@@ -179,7 +179,30 @@ const appsRoute: Routes = [
         component: lazy(() => import('@/views/attandance/AttendanceManagement/AttendanceSummary')),
         authority: [ADMIN, USER,SUPERADMIN ,ENGINEER],
     },
-   
+    // {
+    //     key: 'apps.expenseAdd',
+    //     path: `${APP_PREFIX_PATH}/expense/:projectId`,
+    //     component: lazy(() => import('@/views/expense-tracker/expense-form/ExpenseForm')),
+    //     authority: [ADMIN, USER,SUPERADMIN],
+    // },
+    // {
+    //     key: 'apps.expenseAdd',
+    //     path: `${APP_PREFIX_PATH}/expense/edit/:projectId`,
+    //     component: lazy(() => import('@/views/expense-tracker/expense-form/ExpenseForm')),
+    //     authority: [ADMIN, USER,SUPERADMIN],
+    // },
+    {
+        key: 'apps.expenseAdd',
+        path: `${APP_PREFIX_PATH}/expense/:projectId`,
+        component: lazy(() => import('@/views/expense-tracker/expense-form/ExpenseForm')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+    {
+        key: 'apps.expenseView',
+        path: `${APP_PREFIX_PATH}/expense-view/:expenseId`,
+        component: lazy(() => import('@/views/expense-tracker/expense-form/EspenseView')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
     
     
 ]

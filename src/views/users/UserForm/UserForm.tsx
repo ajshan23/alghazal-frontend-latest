@@ -32,6 +32,11 @@ type InitialData = {
     profileImage?: string | File
     signatureImage?: string | File
     salary?: number
+    accountNumber?: string
+    emiratesId?: string
+    emiratesIdDocument?: string | File
+    passportNumber?: string
+    passportDocument?: string | File
 }
 
 export type FormModel = Omit<InitialData, 'tags'> & {
@@ -62,7 +67,12 @@ const UserForm = forwardRef<FormikRef, UserForm>((props, ref) => {
             password: '',
             profileImage: '',
             signatureImage: '',
-            salary: 0
+            salary: 0,
+            accountNumber: '',
+            emiratesId: '',
+            emiratesIdDocument: '',
+            passportNumber: '',
+            passportDocument: ''
         },
         onFormSubmit,
         onDiscard,
@@ -71,6 +81,8 @@ const UserForm = forwardRef<FormikRef, UserForm>((props, ref) => {
 
     const [profileImageFile, setProfileImageFile] = useState<File | null>(null)
     const [signatureImageFile, setSignatureImageFile] = useState<File | null>(null)
+    const [emiratesIdFile, setEmiratesIdFile] = useState<File | null>(null)
+    const [passportFile, setPassportFile] = useState<File | null>(null)
 
     const validationSchema = Yup.object().shape({
         firstName: Yup.string().required('First Name Required'),
@@ -95,13 +107,16 @@ const UserForm = forwardRef<FormikRef, UserForm>((props, ref) => {
                 is: (role: string) => !['admin', 'super_admin'].includes(role),
                 then: (schema) => schema.required('Salary is required for this role'),
                 otherwise: (schema) => schema.notRequired()
-            })
+            }),
+        accountNumber: Yup.string(),
+        emiratesId: Yup.string(),
+        passportNumber: Yup.string()
     })
 
     const handleSubmit = async (values: FormModel, { setSubmitting }: { setSubmitting: SetSubmitting }) => {
         const formData = new FormData()
         
-        // Append all fields
+        // Append all basic fields
         formData.append('firstName', values.firstName || '')
         formData.append('lastName', values.lastName || '')
         formData.append('email', values.email || '')
@@ -110,6 +125,11 @@ const UserForm = forwardRef<FormikRef, UserForm>((props, ref) => {
         if (values.password) {
             formData.append('password', values.password)
         }
+
+        // Append new fields
+        if (values.accountNumber) formData.append('accountNumber', values.accountNumber)
+        if (values.emiratesId) formData.append('emiratesId', values.emiratesId)
+        if (values.passportNumber) formData.append('passportNumber', values.passportNumber)
 
         // Append phone numbers
         values.phoneNumbers?.forEach((num, index) => {
@@ -134,10 +154,21 @@ const UserForm = forwardRef<FormikRef, UserForm>((props, ref) => {
             formData.append('signatureImage', values.signatureImage)
         }
 
-        // Log form data for debugging
-        for (let [key, value] of formData.entries()) {
-            console.log(key, value)
+        if (emiratesIdFile) {
+            formData.append('emiratesIdDocument', emiratesIdFile)
+        } else if (values.emiratesIdDocument && typeof values.emiratesIdDocument === 'string') {
+            formData.append('emiratesIdDocument', values.emiratesIdDocument)
         }
+
+        if (passportFile) {
+            formData.append('passportDocument', passportFile)
+        } else if (values.passportDocument && typeof values.passportDocument === 'string') {
+            formData.append('passportDocument', values.passportDocument)
+        }
+
+        // Handle document removals
+        if (values.removeEmiratesIdDocument) formData.append('removeEmiratesIdDocument', 'true')
+        if (values.removePassportDocument) formData.append('removePassportDocument', 'true')
 
         onFormSubmit?.(formData, setSubmitting)
     }
@@ -147,6 +178,8 @@ const UserForm = forwardRef<FormikRef, UserForm>((props, ref) => {
             innerRef={ref}
             initialValues={{
                 ...initialData,
+                removeEmiratesIdDocument: false,
+                removePassportDocument: false
             }}
             validationSchema={validationSchema}
             onSubmit={handleSubmit}
@@ -168,6 +201,22 @@ const UserForm = forwardRef<FormikRef, UserForm>((props, ref) => {
                     }
                 }
 
+                const handleEmiratesIdChange = (files: File[]) => {
+                    if (files.length > 0) {
+                        setEmiratesIdFile(files[0])
+                        setFieldValue('emiratesIdDocument', files[0].name)
+                        setFieldValue('removeEmiratesIdDocument', false)
+                    }
+                }
+
+                const handlePassportChange = (files: File[]) => {
+                    if (files.length > 0) {
+                        setPassportFile(files[0])
+                        setFieldValue('passportDocument', files[0].name)
+                        setFieldValue('removePassportDocument', false)
+                    }
+                }
+
                 const handleProfileRemove = () => {
                     setProfileImageFile(null)
                     setFieldValue('profileImage', '')
@@ -178,6 +227,18 @@ const UserForm = forwardRef<FormikRef, UserForm>((props, ref) => {
                     setFieldValue('signatureImage', '')
                 }
 
+                const handleEmiratesIdRemove = () => {
+                    setEmiratesIdFile(null)
+                    setFieldValue('emiratesIdDocument', '')
+                    setFieldValue('removeEmiratesIdDocument', true)
+                }
+
+                const handlePassportRemove = () => {
+                    setPassportFile(null)
+                    setFieldValue('passportDocument', '')
+                    setFieldValue('removePassportDocument', true)
+                }
+
                 const showSalaryField = !['admin', 'super_admin'].includes(values.role)
 
                 return (
@@ -185,137 +246,112 @@ const UserForm = forwardRef<FormikRef, UserForm>((props, ref) => {
                         <FormContainer>
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                                 <div className="lg:col-span-2">
-                                    <FormItem
-                                        label="First Name"
-                                        invalid={!!(errors.firstName && touched.firstName)}
-                                        errorMessage={errors.firstName as string}
-                                    >
-                                        <Field
-                                            type="text"
-                                            autoComplete="off"
-                                            name="firstName"
-                                            placeholder="First Name"
-                                            component={Input}
-                                        />
-                                    </FormItem>
-
-                                    <FormItem
-                                        label="Last Name"
-                                        invalid={!!(errors.lastName && touched.lastName)}
-                                        errorMessage={errors.lastName as string}
-                                    >
-                                        <Field
-                                            type="text"
-                                            autoComplete="off"
-                                            name="lastName"
-                                            placeholder="Last Name"
-                                            component={Input}
-                                        />
-                                    </FormItem>
-
-                                    <div className="md:grid grid-cols-2 gap-4">
-                                        <FormItem
-                                            label="Email"
-                                            invalid={!!(errors.email && touched.email)}
-                                            errorMessage={errors.email as string}
-                                        >
-                                            <Field
-                                                type="email"
-                                                autoComplete="off"
-                                                name="email"
-                                                placeholder="Email"
-                                                component={Input}
-                                            />
-                                        </FormItem>
-
-                                        <FormItem
-                                            label="Role"
-                                            invalid={!!(errors.role && touched.role)}
-                                            errorMessage={errors.role as string}
-                                        >
-                                            <Field name="role">
-                                                {({ field, form }: FieldProps) => (
-                                                    <Select
-                                                        placeholder="Select Role"
-                                                        field={field}
-                                                        form={form}
-                                                        options={RoleOptions}
-                                                        value={RoleOptions.find(
-                                                            (role) => role.value === values.role
-                                                        )}
-                                                        onChange={(role) => {
-                                                            form.setFieldValue(
-                                                                field.name,
-                                                                role?.value || ''
-                                                            )
-                                                            // Reset salary when switching to admin/super_admin
-                                                            if (['admin', 'super_admin'].includes(role?.value || '')) {
-                                                                form.setFieldValue('salary', 0)
-                                                            }
-                                                        }}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-                                    </div>
-
-                                    {showSalaryField && (
-                                        <FormItem
-                                            label="Salary"
-                                            invalid={!!(errors.salary && touched.salary)}
-                                            errorMessage={errors.salary as string}
-                                        >
-                                            <Field
-                                                type="number"
-                                                autoComplete="off"
-                                                name="salary"
-                                                placeholder="Salary"
-                                                component={Input}
-                                                min="0"
-                                                step="0.01"
-                                            />
-                                        </FormItem>
-                                    )}
-                                   
-                                    <div className='flex flex-col-2 gap-4 mb-4'>
-                                        <div className='flex flex-col gap-y-2'>
-                                            <FormItem
-                                                label="Signature"
-                                                invalid={!!(errors.signatureImage && touched.signatureImage)}
-                                                errorMessage={errors.signatureImage as string}
-                                            >
-                                                <Upload 
-                                                    onChange={(files) => handleSignatureImageChange(files)}
-                                                    onFileRemove={handleSignatureRemove}
-                                                    uploadLimit={1}
-                                                    defaultFile={initialData.signatureImage}
-                                                />
-                                            </FormItem>
-                                        </div>
-                                        <div className='flex flex-col gap-y-2'>
-                                            <FormItem
-                                                label="Profile Image"
-                                                invalid={!!(errors.profileImage && touched.profileImage)}
-                                                errorMessage={errors.profileImage as string}
-                                            >
-                                                <Upload 
-                                                    onChange={(files) => handleProfileImageChange(files)}
-                                                    onFileRemove={handleProfileRemove}
-                                                    uploadLimit={1}
-                                                    defaultFile={initialData.profileImage}
-                                                />
-                                            </FormItem>
-                                        </div>
-                                    </div>
-                                    
                                     <AdaptableCard divider className="mb-4">
+                                        <h5 className="mb-4">Basic Information</h5>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <FormItem
+                                                label="First Name"
+                                                invalid={!!(errors.firstName && touched.firstName)}
+                                                errorMessage={errors.firstName as string}
+                                            >
+                                                <Field
+                                                    type="text"
+                                                    autoComplete="off"
+                                                    name="firstName"
+                                                    placeholder="First Name"
+                                                    component={Input}
+                                                />
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="Last Name"
+                                                invalid={!!(errors.lastName && touched.lastName)}
+                                                errorMessage={errors.lastName as string}
+                                            >
+                                                <Field
+                                                    type="text"
+                                                    autoComplete="off"
+                                                    name="lastName"
+                                                    placeholder="Last Name"
+                                                    component={Input}
+                                                />
+                                            </FormItem>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <FormItem
+                                                label="Email"
+                                                invalid={!!(errors.email && touched.email)}
+                                                errorMessage={errors.email as string}
+                                            >
+                                                <Field
+                                                    type="email"
+                                                    autoComplete="off"
+                                                    name="email"
+                                                    placeholder="Email"
+                                                    component={Input}
+                                                />
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="Role"
+                                                invalid={!!(errors.role && touched.role)}
+                                                errorMessage={errors.role as string}
+                                            >
+                                                <Field name="role">
+                                                    {({ field, form }: FieldProps) => (
+                                                        <Select
+                                                            placeholder="Select Role"
+                                                            field={field}
+                                                            form={form}
+                                                            options={RoleOptions}
+                                                            value={RoleOptions.find(
+                                                                (role) => role.value === values.role
+                                                            )}
+                                                            onChange={(role) => {
+                                                                form.setFieldValue(
+                                                                    field.name,
+                                                                    role?.value || ''
+                                                                )
+                                                                // Reset salary when switching to admin/super_admin
+                                                                if (['admin', 'super_admin'].includes(role?.value || '')) {
+                                                                    form.setFieldValue('salary', 0)
+                                                                }
+                                                            }}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+                                        </div>
+
+                                        {showSalaryField && (
+                                            <FormItem
+                                                label="Salary"
+                                                invalid={!!(errors.salary && touched.salary)}
+                                                errorMessage={errors.salary as string}
+                                            >
+                                                <Field
+                                                    type="number"
+                                                    autoComplete="off"
+                                                    name="salary"
+                                                    placeholder="Salary"
+                                                    component={Input}
+                                                    min="0"
+                                                    step="0.01"
+                                                />
+                                            </FormItem>
+                                        )}
+                                    </AdaptableCard>
+
+                                    <AdaptableCard divider className="mb-4">
+                                        <h5 className="mb-4">Contact Information</h5>
                                         <FieldArray name="phoneNumbers">
                                             {({ push, remove }) => (
                                                 <div className="space-y-4">
                                                     {values.phoneNumbers?.map((phoneNumber, index) => (
                                                         <div key={index} className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end border-b pb-4">
                                                             <FormItem
-                                                                label="Phone Number"
+                                                                label={`Phone Number ${index + 1}`}
                                                                 invalid={Boolean(
                                                                     errors.phoneNumbers &&
                                                                     (errors.phoneNumbers as any)[index] &&
@@ -358,22 +394,123 @@ const UserForm = forwardRef<FormikRef, UserForm>((props, ref) => {
                                                 </div>
                                             )}
                                         </FieldArray>
-                                    </AdaptableCard>
 
-                                    {type === 'new' && (
                                         <FormItem
-                                            label="Password"
-                                            invalid={!!(errors.password && touched.password)}
-                                            errorMessage={errors.password as string}
+                                            label="Account Number"
                                         >
                                             <Field
-                                                type="password"
+                                                type="text"
                                                 autoComplete="off"
-                                                name="password"
-                                                placeholder="Password"
+                                                name="accountNumber"
+                                                placeholder="Bank Account Number"
                                                 component={Input}
                                             />
                                         </FormItem>
+                                    </AdaptableCard>
+
+                                    <AdaptableCard divider className="mb-4">
+                                        <h5 className="mb-4">Document Information</h5>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <FormItem
+                                                label="Emirates ID"
+                                            >
+                                                <Field
+                                                    type="text"
+                                                    autoComplete="off"
+                                                    name="emiratesId"
+                                                    placeholder="Emirates ID Number"
+                                                    component={Input}
+                                                />
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="Passport Number"
+                                            >
+                                                <Field
+                                                    type="text"
+                                                    autoComplete="off"
+                                                    name="passportNumber"
+                                                    placeholder="Passport Number"
+                                                    component={Input}
+                                                />
+                                            </FormItem>
+                                        </div>
+
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <FormItem
+                                                label="Emirates ID Document"
+                                            >
+                                                <Upload 
+                                                    onChange={(files) => handleEmiratesIdChange(files)}
+                                                    onFileRemove={handleEmiratesIdRemove}
+                                                    uploadLimit={1}
+                                                    defaultFile={initialData.emiratesIdDocument}
+                                                    accept=".pdf,.png,.jpeg,.jpg"
+                                                />
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="Passport Document"
+                                            >
+                                                <Upload 
+                                                    onChange={(files) => handlePassportChange(files)}
+                                                    onFileRemove={handlePassportRemove}
+                                                    uploadLimit={1}
+                                                    defaultFile={initialData.passportDocument}
+                                                    accept=".pdf,.png,.jpeg,.jpg"
+                                                />
+                                            </FormItem>
+                                        </div>
+                                    </AdaptableCard>
+
+                                    <AdaptableCard divider className="mb-4">
+                                        <h5 className="mb-4">Profile Images</h5>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                            <FormItem
+                                                label="Profile Image"
+                                                invalid={!!(errors.profileImage && touched.profileImage)}
+                                                errorMessage={errors.profileImage as string}
+                                            >
+                                                <Upload 
+                                                    onChange={(files) => handleProfileImageChange(files)}
+                                                    onFileRemove={handleProfileRemove}
+                                                    uploadLimit={1}
+                                                    defaultFile={initialData.profileImage}
+                                                />
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="Signature Image"
+                                                invalid={!!(errors.signatureImage && touched.signatureImage)}
+                                                errorMessage={errors.signatureImage as string}
+                                            >
+                                                <Upload 
+                                                    onChange={(files) => handleSignatureImageChange(files)}
+                                                    onFileRemove={handleSignatureRemove}
+                                                    uploadLimit={1}
+                                                    defaultFile={initialData.signatureImage}
+                                                />
+                                            </FormItem>
+                                        </div>
+                                    </AdaptableCard>
+
+                                    {type === 'new' && (
+                                        <AdaptableCard divider className="mb-4">
+                                            <h5 className="mb-4">Security</h5>
+                                            <FormItem
+                                                label="Password"
+                                                invalid={!!(errors.password && touched.password)}
+                                                errorMessage={errors.password as string}
+                                            >
+                                                <Field
+                                                    type="password"
+                                                    autoComplete="off"
+                                                    name="password"
+                                                    placeholder="Password"
+                                                    component={Input}
+                                                />
+                                            </FormItem>
+                                        </AdaptableCard>
                                     )}
                                 </div>
                             </div>
