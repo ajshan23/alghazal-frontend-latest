@@ -17,7 +17,7 @@ export const fetchInvoiceData = async (projectId: string) => {
 export const downloadInvoicePdf = async (projectId: string) => {
     try {
         console.log("Downloading invoice PDF for project:", projectId);
-        const response = await BaseService.get(`/invoice/${projectId}/download`, {
+        const response = await BaseService.get(`/project/${projectId}/invoice/pdf`, {
             responseType: 'blob' // Important for file downloads
         })
         return response.data

@@ -179,6 +179,19 @@ const appsRoute: Routes = [
         component: lazy(() => import('@/views/attandance/AttendanceManagement/AttendanceSummary')),
         authority: [ADMIN, USER,SUPERADMIN ,ENGINEER],
     },
+    {
+        key: 'apps.normalAttendanceMark',
+        path: `${APP_PREFIX_PATH}/attendance/normal/mark`,
+        component: lazy(() => import('@/views/attandance/AttendanceManagement/NormalAttendanceMarkPage')),
+        authority: [ADMIN, SUPERADMIN ],
+    },
+    {
+        key: 'apps.monthlyAttendancePerUser',
+        path: `${APP_PREFIX_PATH}/attendance/user/:userId?`,
+        component: lazy(() => import('@/views/attandance/AttendanceManagement/UserMonthlyAttendancePage')),
+        authority: [ADMIN, SUPERADMIN ],
+    },
+    
     // {
     //     key: 'apps.expenseAdd',
     //     path: `${APP_PREFIX_PATH}/expense/:projectId`,

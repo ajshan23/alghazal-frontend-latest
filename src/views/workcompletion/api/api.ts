@@ -110,3 +110,30 @@ export const apiCreateWorkCompletion = async (projectId: string): Promise<{ data
     throw error;
   }
 }
+
+// src/services/completionService.ts
+export const apiDownloadCompletionCertificate = async (projectId: string): Promise<void> => {
+  try {
+    const response = await BaseService.get(
+      `/work-completion/project/${projectId}/certificate`,
+      { responseType: 'blob' } // Important for handling PDF response
+    );
+    
+    // Create download link
+    const url = window.URL.createObjectURL(new Blob([response.data]));
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `completion-certificate-${projectId}.pdf`);
+    document.body.appendChild(link);
+    link.click();
+    
+    // Clean up
+    link.parentNode?.removeChild(link);
+    window.URL.revokeObjectURL(url);
+    
+    return response.data;
+  } catch (error) {
+    console.error("Error downloading completion certificate:", error);
+    throw error;
+  }
+}

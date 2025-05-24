@@ -9,7 +9,7 @@ import { useAppSelector } from '@/store';
 import dayjs from 'dayjs';
 import { Notification, toast } from '@/components/ui';
 import ImageUploadModal from './ImageUploadModal';
-import { apiGetCompletionData, apiUploadCompletionImages, apiCreateWorkCompletion } from '../../api/api';
+import { apiGetCompletionData, apiUploadCompletionImages, apiCreateWorkCompletion, apiDownloadCompletionCertificate } from '../../api/api';
 import { useNavigate, useParams } from 'react-router-dom';
 
 type CompletionData = {
@@ -138,29 +138,43 @@ const CompletionContent = () => {
     }
   };
 
-  const handleDownloadPdf = async () => {
-    setPdfLoading(true);
-    setError('');
+  // src/views/completion/components/CompletionContent.tsx
+const handleDownloadPdf = async () => {
+  setPdfLoading(true);
+  setError('');
+  
+  try {
+    await apiDownloadCompletionCertificate(projectId!);
     
-    try {
-      // Simulate PDF generation delay
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      toast.push(
-        <Notification title="Success" type="success">
-          PDF downloaded successfully
-        </Notification>
-      );
-    } catch (error) {
-      setError('Failed to download PDF');
-      toast.push(
-        <Notification title="Error" type="danger">
-          Failed to download PDF
-        </Notification>
-      );
-    } finally {
-      setPdfLoading(false);
+    toast.push(
+      <Notification title="Success" type="success">
+        PDF downloaded successfully
+      </Notification>
+    );
+  } catch (error) {
+    console.error('Error downloading PDF:', error);
+    setError('Failed to download PDF');
+    
+    let errorMessage = 'Failed to download PDF';
+    if (error.response) {
+      if (error.response.status === 404) {
+        errorMessage = 'Project data not found for PDF generation';
+      } else if (error.response.status === 400) {
+        errorMessage = 'Invalid project data for PDF generation';
+      } else if (error.response.data?.message) {
+        errorMessage = error.response.data.message;
+      }
     }
-  };
+    
+    toast.push(
+      <Notification title="Error" type="danger">
+        {errorMessage}
+      </Notification>
+    );
+  } finally {
+    setPdfLoading(false);
+  }
+};
 
   if (error) {
     return (

@@ -173,8 +173,17 @@ const Progress = () => {
         const project = projectResponse.data.data;
         const team = teamResponse.data.data;
         
+        const statusRequiresTeam = [
+          'team_assigned', 
+          'work_started', 
+          'in_progress',
+          'work_completed',
+          'quality_check',
+          'client_handover'
+        ].includes(project.status);
+        
         setTeamAssigned(
-          project.status === 'team_assigned' && 
+          statusRequiresTeam && 
           project.assignedWorkers?.length > 0 && 
           project.assignedDriver
         );
