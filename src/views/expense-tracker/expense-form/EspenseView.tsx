@@ -1,15 +1,56 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button, Notification, toast } from '@/components/ui';
-import { fetchExpense, deleteExpense } from '../api/api';
-import { HiOutlineArrowLeft, HiOutlineTrash, HiOutlinePencil } from 'react-icons/hi';
+import { fetchExpense, deleteExpense, downloadPdf } from '../api/api';
+import { HiOutlineArrowLeft, HiOutlineTrash, HiOutlinePencil, HiOutlineDownload } from 'react-icons/hi';
+
+interface MaterialInput {
+  description: string;
+  date: Date;
+  invoiceNo: string;
+  amount: number;
+}
+
+interface ExpenseData {
+  projectId: string;
+  materials: MaterialInput[];
+}
+
+export interface QuotationData {
+  netAmount: number;
+}
+
+export interface ExpenseDetails {
+  _id: string;
+  project: {
+    _id: string;
+    projectName: string;
+    projectNumber: string;
+  };
+  materials: {
+    description: string;
+    date: string;
+    invoiceNo: string;
+    amount: number;
+    _id: string;
+  }[];
+  laborDetails: {
+    workers: Worker[];
+    driver: Driver;
+    totalLaborCost: number;
+  };
+  totalMaterialCost: number;
+  createdBy: User;
+  createdAt: string;
+  updatedAt: string;
+  quotation: QuotationData | null;
+}
 
 interface User {
   _id: string;
   firstName: string;
   lastName: string;
   profileImage?: string;
-  salary?: number;
 }
 
 interface Worker {
@@ -27,39 +68,13 @@ interface Driver {
   totalSalary: number;
 }
 
-interface MaterialItem {
-  description: string;
-  date: string;
-  invoiceNo: string;
-  amount: number;
-  _id: string;
-}
-
-interface ExpenseDetails {
-  _id: string;
-  project: {
-    _id: string;
-    projectName: string;
-    projectNumber: string;
-  };
-  materials: MaterialItem[];
-  laborDetails: {
-    workers: Worker[];
-    driver: Driver;
-    totalLaborCost: number;
-  };
-  totalMaterialCost: number;
-  createdBy: User;
-  createdAt: string;
-  updatedAt: string;
-}
-
 const ExpenseView = () => {
   const { expenseId } = useParams();
   const navigate = useNavigate();
   const [expense, setExpense] = useState<ExpenseDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [deleting, setDeleting] = useState(false);
+  const [downloading, setDownloading] = useState(false);
 
   useEffect(() => {
     const loadExpense = async () => {
@@ -105,6 +120,23 @@ const ExpenseView = () => {
     }
   };
 
+  const handleDownloadPdf = async () => {
+    try {
+      setDownloading(true);
+      const fileName = `expense-${expense?.project.projectNumber}-${expenseId}.pdf`;
+      await downloadPdf(expenseId!, fileName);
+    } catch (error) {
+      toast.push(
+        <Notification title="Error" type="danger">
+          Failed to download PDF
+        </Notification>
+      );
+      console.error("Error downloading PDF:", error);
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -129,6 +161,14 @@ const ExpenseView = () => {
     );
   }
 
+  // Calculate totals
+  const totalMaterialCost = expense.totalMaterialCost;
+  const totalLaborCost = expense.laborDetails.totalLaborCost;
+  const totalExpense = totalMaterialCost + totalLaborCost;
+  const quotationAmount = expense.quotation?.netAmount || 0;
+  const profit = quotationAmount - totalExpense;
+  const profitPercentage = quotationAmount ? (profit / quotationAmount) * 100 : 0;
+
   return (
     <div className="container mx-auto px-4 py-6 space-y-6">
       {/* Header */}
@@ -140,14 +180,21 @@ const ExpenseView = () => {
           <HiOutlineArrowLeft className="mr-1" />
           Back
         </button>
-        
-        {/* <div className="flex space-x-2">
+        <div className="flex space-x-2">
           <Button
             variant="solid"
             icon={<HiOutlinePencil />}
             onClick={() => navigate(`/expenses/${expenseId}/edit`)}
           >
             Edit
+          </Button>
+          <Button
+            variant="solid"
+            icon={<HiOutlineDownload />}
+            loading={downloading}
+            onClick={handleDownloadPdf}
+          >
+            Download PDF
           </Button>
           <Button
             variant="plain"
@@ -158,7 +205,7 @@ const ExpenseView = () => {
           >
             Delete
           </Button>
-        </div> */}
+        </div>
       </div>
 
       {/* Project Info */}
@@ -337,25 +384,45 @@ const ExpenseView = () => {
       {/* Summary */}
       <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
         <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">Expense Summary</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           <div className="bg-blue-50 dark:bg-blue-900/30 p-4 rounded-lg">
             <p className="text-sm text-blue-600 dark:text-blue-400">Total Material Cost</p>
             <p className="text-2xl font-bold text-blue-800 dark:text-blue-200">
-              {expense.totalMaterialCost.toFixed(2)} AED
+              {totalMaterialCost.toFixed(2)} AED
             </p>
           </div>
           <div className="bg-purple-50 dark:bg-purple-900/30 p-4 rounded-lg">
             <p className="text-sm text-purple-600 dark:text-purple-400">Total Labor Cost</p>
             <p className="text-2xl font-bold text-purple-800 dark:text-purple-200">
-              {expense.laborDetails.totalLaborCost.toFixed(2)} AED
+              {totalLaborCost.toFixed(2)} AED
             </p>
           </div>
           <div className="bg-green-50 dark:bg-green-900/30 p-4 rounded-lg">
             <p className="text-sm text-green-600 dark:text-green-400">Total Expense</p>
             <p className="text-2xl font-bold text-green-800 dark:text-green-200">
-              {(expense.totalMaterialCost + expense.laborDetails.totalLaborCost).toFixed(2)} AED
+              {totalExpense.toFixed(2)} AED
             </p>
           </div>
+          {expense.quotation && (
+            <div className={`p-4 rounded-lg ${
+              profit >= 0 
+                ? 'bg-green-50 dark:bg-green-900/30' 
+                : 'bg-red-50 dark:bg-red-900/30'
+            }`}>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Quotation Amount</p>
+              <p className="text-xl font-bold text-gray-800 dark:text-gray-200 mb-2">
+                {quotationAmount.toFixed(2)} AED
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-300">Profit/Loss</p>
+              <p className={`text-2xl font-bold ${
+                profit >= 0 
+                  ? 'text-green-800 dark:text-green-200' 
+                  : 'text-red-800 dark:text-red-200'
+              }`}>
+                {profit.toFixed(2)} AED ({profitPercentage.toFixed(2)}%)
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>

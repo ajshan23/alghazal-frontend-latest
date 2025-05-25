@@ -26,7 +26,7 @@ export const apiMarkNormalAttendance = (data: {
     date?: Date
     type?: 'normal'
 }) => {
-    return BaseService.post('/attandance/normal', {
+    return BaseService.post(`/attandance/normal/${data.userId}`, {
         ...data,
         type: 'normal' // Ensure type is always normal
     })
@@ -57,3 +57,53 @@ export const apiGetUsers = (params?: {
 }) => {
     return BaseService.get('/user', { params })
 }
+// Overview stats
+export const fetchOverviewStats = async (params: { 
+  period?: string; 
+  year?: string 
+}) => {
+  const response = await BaseService.get(`/analytics/overview`, {
+    params,
+    withCredentials: true
+  });
+  return response.data.data;
+};
+
+// Employee trend
+export const fetchEmployeeTrend = async (
+  employeeId: string, 
+  params: { months?: string }
+) => {
+  const response = await BaseService.get(`/analytics/employee/${employeeId}`, {
+    params,
+    withCredentials: true
+  });
+  return response.data.data;
+};
+
+// All projects analytics
+export const fetchAllProjectsAnalytics = async (params: {
+  period?: string;
+  year?: string
+}) => {
+  const response = await BaseService.get(`/analytics/projects`, {
+    params,
+    withCredentials: true
+  });
+  return response.data.data;
+};
+
+// Single project analytics
+export const fetchProjectAnalytics = async (
+  projectId: string,
+  params: {
+    period?: string;
+    year?: string
+  }
+) => {
+  const response = await BaseService.get(`/analytics/projects/${projectId}`, {
+    params,
+    withCredentials: true
+  });
+  return response.data.data;
+};

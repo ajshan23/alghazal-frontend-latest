@@ -2,17 +2,16 @@ import { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
 import { 
   Card, 
-  Table, 
-  Avatar, 
   Badge, 
   Button, 
   Notification,
   toast
 } from '@/components/ui';
-import { HiOutlineRefresh, HiUser } from 'react-icons/hi';
+import { HiOutlineRefresh, HiChevronLeft, HiChevronRight, HiDownload } from 'react-icons/hi';
 import { apiGetUserMonthlyAttendance, apiGetUsers } from '../api/api';
 import dayjs from 'dayjs';
 import { Loading } from '@/components/shared';
+import * as XLSX from 'xlsx';
 
 interface AttendanceRecord {
   _id: string;
@@ -45,6 +44,7 @@ const UserMonthlyAttendancePage = () => {
   const [year, setYear] = useState<number>(dayjs().year());
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<string>(userId || '');
+  const [selectedUserName, setSelectedUserName] = useState<string>('');
 
   const months = [
     { value: 1, label: 'January' },
@@ -70,6 +70,13 @@ const UserMonthlyAttendancePage = () => {
     try {
       const response = await apiGetUsers({ limit: 1000 });
       setUsers(response.data.data.users);
+      // Set the selected user name if userId is provided in URL
+      if (userId) {
+        const user = response.data.data.users.find(u => u._id === userId);
+        if (user) {
+          setSelectedUserName(`${user.firstName} ${user.lastName}`);
+        }
+      }
     } catch (error: any) {
       toast.push(
         <Notification title="Error fetching users" type="danger">
@@ -101,6 +108,52 @@ const UserMonthlyAttendancePage = () => {
     }
   };
 
+  const changeMonth = (increment: number) => {
+    const newDate = dayjs().month(month - 1).year(year).add(increment, 'month');
+    setMonth(newDate.month() + 1);
+    setYear(newDate.year());
+  };
+
+  const handleUserChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const userId = e.target.value;
+    setSelectedUser(userId);
+    const user = users.find(u => u._id === userId);
+    setSelectedUserName(user ? `${user.firstName} ${user.lastName}` : '');
+  };
+
+  const exportToExcel = () => {
+    if (attendance.length === 0) {
+      toast.push(
+        <Notification title="No data to export" type="warning">
+          There are no attendance records to export
+        </Notification>
+      );
+      return;
+    }
+
+    // Prepare data for Excel
+    const data = attendance.map(record => ({
+      Date: dayjs(record.date).format('DD/MM/YYYY'),
+      Status: record.present ? 'Present' : 'Absent',
+      Type: record.type === 'project' ? 'Project' : 'Normal',
+      Project: record.project?.projectName || 'N/A',
+      'Marked By': record.markedBy ? `${record.markedBy.firstName} ${record.markedBy.lastName}` : 'System'
+    }));
+
+    // Create worksheet
+    const ws = XLSX.utils.json_to_sheet(data);
+    
+    // Create workbook
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Attendance");
+    
+    // Generate file name
+    const fileName = `Attendance_${selectedUserName || 'User'}_${months[month - 1].label}_${year}.xlsx`;
+    
+    // Export to Excel
+    XLSX.writeFile(wb, fileName);
+  };
+
   useEffect(() => {
     fetchUsers();
   }, []);
@@ -109,19 +162,89 @@ const UserMonthlyAttendancePage = () => {
     fetchAttendance();
   }, [selectedUser, month, year]);
 
-  const getStatusBadge = (present: boolean) => (
-    <Badge
-      content={present ? 'Present' : 'Absent'}
-      innerClass={`${present ? 'bg-emerald-500' : 'bg-red-500'} text-white`}
-    />
-  );
+  const renderCalendar = () => {
+    const startOfMonth = dayjs().year(year).month(month - 1).startOf('month');
+    const endOfMonth = dayjs().year(year).month(month - 1).endOf('month');
+    const daysInMonth = endOfMonth.date();
+    const startDay = startOfMonth.day();
 
-  const getTypeBadge = (type: 'project' | 'normal') => (
-    <Badge
-      content={type === 'project' ? 'Project' : 'Normal'}
-      innerClass={`${type === 'project' ? 'bg-blue-500' : 'bg-purple-500'} text-white`}
-    />
-  );
+    const attendanceMap = new Map<string, AttendanceRecord>();
+    attendance.forEach(record => {
+      const dateStr = dayjs(record.date).format('YYYY-MM-DD');
+      attendanceMap.set(dateStr, record);
+    });
+
+    const weeks = [];
+    let days = [];
+    
+    for (let i = 0; i < startDay; i++) {
+      days.push(<div key={`empty-${i}`} className="h-24 p-1 border border-gray-200 dark:border-gray-700" />);
+    }
+
+    for (let day = 1; day <= daysInMonth; day++) {
+      const currentDate = dayjs().year(year).month(month - 1).date(day);
+      const dateStr = currentDate.format('YYYY-MM-DD');
+      const record = attendanceMap.get(dateStr);
+      const isToday = currentDate.isSame(dayjs(), 'day');
+      const isWeekend = currentDate.day() === 0 || currentDate.day() === 6;
+
+      days.push(
+        <div 
+          key={`day-${day}`} 
+          className={`h-24 p-1 border border-gray-200 dark:border-gray-700 ${
+            isToday ? 'bg-blue-50 dark:bg-blue-900/30' : 
+            isWeekend ? 'bg-gray-50 dark:bg-gray-800' : ''
+          }`}
+        >
+          <div className="flex justify-between items-start">
+            <span className={`
+              inline-flex items-center justify-center w-6 h-6 rounded-full text-sm font-medium
+              ${record ? 
+                (record.present ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200' : 
+                                 'bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200') :
+                'text-gray-800 dark:text-gray-200'
+              }
+              ${isToday ? 'ring-2 ring-blue-500' : ''}
+            `}>
+              {day}
+            </span>
+            {record && (
+              <Badge
+                content={record.type === 'project' ? 'P' : 'N'}
+                innerClass={`${record.type === 'project' ? 'bg-blue-500' : 'bg-purple-500'} text-white`}
+              />
+            )}
+          </div>
+          {record && (
+            <div className="mt-1 text-xs space-y-1">
+              {record.type === 'project' && record.project && (
+                <div className="truncate" title={record.project.projectName}>
+                  {record.project.projectName}
+                </div>
+              )}
+              <div className="text-gray-500 dark:text-gray-400">
+                {record.markedBy ? `${record.markedBy.firstName} ${record.markedBy.lastName}` : 'System'}
+              </div>
+            </div>
+          )}
+        </div>
+      );
+
+      if (days.length === 7) {
+        weeks.push(<div key={`week-${weeks.length}`} className="grid grid-cols-7">{days}</div>);
+        days = [];
+      }
+    }
+
+    if (days.length > 0) {
+      while (days.length < 7) {
+        days.push(<div key={`empty-end-${days.length}`} className="h-24 p-1 border border-gray-200 dark:border-gray-700" />);
+      }
+      weeks.push(<div key={`week-${weeks.length}`} className="grid grid-cols-7">{days}</div>);
+    }
+
+    return weeks;
+  };
 
   return (
     <div className="container mx-auto px-4 h-full">
@@ -133,7 +256,7 @@ const UserMonthlyAttendancePage = () => {
               <select
                 className="w-full p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
                 value={selectedUser}
-                onChange={(e) => setSelectedUser(e.target.value)}
+                onChange={handleUserChange}
               >
                 <option value="">Select user</option>
                 {users.map(user => (
@@ -167,9 +290,29 @@ const UserMonthlyAttendancePage = () => {
                 </select>
                 <Button
                   variant="plain"
+                  shape="circle"
                   icon={<HiOutlineRefresh />}
                   onClick={fetchAttendance}
                 />
+                <Button
+                  variant="plain"
+                  shape="circle"
+                  icon={<HiChevronLeft />}
+                  onClick={() => changeMonth(-1)}
+                />
+                <Button
+                  variant="plain"
+                  shape="circle"
+                  icon={<HiChevronRight />}
+                  onClick={() => changeMonth(1)}
+                />
+                <Button
+                  variant="solid"
+                  icon={<HiDownload />}
+                  onClick={exportToExcel}
+                >
+                  Export
+                </Button>
               </div>
             </div>
           </div>
@@ -181,44 +324,34 @@ const UserMonthlyAttendancePage = () => {
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <Table>
-              <thead>
-                <tr>
-                  <th>Date</th>
-                  <th>Status</th>
-                  <th>Type</th>
-                  <th>Project</th>
-                  <th>Marked By</th>
-                </tr>
-              </thead>
-              <tbody>
-                {attendance.length > 0 ? (
-                  attendance.map((record) => (
-                    <tr key={record._id}>
-                      <td>{dayjs(record.date).format('DD MMM YYYY')}</td>
-                      <td>{getStatusBadge(record.present)}</td>
-                      <td>{getTypeBadge(record.type)}</td>
-                      <td>
-                        {record.type === 'project' && record.project 
-                          ? record.project.projectName 
-                          : 'N/A'}
-                      </td>
-                      <td>
-                        {record.markedBy 
-                          ? `${record.markedBy.firstName} ${record.markedBy.lastName}`
-                          : 'System'}
-                      </td>
-                    </tr>
-                  ))
-                ) : (
-                  <tr>
-                    <td colSpan={5} className="text-center py-8 text-gray-500">
-                      No attendance records found for selected period
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </Table>
+            <div className="mb-4 grid grid-cols-7 text-center font-medium text-gray-500 dark:text-gray-400">
+              {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
+                <div key={day} className="p-2">{day}</div>
+              ))}
+            </div>
+            {renderCalendar()}
+            <div className="mt-4 flex flex-wrap gap-4 items-center justify-center">
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-900 dark:text-emerald-200 text-sm">
+                  1
+                </span>
+                <span>Present</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center justify-center w-6 h-6 rounded-full bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 text-sm">
+                  1
+                </span>
+                <span>Absent</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge content="P" innerClass="bg-blue-500 text-white" />
+                <span>Project</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Badge content="N" innerClass="bg-purple-500 text-white" />
+                <span>Normal</span>
+              </div>
+            </div>
           </div>
         )}
       </Card>

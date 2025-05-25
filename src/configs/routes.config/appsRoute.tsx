@@ -189,8 +189,16 @@ const appsRoute: Routes = [
         key: 'apps.monthlyAttendancePerUser',
         path: `${APP_PREFIX_PATH}/attendance/user/:userId?`,
         component: lazy(() => import('@/views/attandance/AttendanceManagement/UserMonthlyAttendancePage')),
-        authority: [ADMIN, SUPERADMIN ],
+        authority: [ADMIN, SUPERADMIN,],
     },
+    {
+        key: 'apps.attandanceDashboard',
+        path: `${APP_PREFIX_PATH}/attendance/dashboard`,
+        component: lazy(() => import('@/views/attandance/AttendanceManagement/AttendanceDashboard')),
+        authority: [ADMIN, SUPERADMIN ],
+    
+    },
+    
     
     // {
     //     key: 'apps.expenseAdd',

@@ -6,11 +6,13 @@ import docNavigationConfig from './doc.navigation.config'
 import type { NavigationTree } from '@/@types/navigation'
 import engNavigationConfig from './apps.engineer.config'
 import drvNavigationConfig from './apps.driver.config'
+import hrNavConfig from './hr.navigstion.config'
 
 const navigationConfig: NavigationTree[] = [
     ...appsNavigationConfig,
     ...engNavigationConfig,
     ...drvNavigationConfig,
+    ...hrNavConfig,
     // ...uiComponentNavigationConfig,
     // ...pagesNavigationConfig,
     // ...authNavigationConfig,

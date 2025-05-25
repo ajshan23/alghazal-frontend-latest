@@ -83,40 +83,7 @@ const appsNavigationConfig: NavigationTree[] = [
             //     ],
             // },
             
-            {
-                key: 'apps.users',
-                path: '',
-                title: 'Users',
-                translateKey: 'nav.appsUsers.users',
-                icon: 'crm',
-                type: NAV_ITEM_TYPE_COLLAPSE,
-                authority: [ADMIN, USER,SUPERADMIN],
-                subMenu: [
-                    
-                    {
-                        key: 'appsUsers.usersList',
-                        path: `${APP_PREFIX_PATH}/user-list`,
-                        title: ' User List',
-                        translateKey: 'nav.appsUsers.usersList',
-                        icon: '',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER,SUPERADMIN],
-                        subMenu: [],
-                    },
-                    // {
-                    //     key: 'appsUsers.userNew',
-                    //     path: `${APP_PREFIX_PATH}/user-new`,
-                    //     title: ' User New',
-                    //     translateKey: 'nav.appsUsers.userNew',
-                    //     icon: '',
-                    //     type: NAV_ITEM_TYPE_ITEM,
-                    //     authority: [ADMIN, USER ,SUPERADMIN],
-                    //     subMenu: [],
-                    // },
-                  
-                    
-                ],
-            },
+          
 
             {
                 key: 'apps.clients',
