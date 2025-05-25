@@ -5,11 +5,10 @@ import {
   Table, 
   Avatar, 
   Badge, 
-  Button, 
-  DatePicker,
+  Button,
   toast 
 } from '@/components/ui';
-import { HiOutlineCalendar, HiRefresh } from 'react-icons/hi';
+import { HiRefresh } from 'react-icons/hi';
 import { apiGetAttendanceSummary } from '../api/api';
 import dayjs from 'dayjs';
 import { Loading } from '@/components/shared';
@@ -29,7 +28,7 @@ interface AttendanceSummaryData {
   dates: string[];
   summary: SummaryItem[];
   totals: Record<string, number>;
-  workers: Worker[];
+  users: Worker[]; // Changed from workers to users
 }
 
 const AttendanceSummary = () => {
@@ -38,25 +37,23 @@ const AttendanceSummary = () => {
   const [workers, setWorkers] = useState<Worker[]>([]);
   const [summary, setSummary] = useState<SummaryItem[]>([]);
   const [totals, setTotals] = useState<Record<string, number>>({});
-  const [dateRange, setDateRange] = useState<[Date | null, Date | null]>([null, null]);
 
   const fetchData = async () => {
     try {
       setLoading(true);
-      const params: Record<string, string> = {};
-      
-      if (dateRange[0] && dateRange[1]) {
-        params.startDate = dayjs(dateRange[0]).format('YYYY-MM-DD');
-        params.endDate = dayjs(dateRange[1]).format('YYYY-MM-DD');
-      }
-
-      const response = await apiGetAttendanceSummary(projectId as string, params);
+      const response = await apiGetAttendanceSummary(projectId as string);
       
       if (response.data && response.data.data) {
-        const { workers = [], summary = [], totals = {} } = response.data.data;
-        setWorkers(workers);
+        const { users = [], summary = [], totals = {} } = response.data.data;
+        setWorkers(users); // Changed from workers to users
         setSummary(summary);
-        setTotals(totals);
+        
+        // Filter out the 'date' property from totals if it exists
+        const filteredTotals = {...totals};
+        if ('date' in filteredTotals) {
+          delete filteredTotals.date;
+        }
+        setTotals(filteredTotals);
       }
     } catch (error: any) {
       toast.show({
@@ -73,11 +70,7 @@ const AttendanceSummary = () => {
     if (projectId) {
       fetchData();
     }
-  }, [projectId, dateRange]);
-
-  const handleDateChange = (value: [Date | null, Date | null]) => {
-    setDateRange(value);
-  };
+  }, [projectId]);
 
   const getStatusBadge = (status: boolean | null) => {
     if (status === null) return null;
@@ -104,12 +97,6 @@ const AttendanceSummary = () => {
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <h4 className="text-lg font-bold">Attendance Summary</h4>
             <div className="flex items-center gap-2">
-              {/* <DatePicker.RangePicker
-                value={dateRange}
-                onChange={handleDateChange}
-                placeholder={['Start Date', 'End Date']}
-                suffix={<HiOutlineCalendar className="text-lg" />}
-              /> */}
               <Button
                 variant="plain"
                 icon={<HiRefresh />}
@@ -170,7 +157,7 @@ const AttendanceSummary = () => {
           </Table>
           {summary.length === 0 && (
             <div className="text-center py-8 text-gray-500">
-              No attendance records found for the selected period
+              No attendance records found
             </div>
           )}
         </div>
