@@ -1,17 +1,5 @@
 import BaseService from "@/services/BaseService";
 
-interface MaterialInput {
-  description: string;
-  date: Date;
-  invoiceNo: string;
-  amount: number;
-}
-
-interface ExpenseData {
-  projectId: string;
-  materials: MaterialInput[];
-}
-
 export const getProjectLaborData = async (projectId: string) => {
   try {
     const response = await BaseService.get(`/expense/project/${projectId}/labor-data`);
@@ -22,16 +10,12 @@ export const getProjectLaborData = async (projectId: string) => {
   }
 };
 
-export const createExpense = async (data: ExpenseData) => {
-  try {
-    const response = await BaseService.post(`/expense/project/${data.projectId}`, {
-      materials: data.materials
-    });
-    return response.data;
-  } catch (error) {
-    console.error("Error creating expense:", error);
-    throw error;
-  }
+export const createExpense = async (projectId: string, formData: FormData) => {
+  return BaseService.post(`/expense/project/${projectId}`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  });
 };
 
 export const fetchExpense = async (expenseId: string) => {
@@ -44,9 +28,13 @@ export const fetchExpense = async (expenseId: string) => {
   }
 };
 
-export const updateExpense = async (expenseId: string, data: { materials: MaterialInput[] }) => {
+export const updateExpense = async (expenseId: string, formData: FormData) => {
   try {
-    const response = await BaseService.put(`/expense/${expenseId}`, data);
+    const response = await BaseService.put(`/expense/${expenseId}`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data'
+      }
+    });
     return response.data;
   } catch (error) {
     console.error("Error updating expense:", error);
@@ -89,34 +77,20 @@ export const deleteExpense = async (expenseId: string) => {
 export const downloadPdf = async (id: string, fileName: string) => {
   try {
     const response = await BaseService.get(`/expense/${id}/pdf`, {
-      responseType: 'arraybuffer',
+      responseType: 'blob',
       headers: {
         'Accept': 'application/pdf'
       }
     });
 
-    // Verify response contains data
-    if (!response.data || response.data.byteLength === 0) {
-      throw new Error('Received empty PDF data');
-    }
-
-    const blob = new Blob([response.data], { type: 'application/pdf' });
-    const url = window.URL.createObjectURL(blob);
-    
+    const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement('a');
     link.href = url;
-    link.download = fileName || `estimation-${id}.pdf`;
-    link.style.display = 'none';
-    
+    link.setAttribute('download', fileName || `expense-${id}.pdf`);
     document.body.appendChild(link);
     link.click();
-    
-    // Cleanup
-    setTimeout(() => {
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
-    }, 100);
-    
+    link.remove();
+    window.URL.revokeObjectURL(url);
   } catch (error) {
     console.error('PDF Download Error:', error);
     throw error;
