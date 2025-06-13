@@ -27,7 +27,7 @@ function useAuth() {
     ): Promise<{ status: Status; message: string }> => {
         try {
             // Make API request
-            const response = await axios.post('http://localhost:4000/api/user/login', {
+            const response = await axios.post('https://agats.alghazalgroup.com/api/user/login', {
                 email: values.userName.includes('@') ? values.userName : `${values.userName}@yourdomain.com`,
                 password: values.password
             });
