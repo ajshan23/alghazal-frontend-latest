@@ -23,7 +23,7 @@ const UserTableTools = () => {
                 to="/app/user-new"
             >
                 <Button block variant="solid" size="sm" icon={<HiPlusCircle />}>
-                    Add User
+                    Add Staff
                 </Button>
             </Link>
         </div>

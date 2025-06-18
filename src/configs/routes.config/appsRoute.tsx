@@ -1,6 +1,6 @@
 import { lazy } from 'react'
 import { APP_PREFIX_PATH } from '@/constants/route.constant'
-import { ADMIN, ENGINEER, SUPERADMIN, USER } from '@/constants/roles.constant'
+import { ADMIN, DRIVER, ENGINEER, SUPERADMIN, USER } from '@/constants/roles.constant'
 import type { Routes } from '@/@types/routes'
 
 const appsRoute: Routes = [
@@ -8,7 +8,7 @@ const appsRoute: Routes = [
         key: 'apps.dashboard',
         path: `${APP_PREFIX_PATH}/dashboard`,
         component: lazy(() => import('@/views/project/ProjectDashboard')),
-        authority: [ADMIN, USER,ENGINEER,SUPERADMIN],
+        authority: [ADMIN, USER,ENGINEER,SUPERADMIN,DRIVER],
     },
     {
         key: 'appsEstimation.estimationList',

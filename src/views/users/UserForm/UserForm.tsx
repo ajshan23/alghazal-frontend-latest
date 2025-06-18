@@ -20,6 +20,7 @@ const RoleOptions = [
     { label: 'Finance', value: 'finance' },
     { label: 'Driver', value: 'driver' },
     { label: 'Worker', value: 'worker' },
+    { label: 'Supervisor', value: 'supervisor' },
 ]
 
 type InitialData = {

@@ -56,7 +56,6 @@ const termsCategories = [
   // ... other categories
 ];
 
-
 const termsTypes = [
   { value: 'The payment as per accounting terms 90 days', label: 'The payment as per accounting terms 90 days' },
   { value: 'The payment as per accounting terms 60 days', label: 'The payment as per accounting terms 60 days' },
@@ -85,7 +84,6 @@ interface InitialData {
   quotationNumber: string;
   date: Date;
   validUntil: Date;
-  scopeOfWork: string[];
   items: IQuotationItem[];
   termsAndConditions: string[];
   vatPercentage: number;
@@ -106,9 +104,6 @@ type QuotationFormProps = {
 
 const validationSchema = Yup.object().shape({
   validUntil: Yup.date().required('Valid Until date is required'),
-  scopeOfWork: Yup.array()
-    .of(Yup.string().required('Scope item cannot be empty'))
-    .min(1, 'At least one scope item is required'),
   items: Yup.array()
     .of(
       Yup.object().shape({
@@ -144,7 +139,6 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
     quotationNumber: '',
     date: new Date(),
     validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
-    scopeOfWork: [''],
     items: [
       { description: '', uom: '', quantity: 0, unitPrice: 0, totalPrice: 0 },
     ],
@@ -185,9 +179,6 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
             quotationNumber: quotation.quotationNumber,
             date: new Date(quotation.date),
             validUntil: new Date(quotation.validUntil),
-            scopeOfWork: quotation.scopeOfWork.length > 0 
-              ? quotation.scopeOfWork 
-              : [''],
             items: quotation.items.map(item => ({
               description: item.description,
               uom: item.uom,
@@ -354,49 +345,6 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
                     </Field>
                   </FormItem> */}
                 </div>
-              </AdaptableCard>
-
-              {/* Scope of Work Section */}
-              <AdaptableCard divider className="mb-4">
-                <h5>Scope of Work</h5>
-                <FieldArray name="scopeOfWork">
-                  {({ push, remove }) => (
-                    <div className="space-y-4">
-                      {values.scopeOfWork.map((scope, index) => (
-                        <div key={index} className="flex items-center gap-4">
-                          <FormItem
-                            className="flex-grow"
-                            invalid={!!errors.scopeOfWork?.[index] && touched.scopeOfWork?.[index]}
-                            errorMessage={errors.scopeOfWork?.[index] as string}
-                          >
-                            <Field
-                              as={Input}
-                              name={`scopeOfWork[${index}]`}
-                              placeholder="Scope of work item"
-                            />
-                          </FormItem>
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="plain"
-                            color="red"
-                            icon={<HiOutlineTrash />}
-                            onClick={() => remove(index)}
-                          />
-                        </div>
-                      ))}
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="twoTone"
-                        icon={<HiOutlinePlus />}
-                        onClick={() => push('')}
-                      >
-                        Add Scope Item
-                      </Button>
-                    </div>
-                  )}
-                </FieldArray>
               </AdaptableCard>
 
               {/* Quotation Items Section */}
