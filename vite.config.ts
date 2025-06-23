@@ -16,9 +16,9 @@ export default defineConfig({
       registerType: 'autoUpdate',
       includeAssets: ['favicon.svg', 'favicon.ico', 'apple-touch-icon.png', 'masked-icon.svg'],
       manifest: {
-        name: 'A G T S',
-        short_name: 'A G T S',
-        description: 'A G T S',
+        name: 'A G A T S',
+        short_name: 'A G A T S',
+        description: 'A G A T S',
         theme_color: '#ffffff',
         background_color: '#ffffff',
         display: 'standalone',

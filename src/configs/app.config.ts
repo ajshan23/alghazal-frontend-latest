@@ -8,7 +8,7 @@ export type AppConfig = {
 }
 
 const appConfig: AppConfig = {
-    apiPrefix: 'https://agts.alghazalgroup.com/api',
+    apiPrefix: 'https://agats.alghazalgroup.com/api',
     authenticatedEntryPath: '/app/dashboard',
     unAuthenticatedEntryPath: '/sign-in',
     tourPath: '/app/account/kyc-form',
