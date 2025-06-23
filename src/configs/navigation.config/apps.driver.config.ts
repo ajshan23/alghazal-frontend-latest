@@ -15,7 +15,7 @@ const drvNavigationConfig: NavigationTree[] = [
         translateKey: 'DRIVER',
         icon: 'drv',
         type: NAV_ITEM_TYPE_TITLE,
-        authority: [ADMIN, USER,SUPERADMIN,DRIVER],
+        authority: [ USER,DRIVER],
         subMenu: [
              {
                             key: 'drv.dashboard',
@@ -24,7 +24,7 @@ const drvNavigationConfig: NavigationTree[] = [
                             translateKey: 'Dashboard',
                             icon: 'project',
                             type: NAV_ITEM_TYPE_ITEM,
-                            authority: [ADMIN, USER,SUPERADMIN],
+                            authority: [USER,DRIVER],
                             subMenu: [],
                },
             {
@@ -34,7 +34,7 @@ const drvNavigationConfig: NavigationTree[] = [
                 translateKey: 'My works',
                 icon: 'graph',
                 type: NAV_ITEM_TYPE_ITEM,
-                authority: [ADMIN, USER,SUPERADMIN,DRIVER],
+                authority: [ USER,DRIVER],
                 subMenu: [],
    },
        

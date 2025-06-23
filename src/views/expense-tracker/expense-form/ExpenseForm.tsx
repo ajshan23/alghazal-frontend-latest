@@ -24,6 +24,13 @@ interface MaterialItem {
   file?: File | null;
 }
 
+interface MiscellaneousItem {
+  description: string;
+  quantity: number;
+  unitPrice: number;
+  total: number;
+}
+
 interface Worker {
   user: string;
   firstName: string;
@@ -73,9 +80,19 @@ const validationSchema = Yup.object().shape({
         })
     })
   ),
+  miscellaneous: Yup.array().of(
+    Yup.object().shape({
+      description: Yup.string().required('Description is required'),
+      quantity: Yup.number()
+        .min(0.01, 'Quantity must be at least 0.01')
+        .required('Quantity is required'),
+      unitPrice: Yup.number()
+        .min(0.01, 'Unit price must be at least 0.01')
+        .required('Unit price is required'),
+    })
+  ),
   laborDetails: Yup.object().required("Labor details are required")
 });
-
 
 const ExpenseForm = () => {
   const { projectId, expenseId } = useParams();
@@ -94,12 +111,19 @@ const ExpenseForm = () => {
       documentKey: undefined,
       file: null
     }],
+    miscellaneous: [{
+      description: '',
+      quantity: 1,
+      unitPrice: 0,
+      total: 0,
+    }],
     laborDetails: {
       workers: [] as Worker[],
       driver: null as Driver | null,
       totalLaborCost: 0
     },
-    totalMaterialCost: 0
+    totalMaterialCost: 0,
+    totalMiscellaneousCost: 0
   });
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -120,10 +144,24 @@ const ExpenseForm = () => {
             file: null
           }));
           
+          const miscellaneous = expenseResponse.data.miscellaneous?.map((m: any) => ({
+            description: m.description,
+            quantity: m.quantity,
+            unitPrice: m.unitPrice,
+            total: m.total
+          })) || [{
+            description: '',
+            quantity: 1,
+            unitPrice: 0,
+            total: 0
+          }];
+          
           setInitialValues({
             materials,
+            miscellaneous,
             laborDetails: expenseResponse.data.laborDetails,
-            totalMaterialCost: expenseResponse.data.totalMaterialCost
+            totalMaterialCost: expenseResponse.data.totalMaterialCost,
+            totalMiscellaneousCost: expenseResponse.data.totalMiscellaneousCost || 0
           });
         } else {
           setInitialValues(prev => ({
@@ -151,7 +189,7 @@ const ExpenseForm = () => {
     try {
       const formData = new FormData();
       
-      // Add materials as JSON string
+      // Prepare materials data
       const materialsData = values.materials.map(m => ({
         description: m.description,
         date: m.date.toISOString(),
@@ -163,21 +201,27 @@ const ExpenseForm = () => {
         documentUrl: m.documentUrl,
         documentKey: m.documentKey
       }));
-      
+  
+      // Prepare miscellaneous data
+      const miscellaneousData = values.miscellaneous.map(m => ({
+        description: m.description,
+        quantity: Number(m.quantity),
+        unitPrice: Number(m.unitPrice),
+        total: Number(m.quantity) * Number(m.unitPrice)
+      }));
+  
+      // Append JSON data
       formData.append('materials', JSON.stringify(materialsData));
+      formData.append('miscellaneous', JSON.stringify(miscellaneousData));
       formData.append('laborDetails', JSON.stringify(values.laborDetails));
-
-      // Add files with indexed names (file-0, file-1, etc.)
-      values.materials.forEach((material, index) => {
+  
+      // Append files with the correct field name ('files' instead of 'materialFiles')
+      values.materials.forEach((material) => {
         if (material.file) {
-          // Use simplified file name pattern for easier parsing
-          const indexedFile = new File([material.file], `file-${index}`, {
-            type: material.file.type
-          });
-          formData.append('files', indexedFile);
+          formData.append('files', material.file);
         }
       });
-
+  
       if (expenseId) {
         await updateExpense(expenseId, formData);
         toast.push(
@@ -193,7 +237,7 @@ const ExpenseForm = () => {
           </Notification>
         );
       }
-      navigate(`/projects/${projectId}/expenses`);
+      navigate(`/app/project-view/${projectId}`);
     } catch (error: any) {
       const errorMessage = error.response?.data?.message || 
                          error.message || 
@@ -210,6 +254,9 @@ const ExpenseForm = () => {
     }
   };
 
+  const calculateTotal = (quantity: number, unitPrice: number) => {
+    return (quantity * unitPrice).toFixed(2);
+  };
 
   if (loading) {
     return (
@@ -411,6 +458,125 @@ const ExpenseForm = () => {
               </FieldArray>
             </div>
 
+            {/* Miscellaneous Expenses Section */}
+            <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
+              <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
+                Miscellaneous Expenses
+              </h2>
+              <FieldArray name="miscellaneous">
+                {({ push, remove }) => (
+                  <div className="space-y-4">
+                    {values.miscellaneous.map((misc, index) => (
+                      <div 
+                        key={index} 
+                        className="border border-gray-200 dark:border-gray-700 rounded-lg p-4"
+                      >
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <FormItem
+                            label="Description"
+                            invalid={(errors.miscellaneous?.[index] as any)?.description && 
+                                    (touched.miscellaneous?.[index] as any)?.description}
+                            errorMessage={(errors.miscellaneous?.[index] as any)?.description}
+                          >
+                            <Field 
+                              name={`miscellaneous[${index}].description`} 
+                              as={Input} 
+                              placeholder="Expense description" 
+                            />
+                          </FormItem>
+
+                          <FormItem
+                            label="Quantity"
+                            invalid={(errors.miscellaneous?.[index] as any)?.quantity && 
+                                    (touched.miscellaneous?.[index] as any)?.quantity}
+                            errorMessage={(errors.miscellaneous?.[index] as any)?.quantity}
+                          >
+                            <Field 
+                              name={`miscellaneous[${index}].quantity`} 
+                              type="number" 
+                              as={Input} 
+                              placeholder="Quantity" 
+                              min="0.01"
+                              step="0.01"
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                const quantity = parseFloat(e.target.value) || 0;
+                                const unitPrice = parseFloat(values.miscellaneous[index].unitPrice.toString()) || 0;
+                                setFieldValue(`miscellaneous[${index}].quantity`, quantity);
+                                setFieldValue(`miscellaneous[${index}].total`, quantity * unitPrice);
+                              }}
+                            />
+                          </FormItem>
+
+                          <FormItem
+                            label="Unit Price (AED)"
+                            invalid={(errors.miscellaneous?.[index] as any)?.unitPrice && 
+                                    (touched.miscellaneous?.[index] as any)?.unitPrice}
+                            errorMessage={(errors.miscellaneous?.[index] as any)?.unitPrice}
+                          >
+                            <Field 
+                              name={`miscellaneous[${index}].unitPrice`} 
+                              type="number" 
+                              as={Input} 
+                              placeholder="Unit price" 
+                              min="0.01"
+                              step="0.01"
+                              onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                const unitPrice = parseFloat(e.target.value) || 0;
+                                const quantity = parseFloat(values.miscellaneous[index].quantity.toString()) || 0;
+                                setFieldValue(`miscellaneous[${index}].unitPrice`, unitPrice);
+                                setFieldValue(`miscellaneous[${index}].total`, quantity * unitPrice);
+                              }}
+                            />
+                          </FormItem>
+                        </div>
+
+                        <div className="mt-4">
+                          <div className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg">
+                            <label className="block text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
+                              Total
+                            </label>
+                            <div className="text-lg font-semibold text-gray-900 dark:text-gray-100">
+                              AED {calculateTotal(
+                                parseFloat(values.miscellaneous[index].quantity.toString()) || 0,
+                                parseFloat(values.miscellaneous[index].unitPrice.toString()) || 0
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        {values.miscellaneous.length > 1 && (
+                          <div className="flex justify-end mt-4">
+                            <button
+                              type="button"
+                              onClick={() => remove(index)}
+                              className="text-red-500 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300 flex items-center"
+                            >
+                              <HiOutlineTrash className="mr-1" />
+                              Remove Item
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    ))}
+
+                    <button
+                      type="button"
+                      onClick={() => push({
+                        description: '',
+                        quantity: 1,
+                        unitPrice: 0,
+                        total: 0
+                      })}
+                      className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none dark:bg-blue-500 dark:hover:bg-blue-600"
+                    >
+                      <HiOutlinePlus className="mr-1" />
+                      Add Miscellaneous Expense
+                    </button>
+                  </div>
+                )}
+              </FieldArray>
+            </div>
+
             {/* Labor Details Section */}
             <div className="bg-white dark:bg-gray-800 rounded-lg shadow p-6">
               <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
@@ -536,13 +702,21 @@ const ExpenseForm = () => {
               <h2 className="text-xl font-semibold mb-4 text-gray-900 dark:text-gray-100">
                 Expense Summary
               </h2>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
                 <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
                   <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">
                     Total Material Cost
                   </label>
                   <div className="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">
                     AED {values.materials.reduce((sum, m) => sum + Number(m.amount), 0).toFixed(2)}
+                  </div>
+                </div>
+                <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
+                  <label className="block text-sm font-medium text-gray-500 dark:text-gray-400">
+                    Total Misc Cost
+                  </label>
+                  <div className="mt-1 text-2xl font-semibold text-gray-900 dark:text-gray-100">
+                    AED {values.miscellaneous.reduce((sum, m) => sum + (Number(m.quantity) * Number(m.unitPrice)), 0).toFixed(2)}
                   </div>
                 </div>
                 <div className="bg-gray-50 dark:bg-gray-700 p-4 rounded-lg">
@@ -560,6 +734,7 @@ const ExpenseForm = () => {
                   <div className="mt-1 text-2xl font-semibold text-green-600 dark:text-green-400">
                     AED {(
                       values.materials.reduce((sum, m) => sum + Number(m.amount), 0) + 
+                      values.miscellaneous.reduce((sum, m) => sum + (Number(m.quantity) * Number(m.unitPrice)), 0) +
                       (laborData?.totalLaborCost || 0)
                     ).toFixed(2)}
                   </div>

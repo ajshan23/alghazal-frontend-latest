@@ -16,6 +16,7 @@ export interface UploadProps extends CommonProps {
     disabled?: boolean
     draggable?: boolean
     fileList?: File[]
+    defaultFile?: { name: string; url?: string }[]
     fileListClass?: string
     fileItemClass?: string
     multiple?: boolean
@@ -24,13 +25,17 @@ export interface UploadProps extends CommonProps {
     showList?: boolean
     tip?: string | ReactNode
     uploadLimit?: number
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     field?: any
 }
 
 const filesToArray = (files: File[]) =>
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     Object.keys(files).map((key) => files[key as any])
+
+const urlToFile = async (url: string, name: string): Promise<File> => {
+    const response = await fetch(url)
+    const blob = await response.blob()
+    return new File([blob], name, { type: blob.type })
+}
 
 const Upload = forwardRef<HTMLDivElement, UploadProps>((props, ref) => {
     const {
@@ -39,6 +44,7 @@ const Upload = forwardRef<HTMLDivElement, UploadProps>((props, ref) => {
         disabled = false,
         draggable = false,
         fileList = [],
+        defaultFile = [],
         fileListClass,
         fileItemClass,
         multiple,
@@ -54,16 +60,38 @@ const Upload = forwardRef<HTMLDivElement, UploadProps>((props, ref) => {
     } = props
 
     const fileInputField = useRef<HTMLInputElement>(null)
-    const [files, setFiles] = useState(fileList)
+    const [files, setFiles] = useState<File[]>(fileList)
     const [dragOver, setDragOver] = useState(false)
 
     const { themeColor, primaryColorLevel } = useConfig()
 
     useEffect(() => {
+        const initializeFiles = async () => {
+            if (defaultFile.length > 0 && files.length === 0) {
+                const newFiles = await Promise.all(
+                    defaultFile.map(async (file) => {
+                        if (file.url) {
+                            try {
+                                return await urlToFile(file.url, file.name)
+                            } catch (error) {
+                                console.error('Error loading file:', error)
+                                return new File([], file.name)
+                            }
+                        }
+                        return new File([], file.name)
+                    })
+                )
+                setFiles(newFiles)
+            }
+        }
+
+        initializeFiles()
+    }, [defaultFile, files.length])
+
+    useEffect(() => {
         if (JSON.stringify(files) !== JSON.stringify(fileList)) {
             setFiles(fileList)
         }
-        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [JSON.stringify(fileList)])
 
     const triggerMessage = (msg: string | ReactNode = '') => {
@@ -83,7 +111,6 @@ const Upload = forwardRef<HTMLDivElement, UploadProps>((props, ref) => {
                 file.push(f)
             }
         }
-
         return file
     }
 
@@ -95,7 +122,6 @@ const Upload = forwardRef<HTMLDivElement, UploadProps>((props, ref) => {
                     file.shift()
                     file = pushFile(newFiles, file)
                 }
-
                 return filesToArray({ ...file })
             }
         }
@@ -216,7 +242,6 @@ const Upload = forwardRef<HTMLDivElement, UploadProps>((props, ref) => {
                     value=""
                     onChange={onNewFileUpload}
                     {...field}
-                    {...rest}
                 ></input>
                 {renderChildren()}
             </div>
@@ -228,6 +253,7 @@ const Upload = forwardRef<HTMLDivElement, UploadProps>((props, ref) => {
                             key={file.name + index}
                             file={file}
                             className={fileItemClass}
+                            previewUrl={file.size > 0 ? URL.createObjectURL(file) : undefined}
                         >
                             <CloseButton
                                 className="upload-file-remove"

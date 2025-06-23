@@ -15,7 +15,7 @@ const engNavigationConfig: NavigationTree[] = [
         translateKey: 'ENGINEER',
         icon: 'eng',
         type: NAV_ITEM_TYPE_TITLE,
-        authority: [ADMIN, USER,SUPERADMIN,ENGINEER],
+        authority: [ADMIN, USER,ENGINEER],
         subMenu: [
             {
                 key: 'eng.dashboard',

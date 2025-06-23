@@ -1,4 +1,4 @@
-import { forwardRef, useState } from 'react'
+import { forwardRef, useState, useEffect } from 'react'
 import { FormContainer, FormItem } from '@/components/ui/Form'
 import Button from '@/components/ui/Button'
 import StickyFooter from '@/components/shared/StickyFooter'
@@ -53,7 +53,7 @@ type UserForm = {
     type: 'edit' | 'new'
     onDiscard?: () => void
     onDelete?: OnDelete
-    onFormSubmit: (formData: any, setSubmitting: SetSubmitting) => void
+    onFormSubmit: (formData: FormData, setSubmitting: SetSubmitting) => Promise<any>
 }
 
 const UserForm = forwardRef<FormikRef, UserForm>((props, ref) => {
@@ -85,6 +85,22 @@ const UserForm = forwardRef<FormikRef, UserForm>((props, ref) => {
     const [emiratesIdFile, setEmiratesIdFile] = useState<File | null>(null)
     const [passportFile, setPassportFile] = useState<File | null>(null)
 
+    const [existingFiles, setExistingFiles] = useState({
+        profileImage: initialData.profileImage as string || '',
+        signatureImage: initialData.signatureImage as string || '',
+        emiratesIdDocument: initialData.emiratesIdDocument as string || '',
+        passportDocument: initialData.passportDocument as string || ''
+    })
+
+    useEffect(() => {
+        setExistingFiles({
+            profileImage: initialData.profileImage as string || '',
+            signatureImage: initialData.signatureImage as string || '',
+            emiratesIdDocument: initialData.emiratesIdDocument as string || '',
+            passportDocument: initialData.passportDocument as string || ''
+        })
+    }, [initialData])
+
     const validationSchema = Yup.object().shape({
         firstName: Yup.string().required('First Name Required'),
         lastName: Yup.string().required('Last Name Required'),
@@ -93,15 +109,9 @@ const UserForm = forwardRef<FormikRef, UserForm>((props, ref) => {
         password: type === 'new' 
             ? Yup.string().required('Password is Required') 
             : Yup.string(),
-        phoneNumbers: Yup.array().of(
-            Yup.string().matches(/^[0-9]+$/, 'Phone number must be digits only')
-        ),
-        profileImage: type === 'new' 
-            ? Yup.mixed().required('Profile image is required') 
-            : Yup.mixed(),
-        signatureImage: type === 'new' 
-            ? Yup.mixed().required('Signature is required') 
-            : Yup.mixed(),
+        phoneNumbers: Yup.array()
+            .of(Yup.string().matches(/^[0-9]+$/, 'Phone number must be digits only'))
+            .min(1, 'At least one phone number is required'),
         salary: Yup.number()
             .min(0, 'Salary cannot be negative')
             .when('role', {
@@ -114,84 +124,98 @@ const UserForm = forwardRef<FormikRef, UserForm>((props, ref) => {
         passportNumber: Yup.string()
     })
 
-    const handleSubmit = async (values: FormModel, { setSubmitting }: { setSubmitting: SetSubmitting }) => {
-        const formData = new FormData()
-        
-        // Append all basic fields
-        formData.append('firstName', values.firstName || '')
-        formData.append('lastName', values.lastName || '')
-        formData.append('email', values.email || '')
-        formData.append('role', values.role || '')
-        
-        if (values.password) {
-            formData.append('password', values.password)
-        }
-
-        // Append new fields
-        if (values.accountNumber) formData.append('accountNumber', values.accountNumber)
-        if (values.emiratesId) formData.append('emiratesId', values.emiratesId)
-        if (values.passportNumber) formData.append('passportNumber', values.passportNumber)
-
-        // Append phone numbers
-        values.phoneNumbers?.forEach((num, index) => {
-            formData.append(`phoneNumbers[${index}]`, num)
-        })
-
-        // Conditionally append salary
-        if (values.role && !['admin', 'super_admin'].includes(values.role) && values.salary !== undefined) {
-            formData.append('salary', values.salary.toString())
-        }
-
-        // Append files if they exist
-        if (profileImageFile) {
-            formData.append('profileImage', profileImageFile)
-        } else if (values.profileImage && typeof values.profileImage === 'string') {
-            formData.append('profileImage', values.profileImage)
-        }
-
-        if (signatureImageFile) {
-            formData.append('signatureImage', signatureImageFile)
-        } else if (values.signatureImage && typeof values.signatureImage === 'string') {
-            formData.append('signatureImage', values.signatureImage)
-        }
-
-        if (emiratesIdFile) {
-            formData.append('emiratesIdDocument', emiratesIdFile)
-        } else if (values.emiratesIdDocument && typeof values.emiratesIdDocument === 'string') {
-            formData.append('emiratesIdDocument', values.emiratesIdDocument)
-        }
-
-        if (passportFile) {
-            formData.append('passportDocument', passportFile)
-        } else if (values.passportDocument && typeof values.passportDocument === 'string') {
-            formData.append('passportDocument', values.passportDocument)
-        }
-
-        // Handle document removals
-        if (values.removeEmiratesIdDocument) formData.append('removeEmiratesIdDocument', 'true')
-        if (values.removePassportDocument) formData.append('removePassportDocument', 'true')
-
-        onFormSubmit?.(formData, setSubmitting)
-    }
-
     return (
         <Formik
             innerRef={ref}
             initialValues={{
                 ...initialData,
-                removeEmiratesIdDocument: false,
-                removePassportDocument: false
+                phoneNumbers: Array.isArray(initialData.phoneNumbers) 
+                    ? initialData.phoneNumbers 
+                    : typeof initialData.phoneNumbers === 'string'
+                        ? JSON.parse(initialData.phoneNumbers.replace(/'/g, '"')) 
+                        : [''],
+                salary: initialData.salary || 0
             }}
             validationSchema={validationSchema}
-            onSubmit={handleSubmit}
+            onSubmit={async (values, { setSubmitting, setErrors }) => {
+                const formData = new FormData()
+                
+                formData.append('firstName', values.firstName || '')
+                formData.append('lastName', values.lastName || '')
+                formData.append('email', values.email || '')
+                formData.append('role', values.role || '')
+                
+                if (values.password) {
+                    formData.append('password', values.password)
+                }
+
+                let phoneNumbersArray = values.phoneNumbers || ['']
+                if (!Array.isArray(phoneNumbersArray)) {
+                    phoneNumbersArray = [phoneNumbersArray]
+                }
+                formData.append('phoneNumbers', JSON.stringify(phoneNumbersArray.filter(num => num.trim().length > 0)))
+
+                if (values.role && !['admin', 'super_admin'].includes(values.role)) {
+                    formData.append('salary', values.salary?.toString() || '0')
+                }
+
+                if (values.accountNumber) formData.append('accountNumber', values.accountNumber)
+                if (values.emiratesId) formData.append('emiratesId', values.emiratesId)
+                if (values.passportNumber) formData.append('passportNumber', values.passportNumber)
+
+                if (profileImageFile) formData.append('profileImage', profileImageFile)
+                if (signatureImageFile) formData.append('signatureImage', signatureImageFile)
+                if (emiratesIdFile) formData.append('emiratesIdDocument', emiratesIdFile)
+                if (passportFile) formData.append('passportDocument', passportFile)
+
+                if (type === 'edit') {
+                    if (!profileImageFile && existingFiles.profileImage) {
+                        formData.append('profileImageUrl', existingFiles.profileImage)
+                    }
+                    if (!signatureImageFile && existingFiles.signatureImage) {
+                        formData.append('signatureImageUrl', existingFiles.signatureImage)
+                    }
+                    if (!emiratesIdFile && existingFiles.emiratesIdDocument) {
+                        formData.append('emiratesIdDocumentUrl', existingFiles.emiratesIdDocument)
+                    }
+                    if (!passportFile && existingFiles.passportDocument) {
+                        formData.append('passportDocumentUrl', existingFiles.passportDocument)
+                    }
+
+                    if (!values.profileImage && existingFiles.profileImage) {
+                        formData.append('removeProfileImage', 'true')
+                    }
+                    if (!values.signatureImage && existingFiles.signatureImage) {
+                        formData.append('removeSignatureImage', 'true')
+                    }
+                    if (!values.emiratesIdDocument && existingFiles.emiratesIdDocument) {
+                        formData.append('removeEmiratesIdDocument', 'true')
+                    }
+                    if (!values.passportDocument && existingFiles.passportDocument) {
+                        formData.append('removePassportDocument', 'true')
+                    }
+                }
+
+                try {
+                    await onFormSubmit(formData, setSubmitting)
+                } catch (error: any) {
+                    setSubmitting(false)
+                    if (error.message?.includes("Email already in use")) {
+                        setErrors({ email: "This email is already registered" })
+                    }
+                }
+            }}
             enableReinitialize={true}
         >
             {({ values, touched, errors, isSubmitting, setFieldValue }) => {
-                
                 const handleProfileImageChange = (files: File[]) => {
                     if (files.length > 0) {
                         setProfileImageFile(files[0])
                         setFieldValue('profileImage', files[0].name)
+                        setExistingFiles(prev => ({ ...prev, profileImage: '' }))
+                    } else {
+                        setProfileImageFile(null)
+                        setFieldValue('profileImage', existingFiles.profileImage || '')
                     }
                 }
                 
@@ -199,6 +223,10 @@ const UserForm = forwardRef<FormikRef, UserForm>((props, ref) => {
                     if (files.length > 0) {
                         setSignatureImageFile(files[0])
                         setFieldValue('signatureImage', files[0].name)
+                        setExistingFiles(prev => ({ ...prev, signatureImage: '' }))
+                    } else {
+                        setSignatureImageFile(null)
+                        setFieldValue('signatureImage', existingFiles.signatureImage || '')
                     }
                 }
 
@@ -206,7 +234,10 @@ const UserForm = forwardRef<FormikRef, UserForm>((props, ref) => {
                     if (files.length > 0) {
                         setEmiratesIdFile(files[0])
                         setFieldValue('emiratesIdDocument', files[0].name)
-                        setFieldValue('removeEmiratesIdDocument', false)
+                        setExistingFiles(prev => ({ ...prev, emiratesIdDocument: '' }))
+                    } else {
+                        setEmiratesIdFile(null)
+                        setFieldValue('emiratesIdDocument', existingFiles.emiratesIdDocument || '')
                     }
                 }
 
@@ -214,30 +245,35 @@ const UserForm = forwardRef<FormikRef, UserForm>((props, ref) => {
                     if (files.length > 0) {
                         setPassportFile(files[0])
                         setFieldValue('passportDocument', files[0].name)
-                        setFieldValue('removePassportDocument', false)
+                        setExistingFiles(prev => ({ ...prev, passportDocument: '' }))
+                    } else {
+                        setPassportFile(null)
+                        setFieldValue('passportDocument', existingFiles.passportDocument || '')
                     }
                 }
 
                 const handleProfileRemove = () => {
                     setProfileImageFile(null)
                     setFieldValue('profileImage', '')
+                    setExistingFiles(prev => ({ ...prev, profileImage: '' }))
                 }
 
                 const handleSignatureRemove = () => {
                     setSignatureImageFile(null)
                     setFieldValue('signatureImage', '')
+                    setExistingFiles(prev => ({ ...prev, signatureImage: '' }))
                 }
 
                 const handleEmiratesIdRemove = () => {
                     setEmiratesIdFile(null)
                     setFieldValue('emiratesIdDocument', '')
-                    setFieldValue('removeEmiratesIdDocument', true)
+                    setExistingFiles(prev => ({ ...prev, emiratesIdDocument: '' }))
                 }
 
                 const handlePassportRemove = () => {
                     setPassportFile(null)
                     setFieldValue('passportDocument', '')
-                    setFieldValue('removePassportDocument', true)
+                    setExistingFiles(prev => ({ ...prev, passportDocument: '' }))
                 }
 
                 const showSalaryField = !['admin', 'super_admin'].includes(values.role)
@@ -314,10 +350,6 @@ const UserForm = forwardRef<FormikRef, UserForm>((props, ref) => {
                                                                     field.name,
                                                                     role?.value || ''
                                                                 )
-                                                                // Reset salary when switching to admin/super_admin
-                                                                if (['admin', 'super_admin'].includes(role?.value || '')) {
-                                                                    form.setFieldValue('salary', 0)
-                                                                }
                                                             }}
                                                         />
                                                     )}
@@ -367,6 +399,12 @@ const UserForm = forwardRef<FormikRef, UserForm>((props, ref) => {
                                                                     name={`phoneNumbers.${index}`}
                                                                     component={Input}
                                                                     placeholder="Phone Number"
+                                                                    value={phoneNumber || ''}
+                                                                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
+                                                                        const newPhoneNumbers = [...values.phoneNumbers]
+                                                                        newPhoneNumbers[index] = e.target.value
+                                                                        setFieldValue('phoneNumbers', newPhoneNumbers)
+                                                                    }}
                                                                 />
                                                             </FormItem>
                                                             <div className="flex justify-end">
@@ -445,7 +483,15 @@ const UserForm = forwardRef<FormikRef, UserForm>((props, ref) => {
                                                     onChange={(files) => handleEmiratesIdChange(files)}
                                                     onFileRemove={handleEmiratesIdRemove}
                                                     uploadLimit={1}
-                                                    defaultFile={initialData.emiratesIdDocument}
+                                                    defaultFile={
+                                                        existingFiles.emiratesIdDocument 
+                                                            ? [{ 
+                                                                name: 'Emirates_ID_Document', 
+                                                                url: existingFiles.emiratesIdDocument 
+                                                              }]
+                                                            : []
+                                                    }
+                                                    fileList={emiratesIdFile ? [emiratesIdFile] : []}
                                                     accept=".pdf,.png,.jpeg,.jpg"
                                                 />
                                             </FormItem>
@@ -457,7 +503,15 @@ const UserForm = forwardRef<FormikRef, UserForm>((props, ref) => {
                                                     onChange={(files) => handlePassportChange(files)}
                                                     onFileRemove={handlePassportRemove}
                                                     uploadLimit={1}
-                                                    defaultFile={initialData.passportDocument}
+                                                    defaultFile={
+                                                        existingFiles.passportDocument 
+                                                            ? [{ 
+                                                                name: 'Passport_Document', 
+                                                                url: existingFiles.passportDocument 
+                                                              }]
+                                                            : []
+                                                    }
+                                                    fileList={passportFile ? [passportFile] : []}
                                                     accept=".pdf,.png,.jpeg,.jpg"
                                                 />
                                             </FormItem>
@@ -466,6 +520,7 @@ const UserForm = forwardRef<FormikRef, UserForm>((props, ref) => {
 
                                     <AdaptableCard divider className="mb-4">
                                         <h5 className="mb-4">Profile Images</h5>
+                                        
                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                             <FormItem
                                                 label="Profile Image"
@@ -476,7 +531,13 @@ const UserForm = forwardRef<FormikRef, UserForm>((props, ref) => {
                                                     onChange={(files) => handleProfileImageChange(files)}
                                                     onFileRemove={handleProfileRemove}
                                                     uploadLimit={1}
-                                                    defaultFile={initialData.profileImage}
+                                                    defaultFile={
+                                                        existingFiles.profileImage 
+                                                            ? [{ name: 'profile.jpg', url: existingFiles.profileImage }]
+                                                            : []
+                                                    }
+                                                    fileList={profileImageFile ? [profileImageFile] : []}
+                                                    accept="image/*"
                                                 />
                                             </FormItem>
 
@@ -489,7 +550,13 @@ const UserForm = forwardRef<FormikRef, UserForm>((props, ref) => {
                                                     onChange={(files) => handleSignatureImageChange(files)}
                                                     onFileRemove={handleSignatureRemove}
                                                     uploadLimit={1}
-                                                    defaultFile={initialData.signatureImage}
+                                                    defaultFile={
+                                                        existingFiles.signatureImage 
+                                                            ? [{ name: 'signature.jpg', url: existingFiles.signatureImage }]
+                                                            : []
+                                                    }
+                                                    fileList={signatureImageFile ? [signatureImageFile] : []}
+                                                    accept="image/*"
                                                 />
                                             </FormItem>
                                         </div>

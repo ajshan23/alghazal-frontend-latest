@@ -59,7 +59,7 @@ interface InitialData {
   commissionAmount?: number;
   profit?: number;
   project?: string;
-  subject?:string;
+  subject?: string;
 }
 
 export type FormModel = InitialData;
@@ -88,10 +88,12 @@ const validationSchema = Yup.object().shape({
       uom: Yup.string().required('Unit of measurement is required'),
       quantity: Yup.number()
         .required('Quantity is required')
-        .min(0, 'Quantity must be positive'),
+        .min(0, 'Quantity must be positive')
+        .typeError('Quantity must be a number'),
       unitPrice: Yup.number()
         .required('Unit price is required')
-        .min(0, 'Unit price must be positive'),
+        .min(0, 'Unit price must be positive')
+        .typeError('Unit price must be a number'),
     })
   ),
   labourCharges: Yup.array().of(
@@ -99,10 +101,12 @@ const validationSchema = Yup.object().shape({
       designation: Yup.string().required('Designation is required'),
       days: Yup.number()
         .required('Days is required')
-        .min(0, 'Days must be positive'),
+        .min(0, 'Days must be positive')
+        .typeError('Days must be a number'),
       price: Yup.number()
         .required('Price is required')
-        .min(0, 'Price must be positive'),
+        .min(0, 'Price must be positive')
+        .typeError('Price must be a number'),
     })
   ),
   termsAndConditions: Yup.array().of(
@@ -110,10 +114,12 @@ const validationSchema = Yup.object().shape({
       description: Yup.string().required('Description is required'),
       quantity: Yup.number()
         .required('Quantity is required')
-        .min(0, 'Quantity must be positive'),
+        .min(0, 'Quantity must be positive')
+        .typeError('Quantity must be a number'),
       unitPrice: Yup.number()
         .required('Unit price is required')
-        .min(0, 'Unit price must be positive'),
+        .min(0, 'Unit price must be positive')
+        .typeError('Unit price must be a number'),
     })
   ),
 });
@@ -142,6 +148,16 @@ const measurementUnits = [
   { value: 'in', label: 'Inch (in)' },
   { value: 'ft', label: 'Foot (ft)' },
   { value: 'yd', label: 'Yard (yd)' },
+  
+  { value: 'sq_m', label: 'Square Meter (m²)' },
+  { value: 'sq_cm', label: 'Square Centimeter (cm²)' },
+  { value: 'sq_mm', label: 'Square Millimeter (mm²)' },
+  { value: 'sq_km', label: 'Square Kilometer (km²)' },
+  { value: 'sq_in', label: 'Square Inch (in²)' },
+  { value: 'sq_ft', label: 'Square Foot (ft²)' },
+  { value: 'sq_yd', label: 'Square Yard (yd²)' },
+  { value: 'acre', label: 'Acre' },
+  { value: 'hectare', label: 'Hectare (ha)' },
 
   // Count/Other
   { value: 'pcs', label: 'Pieces (pcs)' },
@@ -153,12 +169,11 @@ const measurementUnits = [
 const EstimationForm = forwardRef<FormikRef, EstimationFormProps>((props, ref) => {
   const { onDiscard } = props;
   const navigate = useNavigate();
-  const paramsData= useParams();
-  const {state}=useLocation()
-  console.log("paramsData",paramsData);
-  
-  const {projectId,estimationId}=paramsData
-  // const estimationId = state?.estimationId;
+  const paramsData = useParams();
+  const { state } = useLocation();
+  console.log("paramsData", paramsData);
+
+  const { projectId, estimationId } = paramsData;
 
   const [initialValues, setInitialValues] = useState<FormModel>({
     dateOfEstimation: new Date(),
@@ -168,16 +183,16 @@ const EstimationForm = forwardRef<FormikRef, EstimationFormProps>((props, ref) =
     paymentDueBy: '',
     status: 'Draft',
     materials: [
-      { description: '',uom: '', quantity: 0, unitPrice: 0, total: 0 },
+      { description: '', uom: '', quantity: 0.0, unitPrice: 0.0, total: 0.0 },
     ],
     labourCharges: [
-      { designation: '', days: 0, price: 0, total: 0 },
+      { designation: '', days: 0.0, price: 0.0, total: 0.0 },
     ],
     termsAndConditions: [
-      { description: '', quantity: 0, unitPrice: 0, total: 0 },
+      { description: '', quantity: 0.0, unitPrice: 0.0, total: 0.0 },
     ],
-    estimatedAmount: 0,
-    subject:"",
+    estimatedAmount: 0.0,
+    subject: "",
   });
 
   const [isLoading, setIsLoading] = useState(!!estimationId);
@@ -188,7 +203,7 @@ const EstimationForm = forwardRef<FormikRef, EstimationFormProps>((props, ref) =
         try {
           const response = await fetchEstimation(estimationId);
           const estimation = response.data;
-          
+
           setInitialValues({
             dateOfEstimation: new Date(estimation.createdAt),
             workStartDate: new Date(estimation.workStartDate),
@@ -219,8 +234,8 @@ const EstimationForm = forwardRef<FormikRef, EstimationFormProps>((props, ref) =
             quotationAmount: estimation.quotationAmount,
             commissionAmount: estimation.commissionAmount,
             profit: estimation.profit,
-            project:estimation.project._id,
-            subject:estimation?.subject
+            project: estimation.project._id,
+            subject: estimation?.subject
           });
         } catch (error) {
           console.error('Error fetching estimation:', error);
@@ -255,13 +270,13 @@ const EstimationForm = forwardRef<FormikRef, EstimationFormProps>((props, ref) =
           commissionAmount: values.commissionAmount,
           quotationAmount: values.quotationAmount,
           status: values.status,
-          subject:values.subject
+          subject: values.subject
         });
-        
+
         toast.push(
-          <Notification 
-            title={`Estimation Updated`} 
-            type="success" 
+          <Notification
+            title={`Estimation Updated`}
+            type="success"
             duration={2500}
           >
             Estimation updated successfully.
@@ -270,7 +285,6 @@ const EstimationForm = forwardRef<FormikRef, EstimationFormProps>((props, ref) =
         );
       } else {
         // Create new estimation
-        
         await createEstimation({
           project: projectId,
           paymentDueBy: values.paymentDueBy,
@@ -282,13 +296,13 @@ const EstimationForm = forwardRef<FormikRef, EstimationFormProps>((props, ref) =
           workStartDate: values.workStartDate,
           commissionAmount: values.commissionAmount,
           quotationAmount: values.quotationAmount,
-          subject:values.subject,
+          subject: values.subject,
         });
-        
+
         toast.push(
-          <Notification 
-            title={`Estimation Created`} 
-            type="success" 
+          <Notification
+            title={`Estimation Created`}
+            type="success"
             duration={2500}
           >
             Estimation created successfully.
@@ -296,15 +310,15 @@ const EstimationForm = forwardRef<FormikRef, EstimationFormProps>((props, ref) =
           { placement: 'top-center' }
         );
       }
-      
+
       navigate(-1)
     } catch (error: any) {
       console.error(`Error ${estimationId ? 'updating' : 'creating'} estimation:`, error);
       if (error?.status === 400) {
         toast.push(
-          <Notification 
-            title={`Not ${estimationId ? 'Updated' : 'Created'}`} 
-            type="danger" 
+          <Notification
+            title={`Not ${estimationId ? 'Updated' : 'Created'}`}
+            type="danger"
             duration={2500}
           >
             {estimationId ? 'Failed to update estimation' : 'Only one estimation is allowed per project.'}
@@ -329,7 +343,6 @@ const EstimationForm = forwardRef<FormikRef, EstimationFormProps>((props, ref) =
       </div>
     );
   }
-
 
   return (
     <Formik
@@ -390,18 +403,12 @@ const EstimationForm = forwardRef<FormikRef, EstimationFormProps>((props, ref) =
           setFieldValue(name, parseFloat(value) || 0);
         };
 
-        
-
         return (
           <Form>
             <FormContainer>
               <AdaptableCard divider className="mb-4">
                 <h5>Work Details</h5>
                 <p className="mb-6">Section to configure client and work information</p>
-
-                
-
-                
 
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                   <FormItem
@@ -462,34 +469,31 @@ const EstimationForm = forwardRef<FormikRef, EstimationFormProps>((props, ref) =
                   </FormItem>
 
                   <FormItem
-  label="Payment Due By *"
-  invalid={!!errors.paymentDueBy && touched.paymentDueBy}
-  errorMessage={errors.paymentDueBy as string}
->
-  <Field
-    type="number"
-    name="paymentDueBy"
-    placeholder="paymentDueBy"
-    component={Input}
-  />
-</FormItem>
+                    label="Payment Due By *"
+                    invalid={!!errors.paymentDueBy && touched.paymentDueBy}
+                    errorMessage={errors.paymentDueBy as string}
+                  >
+                    <Field
+                      type="number"
+                      name="paymentDueBy"
+                      placeholder="paymentDueBy"
+                      component={Input}
+                    />
+                  </FormItem>
                 </div>
 
-               
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormItem label="Subject">
-                      <Field
-                        type="text"
-                        name="subject"
-                        value={values.subject}
-                        placeholder="Subject"
-                        textArea={true}
-                        component={Input}
-                      />
-                    </FormItem>
-                   
-                  </div>
-              
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <FormItem label="Subject">
+                    <Field
+                      type="text"
+                      name="subject"
+                      value={values.subject}
+                      placeholder="Subject"
+                      textArea={true}
+                      component={Input}
+                    />
+                  </FormItem>
+                </div>
               </AdaptableCard>
 
               <AdaptableCard divider className="mb-4">
@@ -514,23 +518,23 @@ const EstimationForm = forwardRef<FormikRef, EstimationFormProps>((props, ref) =
                             />
                           </FormItem>
                           <FormItem
-                                                      label="UOM"
-                                                      invalid={!!errors.materials?.[index]?.uom && touched.materials?.[index]?.uom}
-                                                      errorMessage={errors.materials?.[index]?.uom}
-                                                    >
-                                                      <Field name={`materials[${index}].uom`}>
-                                                        {({ field, form }: any) => (
-                                                          <Select
-                                                            options={measurementUnits}
-                                                            value={measurementUnits.find(option => option.value === field.value) || null}
-                                                            onChange={(option: any) => {
-                                                              form.setFieldValue(field.name, option?.value || '');
-                                                            }}
-                                                            placeholder="Select unit"
-                                                          />
-                                                        )}
-                                                      </Field>
-                                                    </FormItem>
+                            label="UOM"
+                            invalid={!!errors.materials?.[index]?.uom && touched.materials?.[index]?.uom}
+                            errorMessage={errors.materials?.[index]?.uom}
+                          >
+                            <Field name={`materials[${index}].uom`}>
+                              {({ field, form }: any) => (
+                                <Select
+                                  options={measurementUnits}
+                                  value={measurementUnits.find(option => option.value === field.value) || null}
+                                  onChange={(option: any) => {
+                                    form.setFieldValue(field.name, option?.value || '');
+                                  }}
+                                  placeholder="Select unit"
+                                />
+                              )}
+                            </Field>
+                          </FormItem>
 
                           <FormItem
                             label="Quantity"
@@ -543,6 +547,7 @@ const EstimationForm = forwardRef<FormikRef, EstimationFormProps>((props, ref) =
                               placeholder="Quantity"
                               component={Input}
                               min={0}
+                              step="0.01"
                               onChange={handleFieldChange}
                             />
                           </FormItem>
@@ -558,6 +563,7 @@ const EstimationForm = forwardRef<FormikRef, EstimationFormProps>((props, ref) =
                               placeholder="Unit price"
                               component={Input}
                               min={0}
+                              step="0.01"
                               onChange={handleFieldChange}
                             />
                           </FormItem>
@@ -590,7 +596,7 @@ const EstimationForm = forwardRef<FormikRef, EstimationFormProps>((props, ref) =
                         size="sm"
                         variant="twoTone"
                         icon={<HiOutlinePlus />}
-                        onClick={() => push({ description: '', quantity: 0, unitPrice: 0, total: 0 })}
+                        onClick={() => push({ description: '', uom: '', quantity: 0.0, unitPrice: 0.0, total: 0.0 })}
                       >
                         Add Material
                       </Button>
@@ -632,6 +638,7 @@ const EstimationForm = forwardRef<FormikRef, EstimationFormProps>((props, ref) =
                               placeholder="Days"
                               component={Input}
                               min={0}
+                              step="0.01"
                               onChange={handleFieldChange}
                             />
                           </FormItem>
@@ -647,6 +654,7 @@ const EstimationForm = forwardRef<FormikRef, EstimationFormProps>((props, ref) =
                               placeholder="Price per day"
                               component={Input}
                               min={0}
+                              step="0.01"
                               onChange={handleFieldChange}
                             />
                           </FormItem>
@@ -679,7 +687,7 @@ const EstimationForm = forwardRef<FormikRef, EstimationFormProps>((props, ref) =
                         size="sm"
                         variant="twoTone"
                         icon={<HiOutlinePlus />}
-                        onClick={() => push({ designation: '', days: 0, price: 0, total: 0 })}
+                        onClick={() => push({ designation: '', days: 0.0, price: 0.0, total: 0.0 })}
                       >
                         Add Labour Charge
                       </Button>
@@ -721,6 +729,7 @@ const EstimationForm = forwardRef<FormikRef, EstimationFormProps>((props, ref) =
                               placeholder="Quantity"
                               component={Input}
                               min={0}
+                              step="0.01"
                               onChange={handleFieldChange}
                             />
                           </FormItem>
@@ -736,6 +745,7 @@ const EstimationForm = forwardRef<FormikRef, EstimationFormProps>((props, ref) =
                               placeholder="Unit price"
                               component={Input}
                               min={0}
+                              step="0.01"
                               onChange={handleFieldChange}
                             />
                           </FormItem>
@@ -768,7 +778,7 @@ const EstimationForm = forwardRef<FormikRef, EstimationFormProps>((props, ref) =
                         size="sm"
                         variant="twoTone"
                         icon={<HiOutlinePlus />}
-                        onClick={() => push({ description: '', quantity: 0, unitPrice: 0, total: 0 })}
+                        onClick={() => push({ description: '', quantity: 0.0, unitPrice: 0.0, total: 0.0 })}
                       >
                         Add Term
                       </Button>
@@ -791,17 +801,6 @@ const EstimationForm = forwardRef<FormikRef, EstimationFormProps>((props, ref) =
                     />
                   </FormItem>
 
-                  <FormItem label="Quotation Amount (Optional)">
-                    <Field
-                      type="number"
-                      name="quotationAmount"
-                      placeholder="Quotation amount"
-                      component={Input}
-                      min={0}
-                      onChange={handleFieldChange}
-                    />
-                  </FormItem>
-
                   <FormItem label="Commission Amount (Optional)">
                     <Field
                       type="number"
@@ -809,6 +808,7 @@ const EstimationForm = forwardRef<FormikRef, EstimationFormProps>((props, ref) =
                       placeholder="Commission amount"
                       component={Input}
                       min={0}
+                      step="0.01"
                       onChange={handleFieldChange}
                     />
                   </FormItem>
@@ -824,8 +824,6 @@ const EstimationForm = forwardRef<FormikRef, EstimationFormProps>((props, ref) =
                     </FormItem>
                   )}
                 </div>
-
-              
               </AdaptableCard>
 
               <StickyFooter
@@ -843,21 +841,17 @@ const EstimationForm = forwardRef<FormikRef, EstimationFormProps>((props, ref) =
                   </Button>
                 </div>
                 <div className='md:flex grid-2 gap-2'>
-                <div className="md:flex ">
-                  
+                  <div className="md:flex">
+                    <Button
+                      size="sm"
+                      variant="solid"
+                      loading={isSubmitting}
+                      type="submit"
+                    >
+                      {estimationId ? 'Update Estimation' : 'Create Estimation'}
+                    </Button>
+                  </div>
                 </div>
-                <div className="md:flex">
-                <Button
-    size="sm"
-    variant="solid"
-    loading={isSubmitting}
-    type="submit"
-  >
-    {estimationId ? 'Update Estimation' : 'Create Estimation'}
-  </Button>
-                </div>
-                </div>
-               
               </StickyFooter>
             </FormContainer>
           </Form>

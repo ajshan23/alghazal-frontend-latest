@@ -4,7 +4,7 @@ import {
     NAV_ITEM_TYPE_COLLAPSE,
     NAV_ITEM_TYPE_ITEM,
 } from '@/constants/navigation.constant'
-import { ADMIN, USER ,SUPERADMIN} from '@/constants/roles.constant'
+import { ADMIN, USER ,SUPERADMIN,ENGINEER} from '@/constants/roles.constant'
 import type { NavigationTree } from '@/@types/navigation'
 
 const appsNavigationConfig: NavigationTree[] = [
@@ -102,7 +102,7 @@ const appsNavigationConfig: NavigationTree[] = [
                         translateKey: 'nav.appsClients.clientsList',
                         icon: '',
                         type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER,SUPERADMIN],
+                        authority: [ADMIN,SUPERADMIN],
                         subMenu: [],
                     },
                     // {
@@ -136,7 +136,7 @@ const appsNavigationConfig: NavigationTree[] = [
                 translateKey: 'nav.appsProjectNew.project',
                 icon: 'crm',
                 type: NAV_ITEM_TYPE_COLLAPSE,
-                authority: [ADMIN, USER,SUPERADMIN],
+                authority: [ADMIN, USER,SUPERADMIN,ENGINEER],
                 subMenu: [
                     
                     {

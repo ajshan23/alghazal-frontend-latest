@@ -16,10 +16,14 @@ const UserNew = () => {
             const fetchData = async () => {
                 try {
                     const response = await fetchUserById(id)
+                    console.log("response:",response)
                     setInitialData({
                         ...response.data,
+                        phoneNumbers: response.data.phoneNumbers || [''],
                         profileImage: response.data.profileImage || '',
                         signatureImage: response.data.signatureImage || '',
+                        emiratesIdDocument: response.data.emiratesIdDocument || '',
+                        passportDocument: response.data.passportDocument || '',
                         salary: response.data.salary || 0
                     })
                     setLoading(false)
@@ -75,10 +79,12 @@ const UserNew = () => {
                 )
                 navigate('/app/user-list')
             } else {
-                throw new Error(`Unexpected status code: ${response.status}`)
+                console.log(response)
+                throw new Error(`Unexpected status code: ${response.response.data.message}`)
             }
         } catch (error) {
             console.error('Error during form submission:', error)
+
             setSubmitting(false)
             toast.push(
                 <Notification
@@ -86,7 +92,7 @@ const UserNew = () => {
                     type="danger"
                     duration={2500}
                 >
-                    {error.message}
+                    {error.response?.data?.message || error.message}
                 </Notification>,
                 {
                     placement: 'top-center',
@@ -100,7 +106,9 @@ const UserNew = () => {
     }
 
     if (loading) {
-        return <div>Loading user data...</div>
+        return <div className="flex justify-center items-center h-64">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+        </div>
     }
 
     return (
@@ -115,7 +123,12 @@ const UserNew = () => {
                 password: '',
                 profileImage: '',
                 signatureImage: '',
-                salary: 0
+                emiratesIdDocument: '',
+                passportDocument: '',
+                salary: 0,
+                accountNumber: '',
+                emiratesId: '',
+                passportNumber: ''
             }}
             onFormSubmit={handleFormSubmit}
             onDiscard={handleDiscard}
