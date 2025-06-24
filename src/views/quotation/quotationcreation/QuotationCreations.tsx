@@ -42,6 +42,16 @@ const measurementUnits = [
   { value: 'in', label: 'Inch (in)' },
   { value: 'ft', label: 'Foot (ft)' },
   { value: 'yd', label: 'Yard (yd)' },
+  
+  { value: 'sq_m', label: 'Square Meter (m²)' },
+  { value: 'sq_cm', label: 'Square Centimeter (cm²)' },
+  { value: 'sq_mm', label: 'Square Millimeter (mm²)' },
+  { value: 'sq_km', label: 'Square Kilometer (km²)' },
+  { value: 'sq_in', label: 'Square Inch (in²)' },
+  { value: 'sq_ft', label: 'Square Foot (ft²)' },
+  { value: 'sq_yd', label: 'Square Yard (yd²)' },
+  { value: 'acre', label: 'Acre' },
+  { value: 'hectare', label: 'Hectare (ha)' },
 
   // Count/Other
   { value: 'pcs', label: 'Pieces (pcs)' },
@@ -101,7 +111,6 @@ type FormikRef = FormikProps<QuotationFormModel>;
 type QuotationFormProps = {
   onDiscard?: () => void;
 };
-
 const validationSchema = Yup.object().shape({
   validUntil: Yup.date().required('Valid Until date is required'),
   items: Yup.array()
@@ -321,7 +330,7 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
               <AdaptableCard divider className="mb-4">
                 <h5>Quotation Details</h5>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* <FormItem label="Quotation Number">
+                  <FormItem label="Quotation Number">
                     <Field name="quotationNumber" type="text" readOnly component={Input} />
                   </FormItem>
                   <FormItem label="Date">
@@ -343,7 +352,7 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
                         />
                       )}
                     </Field>
-                  </FormItem> */}
+                  </FormItem>
                 </div>
               </AdaptableCard>
 
@@ -401,6 +410,7 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
                               placeholder="Quantity"
                               component={Input}
                               min={0}
+                              step="any"
                               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                 const value = parseFloat(e.target.value) || 0;
                                 setFieldValue(`items[${index}].quantity`, value);
