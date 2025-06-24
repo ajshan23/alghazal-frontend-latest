@@ -2,6 +2,8 @@ import classNames from 'classnames'
 import { HEADER_HEIGHT_CLASS } from '@/constants/theme.constant'
 import type { ReactNode } from 'react'
 import type { CommonProps } from '@/@types/common'
+import { IoArrowBackCircleOutline } from 'react-icons/io5'
+import { useNavigate } from 'react-router-dom'
 
 interface HeaderProps extends CommonProps {
     headerStart?: ReactNode
@@ -12,7 +14,7 @@ interface HeaderProps extends CommonProps {
 
 const Header = (props: HeaderProps) => {
     const { headerStart, headerEnd, headerMiddle, className, container } = props
-
+    const nagivte=useNavigate()
     return (
         <header className={classNames('header', className)}>
             <div
@@ -24,6 +26,7 @@ const Header = (props: HeaderProps) => {
             >
                 <div className="header-action header-action-start">
                     {headerStart}
+                    <IoArrowBackCircleOutline size={25} onClick={()=>nagivte(-1)}/>
                 </div>
                 {headerMiddle && (
                     <div className="header-action header-action-middle">
