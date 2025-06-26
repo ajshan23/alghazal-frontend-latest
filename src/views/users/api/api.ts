@@ -66,3 +66,16 @@ export const fetchUserView = async (id: string) => {
         throw error
     }
 }
+
+// Add this to your api.ts file
+export const exportUsersToCSV = async () => {
+    try {
+        const response = await BaseService.get('/user/export/csv', {
+            responseType: 'blob', // Important for file downloads
+        })
+        return response.data
+    } catch (error) {
+        console.error('Error exporting users:', error)
+        throw error
+    }
+}

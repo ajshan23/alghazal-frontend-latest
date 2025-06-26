@@ -137,3 +137,46 @@ export const apiDownloadCompletionCertificate = async (projectId: string): Promi
     throw error;
   }
 }
+
+// ... (previous imports remain the same)
+
+export const apiUpdateCompletionDate = async (projectId: string, date: string): Promise<{ data: CompletionData }> => {
+  try {
+    const response = await BaseService.put(
+      `/work-completion/project/${projectId}/completion-date`,
+      { date }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating completion date:", error);
+    throw error;
+  }
+};
+
+export const apiUpdateHandoverDate = async (projectId: string, date: string): Promise<{ data: CompletionData }> => {
+  try {
+    const response = await BaseService.put(
+      `/work-completion/project/${projectId}/handover-date`,
+      { date }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating handover date:", error);
+    throw error;
+  }
+};
+
+export const apiUpdateAcceptanceDate = async (projectId: string, date: string): Promise<{ data: CompletionData }> => {
+  try {
+    const response = await BaseService.put(
+      `/work-completion/project/${projectId}/acceptance-date`,
+      { date }
+    );
+    return response.data;
+  } catch (error) {
+    console.error("Error updating acceptance date:", error);
+    throw error;
+  }
+};
+
+// ... (rest of the file remains the same)

@@ -1,16 +1,24 @@
-// src/views/completion/components/CompletionContent.tsx
 import { useEffect, useState } from 'react';
 import Button from '@/components/ui/Button';
 import Loading from '@/components/shared/Loading';
 import Logo from '@/components/template/Logo';
-import { HiLocationMarker, HiPhone, HiUser, HiPlus } from 'react-icons/hi';
+import { HiLocationMarker, HiUser, HiPlus, HiPencil } from 'react-icons/hi';
 import useThemeClass from '@/utils/hooks/useThemeClass';
 import { useAppSelector } from '@/store';
 import dayjs from 'dayjs';
 import { Notification, toast } from '@/components/ui';
 import ImageUploadModal from './ImageUploadModal';
-import { apiGetCompletionData, apiUploadCompletionImages, apiCreateWorkCompletion, apiDownloadCompletionCertificate } from '../../api/api';
+import { 
+  apiGetCompletionData, 
+  apiUploadCompletionImages, 
+  apiCreateWorkCompletion, 
+  apiDownloadCompletionCertificate,
+  apiUpdateCompletionDate,
+  apiUpdateHandoverDate,
+  apiUpdateAcceptanceDate
+} from '../../api/api';
 import { useNavigate, useParams } from 'react-router-dom';
+import { Input } from '@/components/ui';
 
 type CompletionData = {
   _id: string;
@@ -60,10 +68,15 @@ const CompletionContent = () => {
   const [pdfLoading, setPdfLoading] = useState(false);
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
   const [creatingCompletion, setCreatingCompletion] = useState(false);
+  const [editingCompletionDate, setEditingCompletionDate] = useState(false);
+  const [editingHandoverDate, setEditingHandoverDate] = useState(false);
+  const [editingAcceptanceDate, setEditingAcceptanceDate] = useState(false);
+  const [tempCompletionDate, setTempCompletionDate] = useState('');
+  const [tempHandoverDate, setTempHandoverDate] = useState('');
+  const [tempAcceptanceDate, setTempAcceptanceDate] = useState('');
 
-  // Get projectId from URL
-  const {projectId} = useParams()
-  const navigate=useNavigate()
+  const { projectId } = useParams();
+  const navigate = useNavigate();
 
   const fetchCompletionData = async () => {
     try {
@@ -79,15 +92,13 @@ const CompletionContent = () => {
   };
 
   useEffect(() => {
-    if (!projectId) navigate("/app/dashboard")
+    if (!projectId) navigate("/app/dashboard");
     fetchCompletionData();
   }, [projectId]);
 
   const handleUploadImages = async (files: File[], titles: string[], descriptions?: string[]) => {
     try {
       setLoading(true);
-      
-      // 1. Upload the images
       await apiUploadCompletionImages({
         projectId: projectId!,
         images: files,
@@ -95,7 +106,6 @@ const CompletionContent = () => {
         descriptions
       });
       
-      // 2. Refetch the complete data to ensure we have all populated fields
       const response = await apiGetCompletionData(projectId);
       setData(response.data);
       
@@ -138,43 +148,111 @@ const CompletionContent = () => {
     }
   };
 
-  // src/views/completion/components/CompletionContent.tsx
-const handleDownloadPdf = async () => {
-  setPdfLoading(true);
-  setError('');
-  
-  try {
-    await apiDownloadCompletionCertificate(projectId!);
+  const handleDownloadPdf = async () => {
+    setPdfLoading(true);
+    setError('');
     
-    toast.push(
-      <Notification title="Success" type="success">
-        PDF downloaded successfully
-      </Notification>
-    );
-  } catch (error) {
-    console.error('Error downloading PDF:', error);
-    setError('Failed to download PDF');
-    
-    let errorMessage = 'Failed to download PDF';
-    if (error.response) {
-      if (error.response.status === 404) {
-        errorMessage = 'Project data not found for PDF generation';
-      } else if (error.response.status === 400) {
-        errorMessage = 'Invalid project data for PDF generation';
-      } else if (error.response.data?.message) {
-        errorMessage = error.response.data.message;
+    try {
+      await apiDownloadCompletionCertificate(projectId!);
+      
+      toast.push(
+        <Notification title="Success" type="success">
+          PDF downloaded successfully
+        </Notification>
+      );
+    } catch (error) {
+      console.error('Error downloading PDF:', error);
+      setError('Failed to download PDF');
+      
+      let errorMessage = 'Failed to download PDF';
+      if (error.response) {
+        if (error.response.status === 404) {
+          errorMessage = 'Project data not found for PDF generation';
+        } else if (error.response.status === 400) {
+          errorMessage = 'Invalid project data for PDF generation';
+        } else if (error.response.data?.message) {
+          errorMessage = error.response.data.message;
+        }
       }
+      
+      toast.push(
+        <Notification title="Error" type="danger">
+          {errorMessage}
+        </Notification>
+      );
+    } finally {
+      setPdfLoading(false);
     }
-    
-    toast.push(
-      <Notification title="Error" type="danger">
-        {errorMessage}
-      </Notification>
-    );
-  } finally {
-    setPdfLoading(false);
-  }
-};
+  };
+
+  const handleUpdateCompletionDate = async () => {
+    try {
+      setLoading(true);
+      const response = await apiUpdateCompletionDate(projectId!, tempCompletionDate);
+      setData(response.data);
+      toast.push(
+        <Notification title="Success" type="success">
+          Completion date updated successfully
+        </Notification>
+      );
+      setEditingCompletionDate(false);
+    } catch (error) {
+      console.error('Error updating completion date:', error);
+      toast.push(
+        <Notification title="Error" type="danger">
+          Failed to update completion date
+        </Notification>
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateHandoverDate = async () => {
+    try {
+      setLoading(true);
+      const response = await apiUpdateHandoverDate(projectId!, tempHandoverDate);
+      setData(response.data);
+      toast.push(
+        <Notification title="Success" type="success">
+          Handover date updated successfully
+        </Notification>
+      );
+      setEditingHandoverDate(false);
+    } catch (error) {
+      console.error('Error updating handover date:', error);
+      toast.push(
+        <Notification title="Error" type="danger">
+          Failed to update handover date
+        </Notification>
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleUpdateAcceptanceDate = async () => {
+    try {
+      setLoading(true);
+      const response = await apiUpdateAcceptanceDate(projectId!, tempAcceptanceDate);
+      setData(response.data);
+      toast.push(
+        <Notification title="Success" type="success">
+          Acceptance date updated successfully
+        </Notification>
+      );
+      setEditingAcceptanceDate(false);
+    } catch (error) {
+      console.error('Error updating acceptance date:', error);
+      toast.push(
+        <Notification title="Error" type="danger">
+          Failed to update acceptance date
+        </Notification>
+      );
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (error) {
     return (
@@ -260,8 +338,44 @@ const handleDownloadPdf = async () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div>
-            <p><strong>Completion Date:</strong> {dayjs(data.completionDate).format('DD MMMM, YYYY')}</p>
+          <div className="flex items-center">
+            <p><strong>Completion Date:</strong> </p>
+            {editingCompletionDate ? (
+              <div className="flex items-center ml-2">
+                <Input
+                  type="date"
+                  value={tempCompletionDate}
+                  onChange={(e) => setTempCompletionDate(e.target.value)}
+                  className="ml-2 w-40"
+                />
+                <Button
+                  size="xs"
+                  className="ml-2"
+                  onClick={handleUpdateCompletionDate}
+                >
+                  Save
+                </Button>
+                <Button
+                  size="xs"
+                  className="ml-2"
+                  variant="plain"
+                  onClick={() => setEditingCompletionDate(false)}
+                >
+                  Cancel
+                </Button>
+              </div>
+            ) : (
+              <div className="flex items-center ml-2">
+                {dayjs(data.completionDate).format('DD MMMM, YYYY')}
+                <HiPencil
+                  className={`ml-2 cursor-pointer ${textTheme}`}
+                  onClick={() => {
+                    setTempCompletionDate(data.completionDate.split('T')[0]);
+                    setEditingCompletionDate(true);
+                  }}
+                />
+              </div>
+            )}
           </div>
           <div>
             <p><strong>LPO Number:</strong> {data.lpoNumber}</p>
@@ -285,13 +399,46 @@ const handleDownloadPdf = async () => {
                 <td className="py-2 font-semibold">Name:</td>
                 <td className="py-2">{data.handover.name}</td>
               </tr>
-              {/* <tr>
-                <td className="py-2 font-semibold">Signature:</td>
-                <td className="py-2">[Signature]</td>
-              </tr> */}
               <tr>
                 <td className="py-2 font-semibold">Date:</td>
-                <td className="py-2">{dayjs(data.handover.date).format('DD MMMM, YYYY')}</td>
+                <td className="py-2">
+                  {editingHandoverDate ? (
+                    <div className="flex items-center">
+                      <Input
+                        type="date"
+                        value={tempHandoverDate}
+                        onChange={(e) => setTempHandoverDate(e.target.value)}
+                        className="w-40"
+                      />
+                      <Button
+                        size="xs"
+                        className="ml-2"
+                        onClick={handleUpdateHandoverDate}
+                      >
+                        Save
+                      </Button>
+                      <Button
+                        size="xs"
+                        className="ml-2"
+                        variant="plain"
+                        onClick={() => setEditingHandoverDate(false)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center">
+                      {dayjs(data.handover.date).format('DD MMMM, YYYY')}
+                      <HiPencil
+                        className={`ml-2 cursor-pointer ${textTheme}`}
+                        onClick={() => {
+                          setTempHandoverDate(data.handover.date.split('T')[0]);
+                          setEditingHandoverDate(true);
+                        }}
+                      />
+                    </div>
+                  )}
+                </td>
               </tr>
             </tbody>
           </table>
@@ -309,13 +456,46 @@ const handleDownloadPdf = async () => {
                 <td className="py-2 font-semibold">Name:</td>
                 <td className="py-2">{data.acceptance.name}</td>
               </tr>
-              {/* <tr>
-                <td className="py-2 font-semibold">Signature:</td>
-                <td className="py-2">[Signature]</td>
-              </tr> */}
               <tr>
                 <td className="py-2 font-semibold">Date:</td>
-                <td className="py-2">{dayjs(data.acceptance.date).format('DD MMMM, YYYY')}</td>
+                <td className="py-2">
+                  {editingAcceptanceDate ? (
+                    <div className="flex items-center">
+                      <Input
+                        type="date"
+                        value={tempAcceptanceDate}
+                        onChange={(e) => setTempAcceptanceDate(e.target.value)}
+                        className="w-40"
+                      />
+                      <Button
+                        size="xs"
+                        className="ml-2"
+                        onClick={handleUpdateAcceptanceDate}
+                      >
+                        Save
+                      </Button>
+                      <Button
+                        size="xs"
+                        className="ml-2"
+                        variant="plain"
+                        onClick={() => setEditingAcceptanceDate(false)}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="flex items-center">
+                      {dayjs(data.acceptance.date).format('DD MMMM, YYYY')}
+                      <HiPencil
+                        className={`ml-2 cursor-pointer ${textTheme}`}
+                        onClick={() => {
+                          setTempAcceptanceDate(data.acceptance.date.split('T')[0]);
+                          setEditingAcceptanceDate(true);
+                        }}
+                      />
+                    </div>
+                  )}
+                </td>
               </tr>
             </tbody>
           </table>
