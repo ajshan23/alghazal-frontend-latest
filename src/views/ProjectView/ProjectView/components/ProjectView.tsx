@@ -565,7 +565,7 @@ const ProjectView = () => {
             route: `/app/quotation-new/${id}`,
             viewRoute: hasQuotation ? `/app/quotation-view/${id}` : undefined,
             exists: hasQuotation,
-            icon: '/img/document-icons/quotation.png',
+            icon: s
             roles: ['finance', 'super_admin', 'admin'],
           });
         }

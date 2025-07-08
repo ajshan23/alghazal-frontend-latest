@@ -5,7 +5,7 @@ import DataTable from '@/components/shared/DataTable'
 import { HiOutlineEye, HiOutlinePencil, HiOutlineTrash } from 'react-icons/hi'
 import { FiUser } from 'react-icons/fi'
 import useThemeClass from '@/utils/hooks/useThemeClass'
-import UserDeleteConfirmation from './UserDeleteConfirmation'
+// import UserDeleteConfirmation from './UserDeleteConfirmation'
 import { useNavigate } from 'react-router-dom'
 import type {
     DataTableResetHandle,
@@ -264,7 +264,7 @@ const UserTable = () => {
                 onPaginationChange={onPaginationChange}
                 onSelectChange={onSelectChange}
             />
-            <UserDeleteConfirmation />
+            {/* <UserDeleteConfirmation /> */}
         </>
     )
 }
