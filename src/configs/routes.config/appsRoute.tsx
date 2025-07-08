@@ -224,6 +224,93 @@ const appsRoute: Routes = [
         component: lazy(() => import('@/views/expense-tracker/expense-form/EspenseView')),
         authority: [ADMIN, USER,SUPERADMIN],
     },
+     {
+        key: 'apps.shopView',
+        path: `${APP_PREFIX_PATH}/shop-view`,
+        component: lazy(() => import('@/views/all-bills/shops/shopList')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+     {
+        key: 'apps.shopView',
+        path: `${APP_PREFIX_PATH}/new-shop`,
+        component: lazy(() => import('@/views/all-bills/shops/newShops/NewShopDetails')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+    {
+    key: 'apps.editShop',
+    path: `${APP_PREFIX_PATH}/new-shop/:id`,
+    component: lazy(() => import('@/views/all-bills/shops/newShops/NewShopDetails')),
+    authority: [ADMIN, USER, SUPERADMIN],
+},
+   {
+    key: 'apps.shopDetails',
+    path: `${APP_PREFIX_PATH}/shop-details/:id`,
+    component: lazy(() => import('@/views/all-bills/shops/ShopDetails')),
+    authority: [ADMIN, USER, SUPERADMIN],
+},
+//Categories
+ {
+        key: 'apps.cateView',
+        path: `${APP_PREFIX_PATH}/cat-view`,
+        component: lazy(() => import('@/views/all-bills/category/CategoryList')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+     {
+        key: 'apps.cateView',
+        path: `${APP_PREFIX_PATH}/new-cat`,
+        component: lazy(() => import('@/views/all-bills/category/NewCategoryDetails')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+    {
+    key: 'apps.editCate',
+    path: `${APP_PREFIX_PATH}/new-cat/:id`,
+    component: lazy(() => import('@/views/all-bills/category/NewCategoryDetails')),
+    authority: [ADMIN, USER, SUPERADMIN],
+},
+//Bills
+    {
+        key: 'apps.billView',
+        path: `${APP_PREFIX_PATH}/bill-view`,
+        component: lazy(() => import('@/views/all-bills/bills/BillList')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+     {
+        key: 'apps.billView',
+        path: `${APP_PREFIX_PATH}/new-gen-bill`,
+        component: lazy(() => import('@/views/all-bills/newBills/NewGeneralBill')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+        {
+    key: 'apps.billView',
+    path: `${APP_PREFIX_PATH}/new-gen-bill/:id`,
+    component: lazy(() => import('@/views/all-bills/newBills/NewGeneralBill')),
+    authority: [ADMIN, USER, SUPERADMIN],
+},
+       {
+        key: 'apps.messBillView',
+        path: `${APP_PREFIX_PATH}/mess-bill-view`,
+        component: lazy(() => import('@/views/all-bills/bills/MessBillList')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+     {
+        key: 'apps.messBillView',
+        path: `${APP_PREFIX_PATH}/new-mess-bill`,
+        component: lazy(() => import('@/views/all-bills/newBills/NewMessBill')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+      {
+        key: 'apps.fuelBillView',
+        path: `${APP_PREFIX_PATH}/fuel-bill-view`,
+        component: lazy(() => import('@/views/all-bills/bills/FuelBillList')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+     {
+        key: 'apps.fuelBillView',
+        path: `${APP_PREFIX_PATH}/new-fuel-bill`,
+        component: lazy(() => import('@/views/all-bills/newBills/NewMessBill')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+    
     
     
 ]

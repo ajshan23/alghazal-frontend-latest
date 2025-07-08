@@ -1,0 +1,96 @@
+import { APP_PREFIX_PATH } from '@/constants/route.constant'
+import {
+    NAV_ITEM_TYPE_TITLE,
+    NAV_ITEM_TYPE_COLLAPSE,
+    NAV_ITEM_TYPE_ITEM,
+} from '@/constants/navigation.constant'
+import { ADMIN, USER, SUPERADMIN } from '@/constants/roles.constant'
+import type { NavigationTree } from '@/@types/navigation'
+
+const billsNavigationConfig: NavigationTree[] = [
+    {
+        key: 'bills',
+        path: '',
+        title: 'Bills',
+        translateKey: 'bills',
+        icon: 'bills',
+        type: NAV_ITEM_TYPE_TITLE,
+        authority: [ADMIN, USER, SUPERADMIN],
+        subMenu: [
+            {
+                key: 'bills.dashboard',
+                path: `${APP_PREFIX_PATH}/shop-view`,
+                title: 'Shops Details',
+                translateKey: 'Dashboard',
+                icon: 'crm',
+                type: NAV_ITEM_TYPE_ITEM,
+                authority: [ADMIN, USER, SUPERADMIN],
+                subMenu: [],
+            },
+             {
+                key: 'cate.dashboard',
+                path: `${APP_PREFIX_PATH}/cat-view`,
+                title: 'Categories',
+                translateKey: 'Dashboard',
+                icon: 'crm',
+                type: NAV_ITEM_TYPE_ITEM,
+                authority: [ADMIN, USER, SUPERADMIN],
+                subMenu: [],
+            },
+            {
+                key: 'bills.clients',
+                path: '',
+                title: 'Bills',
+                translateKey: 'nav.billsClients.clients',
+                icon: 'project',
+                type: NAV_ITEM_TYPE_COLLAPSE,
+                authority: [ADMIN, USER, SUPERADMIN],
+                subMenu: [
+               
+                    {
+                        key: 'bills.clients.general',
+                        path: `${APP_PREFIX_PATH}/bill-view`,
+                        title: 'General Bills',
+                        translateKey: 'nav.billsClients.general',
+                        icon: '',
+                        type: NAV_ITEM_TYPE_ITEM,
+                        authority: [ADMIN, SUPERADMIN],
+                        subMenu: [],
+                    },
+                       {
+                        key: 'bills.clients.mess',
+                        path: `${APP_PREFIX_PATH}/mess-bill-view`,
+                        title: 'Mess Bills',
+                        translateKey: 'nav.billsClients.mess',
+                        icon: '',
+                        type: NAV_ITEM_TYPE_ITEM,
+                        authority: [ADMIN, SUPERADMIN],
+                        subMenu: [],
+                    },
+                    {
+                        key: 'bills.clients.fuel',
+                        path: `${APP_PREFIX_PATH}/fuel-bill-view`,
+                        title: 'Fuel Bills',
+                        translateKey: 'nav.billsClients.fuel',
+                        icon: '',
+                        type: NAV_ITEM_TYPE_ITEM,
+                        authority: [ADMIN, SUPERADMIN],
+                        subMenu: [],
+                    },
+                    {
+                        key: 'bills.clients.vehicles',
+                        path: `${APP_PREFIX_PATH}/client-list/vehicles`,
+                        title: 'Vehicles',
+                        translateKey: 'nav.billsClients.vehicles',
+                        icon: '',
+                        type: NAV_ITEM_TYPE_ITEM,
+                        authority: [ADMIN, SUPERADMIN],
+                        subMenu: [],
+                    },
+                ],
+            },
+        ],
+    },
+]
+
+export default billsNavigationConfig

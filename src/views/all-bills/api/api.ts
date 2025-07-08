@@ -1,0 +1,107 @@
+import BaseService from "@/services/BaseService"
+
+export const fetchUser = async () => {
+    try {
+        const response = await BaseService.get(`/user`)
+        return response.data
+    } catch (error) {
+        console.error('Error fetching user:', error)
+        throw error
+    }
+}
+
+export const fetchShops = async () => {
+    try {
+        const response = await BaseService.get(`/shops`);
+        return response.data;
+    } catch (error) {
+        console.error('Error fetching shops:', error);
+        throw error;
+    }
+};
+
+export const fetchCategories = async () => {
+    try {
+        const response = await BaseService.get(`/categories`)
+        return response.data
+    } catch (error) {
+        console.error('Error fetching categories:', error)
+        throw error
+    }
+}
+
+
+
+export const getBills = async ({ page, limit, search ,billType}) => {
+    try {
+        const response = await BaseService.get(`/bills`, {
+            params: {
+                page,
+                limit,
+                search,
+                billType
+            },
+        })
+        return response.data
+    } catch (error) {
+        console.error('Error fetching bills:', error)
+        throw error
+    }
+}
+
+export const addBill = async (formData: FormData) => {
+    try {
+        const response = await BaseService.post("/bills/", formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        })
+        return response
+    } catch (error) {
+        console.error('Error adding user:', error)
+        throw error
+    }
+}
+
+export const editBill = async (id: string, formData: FormData) => {
+    try {
+        const response = await BaseService.put(`/bills/${id}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        })
+        return response
+    } catch (error) {
+        console.error('Error editing user:', error)
+        throw error
+    }
+}
+
+export const fetchBillById = async (id: string) => {
+    try {
+        const response = await BaseService.get(`/bills/${id}`)
+        
+        console.log(response, "from single bill")
+        return {
+            ...response.data,
+            // Ensure attachments is always an array
+            attachments: Array.isArray(response.data.attachments) 
+                ? response.data.attachments 
+                : response.data.attachments ? [response.data.attachments] : [],
+            // Format nested objects if needed
+            category: response.data.category || { _id: '', name: '' },
+            shop: response.data.shop || { _id: '', shopName: '' },
+            // Format date if needed
+            billDate: response.data.billDate || new Date().toISOString().split('T')[0],
+            // Ensure numeric fields
+            amount: Number(response.data.amount) || 0,
+            // Default empty strings for optional fields
+            invoiceNo: response.data.invoiceNo || '',
+            remarks: response.data.remarks || '',
+            paymentMethod: response.data.paymentMethod || ''
+        }
+    } catch (error) {
+        console.error('Error fetching bill:', error)
+        throw error
+    }
+}
