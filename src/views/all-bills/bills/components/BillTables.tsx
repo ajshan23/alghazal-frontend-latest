@@ -5,7 +5,6 @@ import useThemeClass from '@/utils/hooks/useThemeClass'
 import { useNavigate } from 'react-router-dom'
 import type {
     DataTableResetHandle,
-    OnSortParam,
     ColumnDef,
 } from '@/components/shared/DataTable'
 import { useQuery } from '@tanstack/react-query'
@@ -14,10 +13,11 @@ import Input from '@/components/ui/Input'
 import Badge from '@/components/ui/Badge'
 import { getBills } from '../../api/api'
 import moment from 'moment'
+import BillDeleteConfirmation from './BillDeleteConfirmation'
 
 type Bill = {
     _id: string
-    billType: string
+    billType: 'general' | 'fuel' | 'mess' | 'vehicle' | 'accommodation'
     billDate: string
     paymentMethod: string
     amount: number
@@ -25,11 +25,18 @@ type Bill = {
         _id: string
         name: string
     }
-    shop: {
+    shop?: {
         _id: string
         shopName: string
+        shopNo:String
     }
-    invoiceNo: string
+    vehicle?: {
+        vehicleNumber: string
+    }
+    accommodation?: {
+        location: string
+    }
+    invoiceNo?: string
     remarks: string
     attachments: string[]
     createdAt: string
@@ -68,34 +75,9 @@ const paymentMethodColor = {
     },
 }
 
-const ActionColumn = ({ row }: { row: Bill }) => {
-    const { textTheme } = useThemeClass()
-    const navigate = useNavigate()
-
-    const onEdit = () => {
-        navigate(`/app/new-gen-bill/${row._id}`)
-    }
-
-    const onView = () => {
-        navigate(`/app/bill-view/${row._id}`)
-    }
-
-    return (
-        <div className="flex text-lg">
-            <span
-                className={`cursor-pointer p-2 hover:${textTheme}`}
-                onClick={() => navigate(`/app/new-gen-bill/${row._id}`)}
-            >
-                <HiOutlinePencil />
-            </span>
-            <span
-                className={`cursor-pointer p-2 hover:${textTheme}`}
-                onClick={onEdit}
-            >
-                <HiOutlinePencil />
-            </span>
-        </div>
-    )
+type ActionColumnProps = {
+    row: Bill
+    onDeleteClick: (bill: Bill) => void
 }
 
 const BillTable = () => {
@@ -109,6 +91,8 @@ const BillTable = () => {
         startDate: '',
         endDate: '',
     })
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+    const [selectedBill, setSelectedBill] = useState<Bill | null>(null)
 
     const {
         data: response,
@@ -167,6 +151,36 @@ const BillTable = () => {
         }))
     }
 
+    const ActionColumn = ({ row, onDeleteClick }: ActionColumnProps) => {
+        const { textTheme } = useThemeClass()
+        const navigate = useNavigate()
+console.log(row,"123")
+        return (
+            <div className="flex text-lg">
+                <span
+                className={`cursor-pointer p-2 hover:${textTheme}`}
+                onClick={() => navigate(`/app/bill-attachments`, { 
+                    state: { data: row?.attachments } 
+                })}
+            >
+                <HiOutlineEye/>
+            </span>
+                <span
+                    className={`cursor-pointer p-2 hover:${textTheme}`}
+                    onClick={() => navigate(`/app/new-gen-bill/${row._id}`)}
+                >
+                    <HiOutlinePencil />
+                </span>
+                <span
+                    className="cursor-pointer p-2 hover:text-red-500"
+                    onClick={() => onDeleteClick(row)}
+                >
+                    <HiOutlineTrash />
+                </span>
+            </div>
+        )
+    }
+
     const columns: ColumnDef<Bill>[] = useMemo(
         () => [
             {
@@ -176,7 +190,7 @@ const BillTable = () => {
                     <span>
                         {moment(props.row.original.billDate).format(
                             'DD MMM YYYY',
-                        )}{' '}
+                        )}
                     </span>
                 ),
             },
@@ -185,6 +199,13 @@ const BillTable = () => {
                 accessorKey: 'shop',
                 cell: (props) => (
                     <span>{props.row.original.shop?.shopName || 'N/A'}</span>
+                ),
+            },
+               {
+                header: 'Shop Number',
+                accessorKey: 'shop Number',
+                cell: (props) => (
+                    <span>{props.row.original.shop?.shopNo || 'N/A'}</span>
                 ),
             },
             {
@@ -242,7 +263,15 @@ const BillTable = () => {
             {
                 header: 'Action',
                 id: 'action',
-                cell: (props) => <ActionColumn row={props.row.original} />,
+                cell: (props) => (
+                    <ActionColumn 
+                        row={props.row.original} 
+                        onDeleteClick={(bill) => {
+                            setSelectedBill(bill)
+                            setIsDeleteOpen(true)
+                        }} 
+                    />
+                ),
             },
         ],
         [],
@@ -268,18 +297,6 @@ const BillTable = () => {
                     onChange={handleSearchChange}
                     className="max-w-md"
                 />
-                {/* <div className="flex gap-2">
-                    <Input
-                        type="date"
-                        placeholder="Start Date"
-                        onChange={(e) => handleDateRangeChange(e, 'startDate')}
-                    />
-                    <Input
-                        type="date"
-                        placeholder="End Date"
-                        onChange={(e) => handleDateRangeChange(e, 'endDate')}
-                    />
-                </div> */}
             </div>
 
             <DataTable
@@ -294,6 +311,13 @@ const BillTable = () => {
                 }}
                 onPaginationChange={onPaginationChange}
                 onSelectChange={onSelectChange}
+            />
+            
+            <BillDeleteConfirmation
+                isOpen={isDeleteOpen}
+                onClose={() => setIsDeleteOpen(false)}
+                bill={selectedBill}
+                refetch={refetch}
             />
         </>
     )

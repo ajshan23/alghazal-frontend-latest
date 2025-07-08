@@ -79,29 +79,31 @@ export const editBill = async (id: string, formData: FormData) => {
 
 export const fetchBillById = async (id: string) => {
     try {
-        const response = await BaseService.get(`/bills/${id}`)
-        
-        console.log(response, "from single bill")
+        const response = await BaseService.get(`/bills/${id}`)      
         return {
             ...response.data,
-            // Ensure attachments is always an array
             attachments: Array.isArray(response.data.attachments) 
                 ? response.data.attachments 
                 : response.data.attachments ? [response.data.attachments] : [],
-            // Format nested objects if needed
             category: response.data.category || { _id: '', name: '' },
             shop: response.data.shop || { _id: '', shopName: '' },
-            // Format date if needed
             billDate: response.data.billDate || new Date().toISOString().split('T')[0],
-            // Ensure numeric fields
             amount: Number(response.data.amount) || 0,
-            // Default empty strings for optional fields
             invoiceNo: response.data.invoiceNo || '',
             remarks: response.data.remarks || '',
             paymentMethod: response.data.paymentMethod || ''
         }
     } catch (error) {
         console.error('Error fetching bill:', error)
+        throw error
+    }
+}
+export const deleteBill = async (id: string) => {
+    try {
+        const response = await BaseService.delete(`/bills/${id}`)
+        return response
+    } catch (error) {
+        console.error('Error deleting bill:', error)
         throw error
     }
 }

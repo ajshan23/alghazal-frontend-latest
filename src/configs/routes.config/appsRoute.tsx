@@ -310,6 +310,12 @@ const appsRoute: Routes = [
         component: lazy(() => import('@/views/all-bills/newBills/NewMessBill')),
         authority: [ADMIN, USER,SUPERADMIN],
     },
+    {
+        key: 'apps.BillViewAttachments',
+        path: `${APP_PREFIX_PATH}/bill-attachments`,
+        component: lazy(() => import('@/views/all-bills/bills/components/BillAttachments')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
     
     
     
