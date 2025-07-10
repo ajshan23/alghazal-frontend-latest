@@ -4,6 +4,7 @@ import CloseButton from '../CloseButton'
 import { motion } from 'framer-motion'
 import type ReactModal from 'react-modal'
 import type { MouseEvent, ReactNode } from 'react'
+import Input from '../Input' // Import your Input component
 
 export interface DrawerProps extends ReactModal.Props {
     bodyClass?: string
@@ -18,6 +19,12 @@ export interface DrawerProps extends ReactModal.Props {
     showBackdrop?: boolean
     title?: string | ReactNode
     width?: string | number
+    // Single date selector props
+    showDateSelector?: boolean
+    selectedDate?: string
+    onDateChange?: (date: string) => void
+    dateSelectorLabel?: string
+    dateSelectorClassName?: string
 }
 
 const Drawer = (props: DrawerProps) => {
@@ -41,6 +48,12 @@ const Drawer = (props: DrawerProps) => {
         showBackdrop = true,
         title,
         width = 400,
+        // Date selector props
+        showDateSelector = false,
+        selectedDate = '',
+        onDateChange,
+        dateSelectorLabel = 'Select Date',
+        dateSelectorClassName,
         ...rest
     } = props
 
@@ -139,6 +152,21 @@ const Drawer = (props: DrawerProps) => {
                     </div>
                 ) : null}
                 <div className={classNames('drawer-body', bodyClass)}>
+                    {showDateSelector && (
+                        <div className={classNames('mb-4', dateSelectorClassName)}>
+                            {dateSelectorLabel && (
+                                <label className="block text-sm font-medium mb-1">
+                                    {dateSelectorLabel}
+                                </label>
+                            )}
+                            <Input
+                                type="date"
+                                value={selectedDate}
+                                onChange={(e) => onDateChange?.(e.target.value)}
+                                className="w-full"
+                            />
+                        </div>
+                    )}
                     {children}
                 </div>
                 {footer && (

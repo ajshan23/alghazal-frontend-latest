@@ -1,11 +1,15 @@
 import { useState, useMemo, useRef } from 'react'
 import DataTable from '@/components/shared/DataTable'
-import { HiOutlineEye, HiOutlinePencil, HiOutlineTrash } from 'react-icons/hi'
+import {
+    HiOutlineEye,
+    HiOutlinePencil,
+    HiOutlineRefresh,
+    HiOutlineTrash,
+} from 'react-icons/hi'
 import useThemeClass from '@/utils/hooks/useThemeClass'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import type {
     DataTableResetHandle,
-    OnSortParam,
     ColumnDef,
 } from '@/components/shared/DataTable'
 import { useQuery } from '@tanstack/react-query'
@@ -14,22 +18,35 @@ import Input from '@/components/ui/Input'
 import Badge from '@/components/ui/Badge'
 import { getBills } from '../../api/api'
 import moment from 'moment'
+import BillDeleteConfirmation from './BillDeleteConfirmation'
+import { FiFilter } from 'react-icons/fi'
+import BillFilterDrawer from './BillFilterDrawer'
+import dayjs from 'dayjs'
 
 type Bill = {
     _id: string
-    billType: string
+    billType: 'general' | 'fuel' | 'mess' | 'vehicle' | 'accommodation'
     billDate: string
     paymentMethod: string
     amount: number
+    kilometer?: number
+    liter?: number
     category: {
         _id: string
         name: string
     }
-    shop: {
+    shop?: {
         _id: string
         shopName: string
+        shopNo: string
     }
-    invoiceNo: string
+    vehicle?: {
+        vehicleNumber: string
+    }
+    accommodation?: {
+        location: string
+    }
+    invoiceNo?: string
     remarks: string
     attachments: string[]
     createdAt: string
@@ -68,35 +85,30 @@ const paymentMethodColor = {
     },
 }
 
-const ActionColumn = ({ row }: { row: Bill }) => {
-    const { textTheme } = useThemeClass()
-    const navigate = useNavigate()
-
-    const onEdit = () => {
-        navigate(`/app/new-gen-bill/${row._id}`)
-    }
-
-    const onView = () => {
-        navigate(`/app/bill-view/${row._id}`)
-    }
-
-    return (
-        <div className="flex text-lg">
-            <span
-                className={`cursor-pointer p-2 hover:${textTheme}`}
-                onClick={() => navigate(`/app/new-gen-bill/${row._id}`)}
-            >
-                <HiOutlinePencil />
-            </span>
-            <span
-                className={`cursor-pointer p-2 hover:${textTheme}`}
-                onClick={onEdit}
-            >
-                <HiOutlinePencil />
-            </span>
-        </div>
-    )
+type ActionColumnProps = {
+    row: Bill
+    onDeleteClick: (bill: Bill) => void
 }
+
+const months = [
+    { value: 1, label: 'January' },
+    { value: 2, label: 'February' },
+    { value: 3, label: 'March' },
+    { value: 4, label: 'April' },
+    { value: 5, label: 'May' },
+    { value: 6, label: 'June' },
+    { value: 7, label: 'July' },
+    { value: 8, label: 'August' },
+    { value: 9, label: 'September' },
+    { value: 10, label: 'October' },
+    { value: 11, label: 'November' },
+    { value: 12, label: 'December' },
+]
+
+const years = Array.from({ length: 10 }, (_, i) => ({
+    value: dayjs().year() - 5 + i,
+    label: (dayjs().year() - 5 + i).toString(),
+}))
 
 const BillTable = () => {
     const tableRef = useRef<DataTableResetHandle>(null)
@@ -105,10 +117,38 @@ const BillTable = () => {
         page: 1,
         limit: 10,
     })
-    const [dateRange, setDateRange] = useState({
+    const [filters, setFilters] = useState({
         startDate: '',
         endDate: '',
+        category: '',
+        shop: '',
+        vehicleNo: '',
+        paymentMethod: '',
     })
+
+
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+    const [selectedBill, setSelectedBill] = useState<Bill | null>(null)
+    const [isOpen, setIsOpen] = useState(false)
+    const [month, setMonth] = useState(new Date().getMonth() + 1)
+    const [year, setYear] = useState(new Date().getFullYear())
+
+    const location = useLocation()
+    const pathname = location.pathname
+
+    const getBillTypeFromRoute = () => {
+        if (pathname.includes('/fuel-bill-view')) return 'fuel'
+        if (pathname.includes('/mess-bill-view')) return 'mess'
+        if (pathname.includes('/vehicle-bill-view')) return 'vehicle'
+        if (pathname.includes('/acc-bill-view')) return 'accommodation'
+        return 'general'
+    }
+
+    const billType = getBillTypeFromRoute()
+
+    const handleApplyFilters = (data) => {
+        setFilters(data)
+    }
 
     const {
         data: response,
@@ -121,16 +161,25 @@ const BillTable = () => {
             pagination.page,
             pagination.limit,
             searchTerm,
-            dateRange,
+            filters,
+            billType,
+            month,
+            year,
         ],
         queryFn: () =>
             getBills({
                 page: pagination.page,
                 limit: pagination.limit,
+                billType: billType,
                 search: searchTerm,
-                startDate: dateRange.startDate,
-                endDate: dateRange.endDate,
-                billType: 'general',
+                month,
+                year,
+                startDate: filters.startDate,
+                endDate: filters.endDate,
+                category: filters.category,
+                shop: filters.shop,
+                vehicle: filters.vehicle,
+                paymentMethod: filters.paymentMethod,
             }),
     })
 
@@ -157,48 +206,59 @@ const BillTable = () => {
         debouncedSearch(e.target.value)
     }
 
-    const handleDateRangeChange = (
-        e: React.ChangeEvent<HTMLInputElement>,
-        type: 'startDate' | 'endDate',
-    ) => {
-        setDateRange((prev) => ({
-            ...prev,
-            [type]: e.target.value,
-        }))
+    const ActionColumn = ({ row, onDeleteClick }: ActionColumnProps) => {
+        const { textTheme } = useThemeClass()
+        const navigate = useNavigate()
+
+        const editPaths = {
+            general: '/app/new-gen-bill',
+            mess: '/app/new-mess-bill',
+            fuel: '/app/new-fuel-bill',
+            vehicle: '/app/new-vehicle-bill',
+            accommodation: '/app/new-acc-bill',
+        }
+
+        return (
+            <div className="flex text-lg">
+                <span
+                    className={`cursor-pointer p-2 hover:${textTheme}`}
+                    onClick={() =>
+                        navigate(`/app/bill-attachments`, {
+                            state: { data: row?.attachments },
+                        })
+                    }
+                >
+                    <HiOutlineEye />
+                </span>
+                <span
+                    className={`cursor-pointer p-2 hover:${textTheme}`}
+                    onClick={() =>
+                        navigate(`${editPaths[billType]}/${row._id}`)
+                    }
+                >
+                    <HiOutlinePencil />
+                </span>
+                <span
+                    className="cursor-pointer p-2 hover:text-red-500"
+                    onClick={() => onDeleteClick(row)}
+                >
+                    <HiOutlineTrash />
+                </span>
+            </div>
+        )
     }
 
-    const columns: ColumnDef<Bill>[] = useMemo(
-        () => [
+    const getColumns = (): ColumnDef<Bill>[] => {
+        const commonColumns = [
             {
-                header: 'Bill Date',
+                header: 'DATE',
                 accessorKey: 'billDate',
                 cell: (props) => (
                     <span>
                         {moment(props.row.original.billDate).format(
                             'DD MMM YYYY',
-                        )}{' '}
+                        )}
                     </span>
-                ),
-            },
-            {
-                header: 'Shop',
-                accessorKey: 'shop',
-                cell: (props) => (
-                    <span>{props.row.original.shop?.shopName || 'N/A'}</span>
-                ),
-            },
-            {
-                header: 'Category',
-                accessorKey: 'category',
-                cell: (props) => (
-                    <span>{props.row.original.category?.name || 'N/A'}</span>
-                ),
-            },
-            {
-                header: 'Amount',
-                accessorKey: 'amount',
-                cell: (props) => (
-                    <span> {props.row.original.amount.toFixed(2)}</span>
                 ),
             },
             {
@@ -226,27 +286,290 @@ const BillTable = () => {
                 },
             },
             {
-                header: 'Invoice No',
-                accessorKey: 'invoiceNo',
+                header: 'Amount',
+                accessorKey: 'amount',
                 cell: (props) => (
-                    <span>{props.row.original.invoiceNo || 'N/A'}</span>
-                ),
-            },
-            {
-                header: 'Remarks',
-                accessorKey: 'remarks',
-                cell: (props) => (
-                    <span>{props.row.original.remarks || 'N/A'}</span>
+                    <span> {props.row.original.amount.toFixed(2)}</span>
                 ),
             },
             {
                 header: 'Action',
                 id: 'action',
-                cell: (props) => <ActionColumn row={props.row.original} />,
+                cell: (props) => (
+                    <ActionColumn
+                        row={props.row.original}
+                        onDeleteClick={(bill) => {
+                            setSelectedBill(bill)
+                            setIsDeleteOpen(true)
+                        }}
+                    />
+                ),
             },
-        ],
-        [],
-    )
+        ]
+
+        if (billType === 'mess') {
+            return [
+                commonColumns[0], // DATE
+                {
+                    header: 'Shop Name',
+                    accessorKey: 'shop',
+                    cell: (props) => (
+                        <span>
+                            {props.row.original.shop?.shopName || 'N/A'}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Shop Number',
+                    accessorKey: 'shopNo',
+                    cell: (props) => (
+                        <span>{props.row.original.shop?.shopNo || 'N/A'}</span>
+                    ),
+                },
+                {
+                    header: 'Invoice No',
+                    accessorKey: 'invoiceNo',
+                    cell: (props) => (
+                        <span>{props.row.original.invoiceNo || 'N/A'}</span>
+                    ),
+                },
+                commonColumns[1], // Payment Method
+                commonColumns[2], // Amount
+                commonColumns[3], // Action
+            ]
+        }
+
+        if (billType === 'general') {
+            return [
+                commonColumns[0], // DATE
+                {
+                    header: 'Category',
+                    accessorKey: 'category',
+                    cell: (props) => (
+                        <span>
+                            {props.row.original.category?.name || 'N/A'}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Shop Name',
+                    accessorKey: 'shop',
+                    cell: (props) => (
+                        <span>
+                            {props.row.original.shop?.shopName || 'N/A'}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Shop Number',
+                    accessorKey: 'shopNo',
+                    cell: (props) => (
+                        <span>{props.row.original.shop?.shopNo || 'N/A'}</span>
+                    ),
+                },
+                {
+                    header: 'Invoice No',
+                    accessorKey: 'invoiceNo',
+                    cell: (props) => (
+                        <span>{props.row.original.invoiceNo || 'N/A'}</span>
+                    ),
+                },
+                commonColumns[1], // Payment Method
+                commonColumns[2], // Amount
+                {
+                    header: 'REMARK',
+                    accessorKey: 'remarks',
+                    cell: (props) => (
+                        <span>{props.row.original.remarks || 'N/A'}</span>
+                    ),
+                },
+                commonColumns[3], // Action
+            ]
+        }
+
+        if (billType === 'fuel') {
+            return [
+                commonColumns[0], // DATE
+                {
+                    header: 'Description',
+                    accessorKey: 'remarks',
+                    cell: (props) => (
+                        <span>{props.row.original.remarks || 'N/A'}</span>
+                    ),
+                },
+                {
+                    header: 'Vehicle No',
+                    accessorKey: 'vehicle',
+                    cell: (props) => (
+                        <span>
+                            {props.row.original.vehicle?.vehicleNumber || 'N/A'}
+                        </span>
+                    ),
+                },
+                commonColumns[1], // Payment Method
+                commonColumns[2], // Amount
+                {
+                    header: 'Kilometer',
+                    accessorKey: 'kilometer',
+                    cell: (props) => (
+                        <span>
+                            {props.row.original.kilometer?.toFixed(2) || 'N/A'}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Liter',
+                    accessorKey: 'liter',
+                    cell: (props) => (
+                        <span>
+                            {props.row.original.liter?.toFixed(2) || 'N/A'}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Remarks',
+                    accessorKey: 'remarks',
+                    cell: (props) => (
+                        <span>{props.row.original.remarks || 'N/A'}</span>
+                    ),
+                },
+                commonColumns[3], // Action
+            ]
+        }
+
+        if (billType === 'vehicle') {
+            return [
+                commonColumns[0], // DATE
+                {
+                    header: 'Purpose Of Use',
+                    accessorKey: 'remarks',
+                    cell: (props) => (
+                        <span>{props.row.original.remarks || 'N/A'}</span>
+                    ),
+                },
+                {
+                    header: 'Vehicle No',
+                    accessorKey: 'vehicle',
+                    cell: (props) => {
+                        const vehicle = props.row.original.vehicles
+                        if (Array.isArray(vehicle)) {
+                            return (
+                                <span>
+                                    {vehicle
+                                        .map((v) => v.vehicleNumber)
+                                        .join(', ') || 'N/A'}
+                                </span>
+                            )
+                        } else if (vehicle) {
+                            return <span>{vehicle.vehicleNumber || 'N/A'}</span>
+                        }
+                        return <span>N/A</span>
+                    },
+                },
+                {
+                    header: 'Invoice No',
+                    accessorKey: 'invoiceNo',
+                    cell: (props) => (
+                        <span>{props.row.original.invoiceNo || 'N/A'}</span>
+                    ),
+                },
+                commonColumns[1], // Payment Method
+                commonColumns[2], // Amount
+                {
+                    header: 'Shop Name',
+                    accessorKey: 'shop',
+                    cell: (props) => (
+                        <span>
+                            {props.row.original.shop?.shopName || 'N/A'}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Remarks',
+                    accessorKey: 'remarks',
+                    cell: (props) => (
+                        <span>{props.row.original.remarks || 'N/A'}</span>
+                    ),
+                },
+                commonColumns[3], // Action
+            ]
+        }
+
+        if (billType === 'accommodation') {
+            return [
+                {
+                    header: 'S.NO',
+                    accessorKey: '_id',
+                    cell: (props) => <span>{props.row.index + 1}</span>,
+                },
+                commonColumns[0], // DATE
+                {
+                    header: 'Company Name',
+                    accessorKey: 'shop',
+                    cell: (props) => (
+                        <span>
+                            {props.row.original.shop?.shopName || 'N/A'}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Room No',
+                    accessorKey: 'accommodation',
+                    cell: (props) => (
+                        <span>{props.row.original?.roomNo || 'N/A'}</span>
+                    ),
+                },
+                {
+                    header: 'Invoice No',
+                    accessorKey: 'invoiceNo',
+                    cell: (props) => (
+                        <span>{props.row.original.invoiceNo || 'N/A'}</span>
+                    ),
+                },
+                {
+                    header: 'Payment Mode',
+                    accessorKey: 'paymentMethod',
+                    cell: (props) => {
+                        const method = props.row.original.paymentMethod
+                        const payment = paymentMethodColor[
+                            method as keyof typeof paymentMethodColor
+                        ] || {
+                            label: method,
+                            dotClass: 'bg-gray-500',
+                            textClass: 'text-gray-500',
+                        }
+                        return (
+                            <span
+                                className={`capitalize font-semibold ${payment.textClass}`}
+                            >
+                                {payment.label}
+                            </span>
+                        )
+                    },
+                },
+                commonColumns[2], // Amount
+                {
+                    header: 'Note',
+                    accessorKey: 'remarks',
+                    cell: (props) => (
+                        <span>{props.row.original.remarks || 'N/A'}</span>
+                    ),
+                },
+                {
+                    header: 'Remarks',
+                    accessorKey: 'remarks',
+                    cell: (props) => (
+                        <span>{props.row.original.remarks || 'N/A'}</span>
+                    ),
+                },
+                commonColumns[3], // Action
+            ]
+        }
+
+        return commonColumns
+    }
+
+    const columns = useMemo(() => getColumns(), [billType])
 
     const onPaginationChange = (page: number) => {
         setPagination((prev) => ({ ...prev, page }))
@@ -255,6 +578,22 @@ const BillTable = () => {
     const onSelectChange = (limit: number) => {
         setPagination((prev) => ({ page: 1, limit }))
     }
+    const openDrawer = () => {
+        setIsOpen(true)
+    }
+
+    const onDrawerClose = (e: MouseEvent) => {
+        console.log('onDrawerClose', e)
+        setIsOpen(false)
+    }
+    const handleResetAll = () => {
+        setFilters({})
+        setSearchTerm('')
+        setMonth(new Date().getMonth() + 1)
+        setYear(new Date().getFullYear())
+        setPagination({ page: 1, limit: 10 })
+        tableRef.current?.resetSorting?.()
+    }
 
     if (error) {
         return <div>Error loading bills: {(error as Error).message}</div>
@@ -262,24 +601,50 @@ const BillTable = () => {
 
     return (
         <>
-            <div className="mb-4 flex flex-col md:flex-row gap-4">
+            <div className="mb-4 flex flex-col md:flex-row gap-4 justify-between items-center">
                 <Input
                     placeholder="Search bills..."
                     onChange={handleSearchChange}
-                    className="max-w-md"
+                    className="max-w-md w-full md:w-auto"
                 />
-                {/* <div className="flex gap-2">
-                    <Input
-                        type="date"
-                        placeholder="Start Date"
-                        onChange={(e) => handleDateRangeChange(e, 'startDate')}
-                    />
-                    <Input
-                        type="date"
-                        placeholder="End Date"
-                        onChange={(e) => handleDateRangeChange(e, 'endDate')}
-                    />
-                </div> */}
+                <div className="flex gap-2 items-center">
+                    <select
+                        className="p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
+                        value={month}
+                        onChange={(e) => setMonth(Number(e.target.value))}
+                    >
+                        {months.map((m) => (
+                            <option key={m.value} value={m.value}>
+                                {m.label}
+                            </option>
+                        ))}
+                    </select>
+                    <select
+                        className="p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
+                        value={year}
+                        onChange={(e) => setYear(Number(e.target.value))}
+                    >
+                        {years.map((y) => (
+                            <option key={y.value} value={y.value}>
+                                {y.label}
+                            </option>
+                        ))}
+                    </select>
+                    <button
+                        onClick={handleResetAll}
+                        className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                        title="Reset filters"
+                    >
+                        <HiOutlineRefresh size={18} />
+                    </button>
+                    <button
+                        onClick={() => openDrawer()}
+                        className="px-4 py-2 flex items-center gap-2 bg-gray-100 dark:bg-gray-700 rounded-md border border-gray-200 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+                    >
+                        <FiFilter size={16} />
+                        Filter
+                    </button>
+                </div>
             </div>
 
             <DataTable
@@ -294,6 +659,20 @@ const BillTable = () => {
                 }}
                 onPaginationChange={onPaginationChange}
                 onSelectChange={onSelectChange}
+            />
+
+            <BillDeleteConfirmation
+                isOpen={isDeleteOpen}
+                onClose={() => setIsDeleteOpen(false)}
+                bill={selectedBill}
+                refetch={refetch}
+            />
+            <BillFilterDrawer
+                isOpen={isOpen}
+                billType={billType}
+                onClose={onDrawerClose}
+                onRequestClose={onDrawerClose}
+                onApplyFilters={handleApplyFilters}
             />
         </>
     )

@@ -5,16 +5,16 @@ import BillTableTools from './components/BillTableTools'
 
 
 
-const BillList = () => {
+const FuelBillList = () => {
     return (
         <AdaptableCard className="h-full" bodyClass="h-full">
             <div className="lg:flex items-center justify-between mb-4">
-                <h3 className="mb-4 lg:mb-0">General Bills</h3>
-<BillTableTools to="/app/new-gen-bill" title="Add Bill" />
+                <h3 className="mb-4 lg:mb-0">Vehicle Bills</h3>
+                <BillTableTools to="/app/new-vehicle-bill" title="Add  Bill" />
             </div>
             <BillTable />
         </AdaptableCard>
     )
 }
 
-export default BillList
+export default FuelBillList

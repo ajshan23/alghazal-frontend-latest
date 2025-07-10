@@ -2,22 +2,23 @@ import { useEffect, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom'
 import toast from '@/components/ui/toast'
 import Notification from '@/components/ui/Notification'
-import GenBillForm from '../billForms/GenBillForm'
 import { addBill, editBill, fetchBillById } from '../api/api'
+import FuelBillForm from '../billForms/FuelBillForm'
 
 const defaultBillData = {
-    billType: 'general',
+    billType: 'fuel',
     billDate: new Date().toISOString().split('T')[0],
     paymentMethod: '',
     amount: 0,
-    category: '',
-    shop: '',
-    invoiceNo: '',
+    description: '',
+    vehicleNo: '',
+    kilometer: 0,
+    liter: 0,
     remarks: '',
     attachments: []
 }
 
-const NewBillDetails = () => {
+const NewFuelBill = () => {
     const navigate = useNavigate()
     const { id } = useParams()
     const [initialData, setInitialData] = useState(defaultBillData)
@@ -42,13 +43,16 @@ const NewBillDetails = () => {
                 }
 
                 setInitialData({
-                    billType: response.data.billType || 'general',
+                    billType: response.data.billType || 'fuel',
                     billDate: response.data.billDate || new Date().toISOString().split('T')[0],
                     paymentMethod: response.data.paymentMethod || '',
                     amount: response.data.amount || 0,
-                    category: response.data.category?._id || response.data.category || '',
-                    shop: response.data.shop?._id || response.data.shop || '',
-                    invoiceNo: response.data.invoiceNo || '',
+                    description: response.data.description || '',
+                    vehicleNo: response.data.vehicle?.vehicleNumber || '',
+                    vehicleId: response.data.vehicle?._id||'',
+
+                    kilometer: response.data.kilometer || 0,
+                    liter: response.data.liter || 0,
                     remarks: response.data.remarks || '',
                     attachments: response.data.attachments || []
                 })
@@ -67,7 +71,7 @@ const NewBillDetails = () => {
                     { placement: 'top-center' }
                 )
                 // Redirect to bills view after showing error
-                setTimeout(() => navigate('/app/bill-view'), 2500)
+                setTimeout(() => navigate('/app/fuel-bill-view'), 2500)
             } finally {
                 setLoading(false)
             }
@@ -87,16 +91,16 @@ const NewBillDetails = () => {
             if ([200, 201].includes(response.status)) {
                 toast.push(
                     <Notification
-                        title={`Successfully ${id ? 'updated' : 'added'} bill`}
+                        title={`Successfully ${id ? 'updated' : 'added'} fuel bill`}
                         type="success"
                         duration={2500}
                     >
-                        Bill {id ? 'updated' : 'added'} successfully
+                        Fuel bill {id ? 'updated' : 'added'} successfully
                     </Notification>,
                     { placement: 'top-center' }
                 )
-                // Navigate to bill view after successful submission
-                navigate('/app/bill-view')
+                // Navigate to fuel bill view after successful submission
+                navigate('/app/fuel-bill-view')
             } else {
                 throw new Error(response?.response?.data?.message || 'Unexpected status code')
             }
@@ -104,7 +108,7 @@ const NewBillDetails = () => {
             console.error('Error during form submission:', error)
             toast.push(
                 <Notification
-                    title={`Error ${id ? 'updating' : 'adding'} bill`}
+                    title={`Error ${id ? 'updating' : 'adding'} fuel bill`}
                     type="danger"
                     duration={2500}
                 >
@@ -120,10 +124,10 @@ const NewBillDetails = () => {
     const handleDiscard = () => {
         if (JSON.stringify(initialData) !== JSON.stringify(defaultBillData)) {
             if (window.confirm('Are you sure you want to discard changes?')) {
-                navigate('/app/bill-view')
+                navigate('/app/fuel-bill-view')
             }
         } else {
-            navigate('/app/bill-view')
+            navigate('/app/fuel-bill-view')
         }
     }
 
@@ -139,7 +143,7 @@ const NewBillDetails = () => {
         return (
             <div className="flex justify-center items-center h-64">
                 <Notification
-                    title="Error loading bill"
+                    title="Error loading fuel bill"
                     type="danger"
                 >
                     {error}
@@ -149,13 +153,14 @@ const NewBillDetails = () => {
     }
 
     return (
-        <GenBillForm
+        <FuelBillForm
             type={id ? 'edit' : 'new'}
             initialData={initialData}
             onFormSubmit={handleFormSubmit}
             onDiscard={handleDiscard}
+            // Make sure your GenBillForm component is updated to handle fuel-specific fields
         />
     )
 }
 
-export default NewBillDetails
+export default NewFuelBill

@@ -20,7 +20,7 @@ type InitialData = {
     ownerName?: string
     ownerEmail?: string
     contact?: string
-    shopAttachments?: 
+ shopAttachments?: Array<File | { fileName: string; filePath: string }>
 }
 
 export type FormModel = InitialData

@@ -1,23 +1,24 @@
-import { useEffect, useState } from 'react'
-import { useNavigate, useParams } from 'react-router-dom'
 import toast from '@/components/ui/toast'
 import Notification from '@/components/ui/Notification'
-import GenBillForm from '../billForms/GenBillForm'
+import { useNavigate, useParams } from 'react-router-dom'
+import { useEffect, useState } from 'react'
+import AccBillForm from '../billForms/AccBillForm'
 import { addBill, editBill, fetchBillById } from '../api/api'
 
 const defaultBillData = {
-    billType: 'general',
-    billDate: new Date().toISOString().split('T')[0],
+    billType: 'accommodation',
+    date: new Date().toISOString().split('T')[0], // Default to today's date
+    shopName: '',
+    roomNo: '',
+    invoiceNumber: '',
     paymentMethod: '',
-    amount: 0,
-    category: '',
-    shop: '',
-    invoiceNo: '',
+    amount: '',
+    note: '',
     remarks: '',
     attachments: []
 }
 
-const NewBillDetails = () => {
+const NewAccBill = () => {
     const navigate = useNavigate()
     const { id } = useParams()
     const [initialData, setInitialData] = useState(defaultBillData)
@@ -36,19 +37,21 @@ const NewBillDetails = () => {
             try {
                 setLoading(true)
                 const response = await fetchBillById(id)
-                
+
                 if (!response?.data) {
                     throw new Error('Invalid bill data received')
                 }
 
                 setInitialData({
-                    billType: response.data.billType || 'general',
-                    billDate: response.data.billDate || new Date().toISOString().split('T')[0],
+                    billType: response.data.billType || 'accommodation',
+                    date: response.data.date || defaultBillData.date,
+                    shopName: response.data.shop?.shopName || '',
+                    roomNo: response.data.roomNo || '',
+                    shopId: response.data.shop?._id || '',
+                    invoiceNumber: response.data.invoiceNo || '',
                     paymentMethod: response.data.paymentMethod || '',
-                    amount: response.data.amount || 0,
-                    category: response.data.category?._id || response.data.category || '',
-                    shop: response.data.shop?._id || response.data.shop || '',
-                    invoiceNo: response.data.invoiceNo || '',
+                    amount: response.data.amount || '',
+                    note: response.data.note || '',
                     remarks: response.data.remarks || '',
                     attachments: response.data.attachments || []
                 })
@@ -67,7 +70,7 @@ const NewBillDetails = () => {
                     { placement: 'top-center' }
                 )
                 // Redirect to bills view after showing error
-                setTimeout(() => navigate('/app/bill-view'), 2500)
+                setTimeout(() => navigate('/app/acc-bill-view'), 2500)
             } finally {
                 setLoading(false)
             }
@@ -77,26 +80,26 @@ const NewBillDetails = () => {
     }, [id, navigate])
 
     const handleFormSubmit = async (
-        values: typeof defaultBillData,
+        formData: FormData,
         setSubmitting: (isSubmitting: boolean) => void
     ) => {
         try {
             setSubmitting(true)
-            const response = id ? await editBill(id, values) : await addBill(values)
+            const response = id ? await editBill(id, formData) : await addBill(formData)
 
             if ([200, 201].includes(response.status)) {
                 toast.push(
                     <Notification
-                        title={`Successfully ${id ? 'updated' : 'added'} bill`}
+                        title={`Successfully ${id ? 'updated' : 'added'} accommodation bill`}
                         type="success"
                         duration={2500}
                     >
-                        Bill {id ? 'updated' : 'added'} successfully
+                        Accommodation bill {id ? 'updated' : 'added'} successfully
                     </Notification>,
                     { placement: 'top-center' }
                 )
-                // Navigate to bill view after successful submission
-                navigate('/app/bill-view')
+                // Navigate to accommodation bill view after successful submission
+                navigate('/app/acc-bill-view')
             } else {
                 throw new Error(response?.response?.data?.message || 'Unexpected status code')
             }
@@ -104,7 +107,7 @@ const NewBillDetails = () => {
             console.error('Error during form submission:', error)
             toast.push(
                 <Notification
-                    title={`Error ${id ? 'updating' : 'adding'} bill`}
+                    title={`Error ${id ? 'updating' : 'adding'} accommodation bill`}
                     type="danger"
                     duration={2500}
                 >
@@ -118,12 +121,13 @@ const NewBillDetails = () => {
     }
 
     const handleDiscard = () => {
+        // Confirm before discarding changes
         if (JSON.stringify(initialData) !== JSON.stringify(defaultBillData)) {
             if (window.confirm('Are you sure you want to discard changes?')) {
-                navigate('/app/bill-view')
+                navigate('/app/acc-bill-view')
             }
         } else {
-            navigate('/app/bill-view')
+            navigate('/app/acc-bill-view')
         }
     }
 
@@ -149,7 +153,7 @@ const NewBillDetails = () => {
     }
 
     return (
-        <GenBillForm
+        <AccBillForm
             type={id ? 'edit' : 'new'}
             initialData={initialData}
             onFormSubmit={handleFormSubmit}
@@ -158,4 +162,4 @@ const NewBillDetails = () => {
     )
 }
 
-export default NewBillDetails
+export default NewAccBill
