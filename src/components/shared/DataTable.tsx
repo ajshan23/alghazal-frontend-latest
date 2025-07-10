@@ -275,11 +275,6 @@ function _DataTable<T>(
                                                         .header,
                                                     header.getContext(),
                                                 )}
-                                                {/* {header.column.getCanSort() && (
-                                                    <Sorter
-                                                        sort={header.column.getIsSorted()}
-                                                    />
-                                                )} */}
                                             </div>
                                         )}
                                     </Th>
@@ -290,7 +285,6 @@ function _DataTable<T>(
                 </THead>
                 {loading && data.length === 0 ? (
                     <TableRowSkeleton
-                        // eslint-disable-next-line  @typescript-eslint/no-explicit-any
                         columns={(finalColumns as Array<T>).length}
                         rows={pagingData.pageSize}
                         avatarInColumns={skeletonAvatarColumns}
@@ -298,49 +292,71 @@ function _DataTable<T>(
                     />
                 ) : (
                     <TBody>
-                        {table
-                            .getRowModel()
-                            .rows.slice(0, pageSize)
-                            .map((row) => {
-                                return (
-                                    <Tr key={row.id}>
-                                        {row.getVisibleCells().map((cell) => {
-                                            return (
-                                                <Td key={cell.id}>
-                                                    {flexRender(
-                                                        cell.column.columnDef
-                                                            .cell,
-                                                        cell.getContext(),
-                                                    )}
-                                                </Td>
-                                            )
-                                        })}
-                                    </Tr>
-                                )
-                            })}
+                        {data.length === 0 ? (
+                            <Tr>
+                                <Td 
+                                    colSpan={finalColumns.length} 
+                                    className="text-center py-8"
+                                >
+                                    <div className="flex flex-col items-center justify-center">
+                                        <span className="text-lg font-semibold text-gray-500 dark:text-gray-400">
+                                            No data found
+                                        </span>
+                                        {!loading && (
+                                            <span className="text-sm text-gray-400 dark:text-gray-500">
+                                                There are no records to display
+                                            </span>
+                                        )}
+                                    </div>
+                                </Td>
+                            </Tr>
+                        ) : (
+                            table
+                                .getRowModel()
+                                .rows.slice(0, pageSize)
+                                .map((row) => {
+                                    return (
+                                        <Tr key={row.id}>
+                                            {row.getVisibleCells().map((cell) => {
+                                                return (
+                                                    <Td key={cell.id}>
+                                                        {flexRender(
+                                                            cell.column.columnDef
+                                                                .cell,
+                                                            cell.getContext(),
+                                                        )}
+                                                    </Td>
+                                                )
+                                            })}
+                                        </Tr>
+                                    )
+                                })
+                        )}
                     </TBody>
                 )}
             </Table>
-            <div className="flex items-center justify-between mt-4">
-                <Pagination
-                    pageSize={pageSize}
-                    currentPage={pageIndex}
-                    total={total}
-                    onChange={handlePaginationChange}
-                />
-                <div style={{ minWidth: 130 }}>
-                    <Select
-                        size="sm"
-                        menuPlacement="top"
-                        isSearchable={false}
-                        value={pageSizeOption.filter(
-                            (option) => option.value === pageSize,
-                        )}
-                        options={pageSizeOption}
-                        onChange={(option) => handleSelectChange(option?.value)}
+            {data.length > 0 && (
+                <div className="flex items-center justify-between mt-4">
+                    <Pagination
+                        pageSize={pageSize}
+                        currentPage={pageIndex}
+                        total={total}
+                        onChange={handlePaginationChange}
                     />
+                    <div style={{ minWidth: 130 }}>
+                        <Select
+                            size="sm"
+                            menuPlacement="top"
+                            isSearchable={false}
+                            value={pageSizeOption.filter(
+                                (option) => option.value === pageSize,
+                            )}
+                            options={pageSizeOption}
+                            onChange={(option) => handleSelectChange(option?.value)}
+                        />
+                    </div>
                 </div>
-            </div>
+            )}
         </Loading>
     )
 }

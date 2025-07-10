@@ -10,7 +10,7 @@ const MessBillList = () => {
         <AdaptableCard className="h-full" bodyClass="h-full">
             <div className="lg:flex items-center justify-between mb-4">
                 <h3 className="mb-4 lg:mb-0">Mess Bills</h3>
-<BillTableTools to="/app/new-mess-bill" title="Add Mess Bill" />
+<BillTableTools to="/app/new-mess-bill" title="Add Bill" />
             </div>
             <BillTable />
         </AdaptableCard>

@@ -10,7 +10,7 @@ export interface BadgeProps extends CommonProps {
     maxCount?: number
 }
 
-const Badge = forwardRef<HTMLElement, BadgeProps>((props, ref) => {
+const   Badge = forwardRef<HTMLElement, BadgeProps>((props, ref) => {
     const {
         badgeStyle,
         children,

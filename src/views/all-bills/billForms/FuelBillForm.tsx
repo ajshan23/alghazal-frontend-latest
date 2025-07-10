@@ -9,39 +9,43 @@ import * as Yup from 'yup'
 import { Input, Upload } from '@/components/ui'
 import { AdaptableCard } from '@/components/shared'
 import Select from '@/components/ui/Select'
-import { fetchCategories, fetchShops } from '../api/api'
 import DatePicker from '@/components/ui/DatePicker'
+import { fetchVehicles } from '../api/api'
 import { format } from 'date-fns'
 
 type FormikRef = FormikProps<any>
+const today = new Date()
 
 const PaymentMethodOptions = [
     { label: 'ADCB', value: 'adcb' },
     { label: 'ADIB', value: 'adib' },
     { label: 'Cash', value: 'cash' },
     { label: 'MASHREQ CARD', value: 'masherq_card' },
+    { label: 'ATHEER PLUS ', value: 'atheer_plus' },
 ]
 
 type InitialData = {
     billType: string
     billDate: string
+    description: string
+    vehicleNo: string
+    vehicleId?: string
+
     paymentMethod: string
     amount: number
-    category: string
-    shop: string
-    invoiceNo: string
+    kilometer: number
+    liter: number
     remarks: string
     attachments: File[] | string[]
 }
 
 export type FormModel = InitialData
-const today = new Date()
 
 export type SetSubmitting = (isSubmitting: boolean) => void
 export type OnDeleteCallback = React.Dispatch<React.SetStateAction<boolean>>
 type OnDelete = (callback: OnDeleteCallback) => void
 
-type BillFormProps = {
+type FuelBillFormProps = {
     initialData?: InitialData
     type: 'edit' | 'new'
     onDiscard?: () => void
@@ -52,17 +56,18 @@ type BillFormProps = {
     ) => Promise<any>
 }
 
-const GenBillForm = forwardRef<FormikRef, BillFormProps>((props, ref) => {
+const FuelBillForm = forwardRef<FormikRef, FuelBillFormProps>((props, ref) => {
     const {
         type,
         initialData = {
-            billType: 'general',
+            billType: 'fuel',
             billDate: new Date().toISOString().split('T')[0],
+            description: '',
+            vehicleNo: '',
             paymentMethod: '',
             amount: 0,
-            category: '',
-            shop: '',
-            invoiceNo: '',
+            kilometer: 0,
+            liter: 0,
             remarks: '',
             attachments: [],
         },
@@ -70,13 +75,11 @@ const GenBillForm = forwardRef<FormikRef, BillFormProps>((props, ref) => {
         onDiscard,
         onDelete,
     } = props
+
     const [attachmentFiles, setAttachmentFiles] = useState<(File | string)[]>(
         [],
     )
-    const [shopOptions, setShopOptions] = useState<
-        { label: string; value: string }[]
-    >([])
-    const [categoryOptions, setCategoryOptions] = useState<
+    const [vehicleOptions, setVechileOptions] = useState<
         { label: string; value: string }[]
     >([])
     const [isLoading, setIsLoading] = useState(true)
@@ -87,26 +90,19 @@ const GenBillForm = forwardRef<FormikRef, BillFormProps>((props, ref) => {
         }
     }, [initialData])
 
+
     useEffect(() => {
         const loadData = async () => {
             try {
-                // Fetch shops
-                const shopData = await fetchShops()
-                const shopOpts = shopData?.data?.shops.map((shop: any) => ({
-                    label: shop.shopName,
-                    value: shop._id,
-                }))
-                setShopOptions(shopOpts || [])
-
-                // Fetch categories
-                const categoryData = await fetchCategories()
-                const categoryOpts = categoryData?.data?.categories?.map(
-                    (category: any) => ({
-                        label: category.name,
-                        value: category._id,
+                // Fetch vehicle
+                const vehicleData = await fetchVehicles()
+                const vehicleOpts = vehicleData?.data?.vehicles.map(
+                    (vehicle: any) => ({
+                        label: vehicle.vehicleNumber,
+                        value: vehicle._id,
                     }),
                 )
-                setCategoryOptions(categoryOpts || [])
+                setVechileOptions(vehicleOpts || [])
             } catch (error) {
                 console.error('Failed to load data:', error)
             } finally {
@@ -122,14 +118,21 @@ const GenBillForm = forwardRef<FormikRef, BillFormProps>((props, ref) => {
         billDate: Yup.date()
             .required('Bill date is required')
             .typeError('Please select a valid date'),
+        description: Yup.string().required('Description is required'),
+        vehicleNo: Yup.string().required('Vehicle number is required'),
         paymentMethod: Yup.string().required('Payment method is required'),
         amount: Yup.number()
             .required('Amount is required')
             .positive('Amount must be positive')
             .typeError('Amount must be a number'),
-        category: Yup.string().required('Category is required'),
-        shop: Yup.string().required('Shop is required'),
-        invoiceNo: Yup.string(),
+        kilometer: Yup.number()
+            .required('Kilometer reading is required')
+            .positive('Kilometer must be positive')
+            .typeError('Kilometer must be a number'),
+        liter: Yup.number()
+            .required('Liter is required')
+            .positive('Liter must be positive')
+            .typeError('Liter must be a number'),
         remarks: Yup.string().max(
             500,
             'Remarks must be at most 500 characters',
@@ -154,13 +157,14 @@ const GenBillForm = forwardRef<FormikRef, BillFormProps>((props, ref) => {
         <Formik
             innerRef={ref}
             initialValues={{
-                billType: initialData.billType || 'general',
+                billType: initialData.billType || 'fuel',
                 billDate: initialData.billDate || '',
+                description: initialData.description || '',
+                vehicleNo: initialData.vehicleId || initialData.vehicleNo || '',
                 paymentMethod: initialData.paymentMethod || '',
                 amount: initialData.amount || '',
-                category: initialData.category || '',
-                shop: initialData.shop || '',
-                invoiceNo: initialData.invoiceNo || '',
+                kilometer: initialData.kilometer || '',
+                liter: initialData.liter || '',
                 remarks: initialData.remarks || '',
                 attachments: initialData.attachments || [],
             }}
@@ -170,11 +174,12 @@ const GenBillForm = forwardRef<FormikRef, BillFormProps>((props, ref) => {
                     const formData = new FormData()
                     formData.append('billType', values.billType)
                     formData.append('billDate', values.billDate)
+                    formData.append('description', values.description)
+                    formData.append('vehicle', values.vehicleNo)
                     formData.append('paymentMethod', values.paymentMethod)
                     formData.append('amount', values.amount.toString())
-                    formData.append('category', values.category)
-                    formData.append('shop', values.shop)
-                    formData.append('invoiceNo', values.invoiceNo)
+                    formData.append('kilometer', values.kilometer.toString())
+                    formData.append('liter', values.liter.toString())
                     formData.append('remarks', values.remarks || '')
 
                     attachmentFiles.forEach((file, index) => {
@@ -215,7 +220,9 @@ const GenBillForm = forwardRef<FormikRef, BillFormProps>((props, ref) => {
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                             <div className="lg:col-span-2">
                                 <AdaptableCard divider className="mb-4">
-                                    <h5 className="mb-4">Bill Information</h5>
+                                    <h5 className="mb-4">
+                                        Fuel Bill Information
+                                    </h5>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <FormItem
                                             label="Bill Type"
@@ -234,8 +241,8 @@ const GenBillForm = forwardRef<FormikRef, BillFormProps>((props, ref) => {
                                                 }: FieldProps) => {
                                                     const options = [
                                                         {
-                                                            label: 'General',
-                                                            value: 'general',
+                                                            label: 'Fuel',
+                                                            value: 'fuel',
                                                             disabled: true,
                                                         },
                                                     ]
@@ -287,7 +294,7 @@ const GenBillForm = forwardRef<FormikRef, BillFormProps>((props, ref) => {
                                                     form,
                                                 }: FieldProps) => (
                                                     <DatePicker
-                                                        placeholder="Select billDate Date"
+                                                        placeholder="Select bill Date"
                                                         value={
                                                             field.value
                                                                 ? new Date(
@@ -316,6 +323,64 @@ const GenBillForm = forwardRef<FormikRef, BillFormProps>((props, ref) => {
                                             </Field>
                                         </FormItem>
 
+                                        <FormItem
+                                            label="Description"
+                                            invalid={
+                                                !!errors.description &&
+                                                touched.description
+                                            }
+                                            errorMessage={
+                                                errors.description as string
+                                            }
+                                        >
+                                            <Field name="description">
+                                                {({ field }: FieldProps) => (
+                                                    <Input
+                                                        type="text"
+                                                        autoComplete="off"
+                                                        placeholder="Description"
+                                                        {...field}
+                                                    />
+                                                )}
+                                            </Field>
+                                        </FormItem>
+
+                                        <FormItem
+                                            label="Vehicle No"
+                                            invalid={
+                                                !!errors.vehicleNo &&
+                                                touched.vehicleNo
+                                            }
+                                            errorMessage={
+                                                errors.vehicleNo as string
+                                            }
+                                        >
+                                            <Field name="vehicleNo">
+                                                {({
+                                                    field,
+                                                    form,
+                                                }: FieldProps) => (
+                                                    <Select
+                                                        placeholder="Select Vehicle Number"
+                                                        options={vehicleOptions}
+                                                        value={vehicleOptions.find(
+                                                            (vehicle) =>
+                                                                vehicle.value ===
+                                                                values.vehicleNo,
+                                                        )}
+                                                        onChange={(option) => {
+                                                            form.setFieldValue(
+                                                                field.name,
+                                                                option?.value ||
+                                                                    '',
+                                                            )
+                                                        }}
+                                                        onBlur={field.onBlur}
+                                                        loading={isLoading}
+                                                    />
+                                                )}
+                                            </Field>
+                                        </FormItem>
                                         <FormItem
                                             label="Payment Method"
                                             invalid={
@@ -384,102 +449,63 @@ const GenBillForm = forwardRef<FormikRef, BillFormProps>((props, ref) => {
                                                 )}
                                             </Field>
                                         </FormItem>
-                                    </div>
-                                </AdaptableCard>
 
-                                <AdaptableCard divider className="mb-4">
-                                    <h5 className="mb-4">Details</h5>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <FormItem
-                                            label="Category"
+                                            label="Kilometer"
                                             invalid={
-                                                !!errors.category &&
-                                                touched.category
+                                                !!errors.kilometer &&
+                                                touched.kilometer
                                             }
                                             errorMessage={
-                                                errors.category as string
+                                                errors.kilometer as string
                                             }
                                         >
-                                            <Field name="category">
+                                            <Field name="kilometer">
                                                 {({
                                                     field,
                                                     form,
                                                 }: FieldProps) => (
-                                                    <Select
-                                                        placeholder="Select Category"
-                                                        options={
-                                                            categoryOptions
-                                                        }
-                                                        value={categoryOptions.find(
-                                                            (cat) =>
-                                                                cat.value ===
-                                                                values.category,
-                                                        )}
-                                                        onChange={(option) => {
-                                                            form.setFieldValue(
-                                                                field.name,
-                                                                option?.value ||
-                                                                    '',
-                                                            )
-                                                        }}
-                                                        onBlur={field.onBlur}
-                                                        loading={isLoading}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        <FormItem
-                                            label="Shop"
-                                            invalid={
-                                                !!errors.shop && touched.shop
-                                            }
-                                            errorMessage={errors.shop as string}
-                                        >
-                                            <Field name="shop">
-                                                {({
-                                                    field,
-                                                    form,
-                                                }: FieldProps) => (
-                                                    <Select
-                                                        placeholder="Select Shop"
-                                                        options={shopOptions}
-                                                        value={shopOptions.find(
-                                                            (shop) =>
-                                                                shop.value ===
-                                                                values.shop,
-                                                        )}
-                                                        onChange={(option) => {
-                                                            form.setFieldValue(
-                                                                field.name,
-                                                                option?.value ||
-                                                                    '',
-                                                            )
-                                                        }}
-                                                        onBlur={field.onBlur}
-                                                        loading={isLoading}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        <FormItem
-                                            label="Invoice Number"
-                                            invalid={
-                                                !!errors.invoiceNo &&
-                                                touched.invoiceNo
-                                            }
-                                            errorMessage={
-                                                errors.invoiceNo as string
-                                            }
-                                        >
-                                            <Field name="invoiceNo">
-                                                {({ field }: FieldProps) => (
                                                     <Input
-                                                        type="text"
+                                                        type="number"
                                                         autoComplete="off"
-                                                        placeholder="Invoice Number"
+                                                        placeholder="Kilometer Reading"
                                                         {...field}
+                                                        onChange={(e) => {
+                                                            form.setFieldValue(
+                                                                field.name,
+                                                                e.target.value,
+                                                            )
+                                                        }}
+                                                    />
+                                                )}
+                                            </Field>
+                                        </FormItem>
+
+                                        <FormItem
+                                            label="Liter"
+                                            invalid={
+                                                !!errors.liter && touched.liter
+                                            }
+                                            errorMessage={
+                                                errors.liter as string
+                                            }
+                                        >
+                                            <Field name="liter">
+                                                {({
+                                                    field,
+                                                    form,
+                                                }: FieldProps) => (
+                                                    <Input
+                                                        type="number"
+                                                        autoComplete="off"
+                                                        placeholder="Liter"
+                                                        {...field}
+                                                        onChange={(e) => {
+                                                            form.setFieldValue(
+                                                                field.name,
+                                                                e.target.value,
+                                                            )
+                                                        }}
                                                     />
                                                 )}
                                             </Field>
@@ -529,43 +555,51 @@ const GenBillForm = forwardRef<FormikRef, BillFormProps>((props, ref) => {
                                             <div className="space-y-2">
                                                 {attachmentFiles.map(
                                                     (file, index) => {
-                                                        const isFileInstance =
+                                                        // Handle both File objects and attachment objects from API
+                                                        let displayName: string
+                                                        let fileId:
+                                                            | string
+                                                            | undefined
+
+                                                        if (
                                                             file instanceof File
-                                                        const displayName =
-                                                            isFileInstance
-                                                                ? file.name
-                                                                : file.fileName
-                                                        const fileUrl =
-                                                            isFileInstance
-                                                                ? undefined
-                                                                : file.filePath
+                                                        ) {
+                                                            displayName =
+                                                                file.name
+                                                        } else if (
+                                                            typeof file ===
+                                                                'object' &&
+                                                            file !== null
+                                                        ) {
+                                                            // Handle API attachment object
+                                                            displayName =
+                                                                file.fileName ||
+                                                                file.filePath ||
+                                                                'Attachment'
+                                                            fileId = file._id
+                                                        } else if (
+                                                            typeof file ===
+                                                            'string'
+                                                        ) {
+                                                            displayName = file
+                                                        } else {
+                                                            displayName =
+                                                                'Attachment'
+                                                        }
 
                                                         return (
                                                             <div
-                                                                key={index}
+                                                                key={
+                                                                    fileId ||
+                                                                    index
+                                                                }
                                                                 className="flex items-center justify-between p-2 border rounded"
                                                             >
-                                                                {fileUrl ? (
-                                                                    <a
-                                                                        href={
-                                                                            fileUrl
-                                                                        }
-                                                                        target="_blank"
-                                                                        rel="noopener noreferrer"
-                                                                        className="text-sm text-blue-600 dark:text-blue-300 truncate hover:underline"
-                                                                    >
-                                                                        {
-                                                                            displayName
-                                                                        }
-                                                                    </a>
-                                                                ) : (
-                                                                    <span className="text-sm text-gray-700 dark:text-gray-300 truncate">
-                                                                        {
-                                                                            displayName
-                                                                        }
-                                                                    </span>
-                                                                )}
-
+                                                                <span className="text-sm text-gray-700 dark:text-gray-300 truncate">
+                                                                    {
+                                                                        displayName
+                                                                    }
+                                                                </span>
                                                                 <button
                                                                     type="button"
                                                                     onClick={() =>
@@ -655,6 +689,6 @@ const GenBillForm = forwardRef<FormikRef, BillFormProps>((props, ref) => {
     )
 })
 
-GenBillForm.displayName = 'GenBillForm'
+FuelBillForm.displayName = 'FuelBillForm'
 
-export default GenBillForm
+export default FuelBillForm

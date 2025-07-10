@@ -10,6 +10,12 @@ const appsRoute: Routes = [
         component: lazy(() => import('@/views/project/ProjectDashboard')),
         authority: [ADMIN, USER,ENGINEER,SUPERADMIN,DRIVER],
     },
+      {
+        key: 'apps.profile',
+        path: `${APP_PREFIX_PATH}/account/settings/profile`,
+        component: lazy(() => import('@/views/account/Settings/components/Profile')),
+        authority: [ADMIN, USER,ENGINEER,SUPERADMIN,DRIVER],
+    },
     {
         key: 'appsEstimation.estimationList',
         path: `${APP_PREFIX_PATH}/estimation-list`,
@@ -267,6 +273,25 @@ const appsRoute: Routes = [
     component: lazy(() => import('@/views/all-bills/category/NewCategoryDetails')),
     authority: [ADMIN, USER, SUPERADMIN],
 },
+//Vehicle
+ {
+        key: 'apps.vehicleView',
+        path: `${APP_PREFIX_PATH}/vehicle-view`,
+        component: lazy(() => import('@/views/all-bills/vehicle/VehicleList')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+     {
+        key: 'apps.vehicleView',
+        path: `${APP_PREFIX_PATH}/new-vehicle`,
+        component: lazy(() => import('@/views/all-bills/vehicle/NewVehicleDetails')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+    {
+    key: 'apps.vehicleView',
+    path: `${APP_PREFIX_PATH}/new-vehicle/:id`,
+    component: lazy(() => import('@/views/all-bills/vehicle/NewVehicleDetails')),
+    authority: [ADMIN, USER, SUPERADMIN],
+},
 //Bills
     {
         key: 'apps.billView',
@@ -298,6 +323,12 @@ const appsRoute: Routes = [
         component: lazy(() => import('@/views/all-bills/newBills/NewMessBill')),
         authority: [ADMIN, USER,SUPERADMIN],
     },
+    {
+        key: 'apps.messBillView',
+        path: `${APP_PREFIX_PATH}/new-mess-bill/:id`,
+        component: lazy(() => import('@/views/all-bills/newBills/NewMessBill')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
       {
         key: 'apps.fuelBillView',
         path: `${APP_PREFIX_PATH}/fuel-bill-view`,
@@ -307,7 +338,12 @@ const appsRoute: Routes = [
      {
         key: 'apps.fuelBillView',
         path: `${APP_PREFIX_PATH}/new-fuel-bill`,
-        component: lazy(() => import('@/views/all-bills/newBills/NewMessBill')),
+        component: lazy(() => import('@/views/all-bills/newBills/NewFuelBill')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },{
+        key: 'apps.fuelBillView',
+        path: `${APP_PREFIX_PATH}/new-fuel-bill/:id`,
+        component: lazy(() => import('@/views/all-bills/newBills/NewFuelBill')),
         authority: [ADMIN, USER,SUPERADMIN],
     },
     {
@@ -316,6 +352,43 @@ const appsRoute: Routes = [
         component: lazy(() => import('@/views/all-bills/bills/components/BillAttachments')),
         authority: [ADMIN, USER,SUPERADMIN],
     },
+     {
+        key: 'apps.vehicleBillView',
+        path: `${APP_PREFIX_PATH}/vehicle-bill-view`,
+        component: lazy(() => import('@/views/all-bills/bills/VehicleBillList')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+     {
+        key: 'apps.vehicleBillView',
+        path: `${APP_PREFIX_PATH}/new-vehicle-bill`,
+        component: lazy(() => import('@/views/all-bills/newBills/NewVehicleBill')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+     {
+        key: 'apps.vehicleBillView',
+        path: `${APP_PREFIX_PATH}/new-vehicle-bill/:id`,
+        component: lazy(() => import('@/views/all-bills/newBills/NewVehicleBill')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+      {
+        key: 'apps.accBillView',
+        path: `${APP_PREFIX_PATH}/acc-bill-view`,
+        component: lazy(() => import('@/views/all-bills/bills/AccBillList')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+     {
+        key: 'apps.vehicleBillView',
+        path: `${APP_PREFIX_PATH}/new-acc-bill`,
+        component: lazy(() => import('@/views/all-bills/newBills/NewAccBill')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+     {
+        key: 'apps.vehicleBillView',
+        path: `${APP_PREFIX_PATH}/new-acc-bill/:id`,
+        component: lazy(() => import('@/views/all-bills/newBills/NewAccBill')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+   
     
     
     

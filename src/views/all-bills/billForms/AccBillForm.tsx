@@ -26,12 +26,15 @@ const PaymentMethodOptions = [
 
 type InitialData = {
     billType?: string
-    billDate?: string
-    shop?: string
-    shopId?: string // ✅ required to extract shopId from initialData
+    date?: string
+    shopName?: string
+    shopId?: string
+    roomNo?: string
     amount: number | string
     invoiceNumber?: string
     paymentMethod?: string
+    note?: string
+    remarks?: string
     attachments?: Array<{ fileName: string; filePath: string }> | File[]
 }
 
@@ -40,7 +43,7 @@ export type SetSubmitting = (isSubmitting: boolean) => void
 export type OnDeleteCallback = React.Dispatch<React.SetStateAction<boolean>>
 type OnDelete = (callback: OnDeleteCallback) => void
 
-type MessBillFormProps = {
+type AccBillFormProps = {
     initialData?: InitialData
     type: 'edit' | 'new'
     onDiscard?: () => void
@@ -51,16 +54,19 @@ type MessBillFormProps = {
     ) => Promise<any>
 }
 
-const MessBillForm = forwardRef<FormikRef, MessBillFormProps>((props, ref) => {
+const AccBillForm = forwardRef<FormikRef, AccBillFormProps>((props, ref) => {
     const {
         type,
         initialData = {
-            billType: 'mess',
-            billDate: new Date().toISOString().split('T')[0],
-            shop: '',
+            billType: 'accommodation',
+            date: new Date().toISOString().split('T')[0],
+            shopName: '',
+            roomNo: '',
             invoiceNumber: '',
             amount: '',
             paymentMethod: '',
+            note: '',
+            remarks: '',
             attachments: [],
         },
         onFormSubmit,
@@ -102,8 +108,9 @@ const MessBillForm = forwardRef<FormikRef, MessBillFormProps>((props, ref) => {
     }, [initialData.attachments])
 
     const validationSchema = Yup.object().shape({
-        billDate: Yup.string().required('Bill Date is required'),
-        shop: Yup.string().required('Shop is required'),
+        date: Yup.string().required('Date is required'),
+        shopName: Yup.string().required('Shop Name is required'),
+        roomNo: Yup.string().required('Room No is required'),
         paymentMethod: Yup.string().required('Payment Method is required'),
         amount: Yup.number()
             .typeError('Amount must be a number')
@@ -126,10 +133,14 @@ const MessBillForm = forwardRef<FormikRef, MessBillFormProps>((props, ref) => {
             innerRef={ref}
             initialValues={{
                 ...initialData,
-                billType: initialData.billType || 'mess',
-                billDate: initialData.billDate || new Date().toISOString().split('T')[0],
-                shop: initialData.shopId || initialData.shop || '', // ✅ use shopId in edit mode
+                billType: initialData.billType || 'accommodation',
+                date: initialData.date || new Date().toISOString().split('T')[0],
+                shopName: initialData.shopName || '',
+                shopId: initialData.shopId || '',
+                roomNo: initialData.roomNo || '',
                 paymentMethod: initialData.paymentMethod || '',
+                note: initialData.note || '',
+                remarks: initialData.remarks || '',
                 attachments: initialData.attachments || [],
                 amount: initialData.amount ?? '',
             }}
@@ -138,13 +149,23 @@ const MessBillForm = forwardRef<FormikRef, MessBillFormProps>((props, ref) => {
                 const formData = new FormData()
 
                 formData.append('billType', values.billType)
-                formData.append('billDate', values.billDate)
-                formData.append('shop', values.shop) // ✅ will contain shopId
+                formData.append('billDate', values.date)
+                formData.append('shopName', values.shopName)
+                if (values.shopId) {
+                    formData.append('shop', values.shopId)
+                }
+                formData.append('roomNo', values.roomNo)
                 formData.append('paymentMethod', values.paymentMethod)
                 formData.append('amount', values.amount.toString())
 
                 if (values.invoiceNumber) {
                     formData.append('invoiceNo', values.invoiceNumber)
+                }
+                if (values.note) {
+                    formData.append('note', values.note)
+                }
+                if (values.remarks) {
+                    formData.append('remarks', values.remarks)
                 }
 
                 attachmentFiles.forEach((file, index) => {
@@ -160,7 +181,7 @@ const MessBillForm = forwardRef<FormikRef, MessBillFormProps>((props, ref) => {
                 } catch (error: any) {
                     setSubmitting(false)
                     if (error.message?.includes('Shop already exists')) {
-                        setErrors({ shop: 'This shop already exists' })
+                        setErrors({ shopName: 'This shop already exists' })
                     }
                 }
             }}
@@ -172,14 +193,14 @@ const MessBillForm = forwardRef<FormikRef, MessBillFormProps>((props, ref) => {
                         <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                             <div className="lg:col-span-2">
                                 <AdaptableCard divider className="mb-4">
-                                    <h5 className="mb-4">Bill Information</h5>
+                                    <h5 className="mb-4">Accommodation Bill Information</h5>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <FormItem label="Bill Type">
                                             <Field name="billType">
                                                 {({ field, form }: FieldProps) => (
                                                     <Select
-                                                        options={[{ label: 'Mess', value: 'mess' }]}
-                                                        value={{ label: 'Mess', value: 'mess' }}
+                                                        options={[{ label: 'Accommodation', value: 'accommodation' }]}
+                                                        value={{ label: 'Accommodation', value: 'accommodation' }}
                                                         onChange={(option) =>
                                                             form.setFieldValue(field.name, option?.value)
                                                         }
@@ -189,42 +210,42 @@ const MessBillForm = forwardRef<FormikRef, MessBillFormProps>((props, ref) => {
                                             </Field>
                                         </FormItem>
 
-                                        <FormItem label="Bill Date" invalid={!!errors.billDate && touched.billDate}>
-                                            <Field name="billDate">
-                                                {({ field, form }: FieldProps) => (
-                                                    <DatePicker
-                                                        placeholder="Select billDate Date"
-                                                        value={field.value ? new Date(field.value) : null}
-                                                        maxDate={today}
-                                                        onChange={(date) =>
-                                                            form.setFieldValue(
-                                                                field.name,
-                                                                date
-                                                                    ? format(
-                                                                        new Date(
-                                                                            date.getFullYear(),
-                                                                            date.getMonth(),
-                                                                            date.getDate()
-                                                                        ),
-                                                                        'yyyy-MM-dd'
-                                                                    )
-                                                                    : ''
-                                                            )
-                                                        }
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
+                                    <FormItem label="Bill Date" invalid={!!errors.billDate && touched.billDate}>
+                                                                    <Field name="billDate">
+                                                                        {({ field, form }: FieldProps) => (
+                                                                            <DatePicker
+                                                                                placeholder="Select bill Date"
+                                                                                value={field.value ? new Date(field.value) : null}
+                                                                                maxDate={today}
+                                                                                onChange={(date) =>
+                                                                                    form.setFieldValue(
+                                                                                        field.name,
+                                                                                        date
+                                                                                            ? format(
+                                                                                                  new Date(
+                                                                                                      date.getFullYear(),
+                                                                                                      date.getMonth(),
+                                                                                                      date.getDate()
+                                                                                                  ),
+                                                                                                  'yyyy-MM-dd'
+                                                                                              )
+                                                                                            : ''
+                                                                                    )
+                                                                                }
+                                                                            />
+                                                                        )}
+                                                                    </Field>
+                                                                </FormItem>
 
                                         <FormItem
-                                            label="Shop"
-                                            invalid={!!errors.shop && touched.shop}
-                                            errorMessage={errors.shop as string}
+                                            label="Shop Name"
+                                            invalid={!!errors.shopName && touched.shopName}
+                                            errorMessage={errors.shopName as string}
                                         >
-                                            <Field name="shop">
+                                            <Field name="shopName">
                                                 {({ field, form }: FieldProps) => {
                                                     const selectedShop = shopOptions.find(
-                                                        (shop) => shop.value === field.value
+                                                        (shop) => shop.label === field.value
                                                     ) || null
 
                                                     return (
@@ -232,14 +253,29 @@ const MessBillForm = forwardRef<FormikRef, MessBillFormProps>((props, ref) => {
                                                             placeholder={isLoading ? 'Loading shops...' : 'Select Shop'}
                                                             options={shopOptions}
                                                             value={selectedShop}
-                                                            onChange={(option) =>
-                                                                form.setFieldValue(field.name, option?.value || '')
-                                                            }
+                                                            onChange={(option) => {
+                                                                form.setFieldValue(field.name, option?.label || '')
+                                                                form.setFieldValue('shopId', option?.value || '')
+                                                            }}
                                                             loading={isLoading}
                                                         />
                                                     )
                                                 }}
                                             </Field>
+                                        </FormItem>
+
+                                        <FormItem
+                                            label="Room No"
+                                            invalid={!!errors.roomNo && touched.roomNo}
+                                            errorMessage={errors.roomNo as string}
+                                        >
+                                            <Field
+                                                type="text"
+                                                autoComplete="off"
+                                                name="roomNo"
+                                                placeholder="Room No"
+                                                component={Input}
+                                            />
                                         </FormItem>
 
                                         <FormItem
@@ -293,6 +329,20 @@ const MessBillForm = forwardRef<FormikRef, MessBillFormProps>((props, ref) => {
                                                 )}
                                             </Field>
                                         </FormItem>
+                                    </div>
+
+                                    <div className="grid grid-cols-1 gap-4">
+                                        <FormItem label="Note">
+                                            <Field
+                                                as="textarea"
+                                                autoComplete="off"
+                                                name="note"
+                                                placeholder="Note"
+                                                component={Input}
+                                                textArea
+                                            />
+                                        </FormItem>
+                                       
                                     </div>
                                 </AdaptableCard>
 
@@ -351,13 +401,27 @@ const MessBillForm = forwardRef<FormikRef, MessBillFormProps>((props, ref) => {
                                         )}
                                     </FormItem>
                                 </AdaptableCard>
+                                <AdaptableCard divider className="mb-4">
+                                    <h5 className="mb-4">Remarks</h5>
+                                     <FormItem label="Remarks">
+                                            <Field
+                                                as="textarea"
+                                                autoComplete="off"
+                                                name="remarks"
+                                                placeholder="Remarks"
+                                                component={Input}
+                                                textArea
+                                            />
+                                        </FormItem>
+                                </AdaptableCard>
+
                             </div>
                         </div>
 
                         <StickyFooter className="-mx-8 px-8 flex items-center justify-between py-4" stickyClass="border-t bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                             <div>
                                 {type === 'edit' && onDelete && (
-                                    <DeleteShopButton onDelete={onDelete} />
+                                    <DeleteBillButton onDelete={onDelete} />
                                 )}
                             </div>
                             <div className="md:flex items-center">
@@ -376,9 +440,9 @@ const MessBillForm = forwardRef<FormikRef, MessBillFormProps>((props, ref) => {
     )
 })
 
-MessBillForm.displayName = 'MessBillForm'
+AccBillForm.displayName = 'AccBillForm'
 
-const DeleteShopButton = ({ onDelete }: { onDelete: OnDelete }) => {
+const DeleteBillButton = ({ onDelete }: { onDelete: OnDelete }) => {
     const [dialogOpen, setDialogOpen] = useState(false)
 
     const onConfirmDialog = () => {
@@ -405,17 +469,17 @@ const DeleteShopButton = ({ onDelete }: { onDelete: OnDelete }) => {
             <ConfirmDialog
                 isOpen={dialogOpen}
                 type="danger"
-                title="Delete Bill Entry"
+                title="Delete Accommodation Bill"
                 confirmButtonColor="red-600"
                 onClose={onDialogClose}
                 onRequestClose={onDialogClose}
                 onCancel={onDialogClose}
                 onConfirm={onConfirmDialog}
             >
-                <p>Are you sure you want to delete this bill entry?</p>
+                <p>Are you sure you want to delete this accommodation bill?</p>
             </ConfirmDialog>
         </>
     )
 }
 
-export default MessBillForm
+export default AccBillForm
