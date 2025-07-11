@@ -26,3 +26,12 @@ export const downloadInvoicePdf = async (projectId: string) => {
         throw error
     }
 }
+export const addGrnNumber = async (projectId: string, grnNumber: string) => {
+    try {
+        const response = await BaseService.put(`/project/${projectId}/grn-number`, { grnNumber })
+        return response.data
+    } catch (error) {
+        console.error("Error adding GRN number:", error)
+        throw error
+    }
+}

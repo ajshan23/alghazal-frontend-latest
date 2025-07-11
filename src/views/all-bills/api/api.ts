@@ -140,3 +140,93 @@ export const deleteBill = async (id: string) => {
         throw error
     }
 }
+export const exportBillToExcel = async ({
+  
+    search,
+    billType,
+    month,
+    year,
+    startDate,
+    endDate,
+    category,
+    shop,
+    vehicle,
+    paymentMethod,  
+}: {
+   
+    search?: string;
+    billType?: string;
+    month?: number;
+    year?: number;
+    startDate?: string;
+    endDate?: string;
+    category?: string;
+    shop?: string;
+    vehicle?: string;
+    paymentMethod?: string;
+}) => {
+    try {
+        // Prepare params object with proper typing
+        const params: Record<string, any> = {
+            
+            
+            search,
+            billType,
+            month,
+            year,
+            startDate: startDate ? new Date(startDate).toISOString() : undefined,
+            endDate: endDate ? new Date(endDate).toISOString() : undefined,
+            category,
+            shop,
+            vehicle,
+            paymentMethod,
+        };
+
+        // Clean up undefined parameters
+        Object.keys(params).forEach(key => params[key] === undefined && delete params[key]);
+
+        const response = await BaseService.get('/bills/export/excel', {
+            params,
+            responseType: 'blob',
+        });
+
+        // Validate response
+        if (!response.data) {
+            throw new Error('No data received from server');
+        }
+
+        // Create filename with current date and bill type
+        const filename = `bills_export_${billType || 'all'}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+
+        // Create download link
+        const url = window.URL.createObjectURL(new Blob([response.data], { 
+            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
+        }));
+        
+        const link = document.createElement('a');
+        link.href = url;
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+        
+        // Clean up
+        setTimeout(() => {
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(url);
+        }, 100);
+
+        return true;
+    } catch (error) {
+        console.error('Error exporting bills:', error);
+        
+        // Enhanced error handling
+        let errorMessage = 'Failed to export bills';
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        } else if (typeof error === 'string') {
+            errorMessage = error;
+        }
+        
+        throw new Error(errorMessage);
+    }
+};
