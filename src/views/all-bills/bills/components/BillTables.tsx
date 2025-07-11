@@ -1,68 +1,68 @@
-import { useState, useMemo, useRef, useEffect } from 'react';
-import DataTable from '@/components/shared/DataTable';
+import { useState, useMemo, useRef, useEffect } from 'react'
+import DataTable from '@/components/shared/DataTable'
 import {
     HiOutlineDownload,
     HiOutlineEye,
     HiOutlinePencil,
     HiOutlineRefresh,
     HiOutlineTrash,
-} from 'react-icons/hi';
-import useThemeClass from '@/utils/hooks/useThemeClass';
-import { useNavigate, useLocation } from 'react-router-dom';
+} from 'react-icons/hi'
+import useThemeClass from '@/utils/hooks/useThemeClass'
+import { useNavigate, useLocation } from 'react-router-dom'
 import type {
     DataTableResetHandle,
     ColumnDef,
-} from '@/components/shared/DataTable';
-import { useQuery } from '@tanstack/react-query';
-import debounce from 'lodash/debounce';
-import Input from '@/components/ui/Input';
-import Badge from '@/components/ui/Badge';
-import { exportBillToExcel, getBills } from '../../api/api';
-import moment from 'moment';
-import BillDeleteConfirmation from './BillDeleteConfirmation';
-import { FiFilter } from 'react-icons/fi';
-import BillFilterDrawer from './BillFilterDrawer';
-import dayjs from 'dayjs';
-import { saveAs } from 'file-saver';
+} from '@/components/shared/DataTable'
+import { useQuery } from '@tanstack/react-query'
+import debounce from 'lodash/debounce'
+import Input from '@/components/ui/Input'
+import Badge from '@/components/ui/Badge'
+import { exportBillToExcel, getBills } from '../../api/api'
+import moment from 'moment'
+import BillDeleteConfirmation from './BillDeleteConfirmation'
+import { FiFilter } from 'react-icons/fi'
+import BillFilterDrawer from './BillFilterDrawer'
+import dayjs from 'dayjs'
+import { saveAs } from 'file-saver'
 
 type Bill = {
-    _id: string;
-    billType: 'general' | 'fuel' | 'mess' | 'vehicle' | 'accommodation';
-    billDate: string;
-    paymentMethod: string;
-    amount: number;
-    kilometer?: number;
-    liter?: number;
+    _id: string
+    billType: 'general' | 'fuel' | 'mess' | 'vehicle' | 'accommodation'
+    billDate: string
+    paymentMethod: string
+    amount: number
+    kilometer?: number
+    liter?: number
     category: {
-        _id: string;
-        name: string;
-    };
+        _id: string
+        name: string
+    }
     shop?: {
-        _id: string;
-        shopName: string;
-        shopNo: string;
-    };
+        _id: string
+        shopName: string
+        shopNo: string
+    }
     vehicle?: {
-        vehicleNumber: string;
-    };
+        vehicleNumber: string
+    }
     accommodation?: {
-        location: string;
-    };
-    invoiceNo?: string;
-    remarks: string;
-    attachments: string[];
-    createdAt: string;
-    updatedAt: string;
-};
+        location: string
+    }
+    invoiceNo?: string
+    remarks: string
+    attachments: string[]
+    createdAt: string
+    updatedAt: string
+}
 
 type Pagination = {
-    page: number;
-    limit: number;
-    total: number;
-    totalPages: number;
-    hasNextPage: boolean;
-    hasPreviousPage: boolean;
-};
+    page: number
+    limit: number
+    total: number
+    totalPages: number
+    hasNextPage: boolean
+    hasPreviousPage: boolean
+}
 
 const paymentMethodColor = {
     adcb: {
@@ -85,12 +85,12 @@ const paymentMethodColor = {
         dotClass: 'bg-orange-500',
         textClass: 'text-orange-500',
     },
-};
+}
 
 type ActionColumnProps = {
-    row: Bill;
-    onDeleteClick: (bill: Bill) => void;
-};
+    row: Bill
+    onDeleteClick: (bill: Bill) => void
+}
 
 const months = [
     { value: 1, label: 'January' },
@@ -105,27 +105,27 @@ const months = [
     { value: 10, label: 'October' },
     { value: 11, label: 'November' },
     { value: 12, label: 'December' },
-];
+]
 
 const years = Array.from({ length: 10 }, (_, i) => ({
     value: dayjs().year() - 5 + i,
     label: (dayjs().year() - 5 + i).toString(),
-}));
+}))
 
 const BillTable = ({
     onDropdownSelect,
 }: {
-    onDropdownSelect: (value: string) => void;
+    onDropdownSelect: (value: string) => void
 }) => {
-    const location = useLocation();
-    const pathname = location.pathname;
-    const [isExporting, setIsExporting] = useState(false);
-    const tableRef = useRef<DataTableResetHandle>(null);
-    const [searchTerm, setSearchTerm] = useState('');
+    const location = useLocation()
+    const pathname = location.pathname
+    const [isExporting, setIsExporting] = useState(false)
+    const tableRef = useRef<DataTableResetHandle>(null)
+    const [searchTerm, setSearchTerm] = useState('')
     const [pagination, setPagination] = useState({
         page: 1,
         limit: 10,
-    });
+    })
     const [filters, setFilters] = useState({
         startDate: '',
         endDate: '',
@@ -133,26 +133,27 @@ const BillTable = ({
         shop: '',
         vehicleNo: '',
         paymentMethod: '',
-    });
-    const [isDeleteOpen, setIsDeleteOpen] = useState(false);
-    const [selectedBill, setSelectedBill] = useState<Bill | null>(null);
-    const [isOpen, setIsOpen] = useState(false);
-    const [month, setMonth] = useState(new Date().getMonth() + 1);
-    const [year, setYear] = useState(new Date().getFullYear());
+    })
+    const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+    const [selectedBill, setSelectedBill] = useState<Bill | null>(null)
+    const [isOpen, setIsOpen] = useState(false)
+    const [month, setMonth] = useState(new Date().getMonth() + 1)
+    const [year, setYear] = useState(new Date().getFullYear())
 
     const getBillTypeFromRoute = () => {
-        if (pathname.includes('/fuel-bill-view')) return 'fuel';
-        if (pathname.includes('/mess-bill-view')) return 'mess';
-        if (pathname.includes('/vehicle-bill-view')) return 'vehicle';
-        if (pathname.includes('/acc-bill-view')) return 'accommodation';
-        return 'general';
-    };
+        if (pathname.includes('/fuel-bill-view')) return 'fuel'
+        if (pathname.includes('/mess-bill-view')) return 'mess'
+        if (pathname.includes('/vehicle-bill-view')) return 'vehicle'
+        if (pathname.includes('/acc-bill-view')) return 'accommodation'
+        if (pathname.includes('/commission-bill-view')) return 'commission'
+        return 'general'
+    }
 
-    const billType = getBillTypeFromRoute();
+    const billType = getBillTypeFromRoute()
 
     const handleApplyFilters = (data: typeof filters) => {
-        setFilters(data);
-    };
+        setFilters(data)
+    }
 
     const {
         data: response,
@@ -185,10 +186,10 @@ const BillTable = ({
                 vehicle: filters.vehicleNo,
                 paymentMethod: filters.paymentMethod,
             }),
-    });
+    })
 
-    const bills = response?.data?.bills || [];
-    const totalAmount = response?.data?.totalAmount || 0;
+    const bills = response?.data?.bills || []
+    const totalAmount = response?.data?.totalAmount || 0
     const paginationData = response?.data?.pagination || {
         total: 0,
         page: 1,
@@ -196,24 +197,24 @@ const BillTable = ({
         totalPages: 1,
         hasNextPage: false,
         hasPreviousPage: false,
-    };
+    }
 
     const debouncedSearch = useMemo(
         () =>
             debounce((value: string) => {
-                setSearchTerm(value);
-                setPagination((prev) => ({ ...prev, page: 1 }));
+                setSearchTerm(value)
+                setPagination((prev) => ({ ...prev, page: 1 }))
             }, 500),
         [],
-    );
+    )
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        debouncedSearch(e.target.value);
-    };
+        debouncedSearch(e.target.value)
+    }
 
     const ActionColumn = ({ row, onDeleteClick }: ActionColumnProps) => {
-        const { textTheme } = useThemeClass();
-        const navigate = useNavigate();
+        const { textTheme } = useThemeClass()
+        const navigate = useNavigate()
 
         const editPaths = {
             general: '/app/new-gen-bill',
@@ -221,7 +222,8 @@ const BillTable = ({
             fuel: '/app/new-fuel-bill',
             vehicle: '/app/new-vehicle-bill',
             accommodation: '/app/new-acc-bill',
-        };
+            commission: '/app/new-commission-bill',
+        }
 
         return (
             <div className="flex text-lg">
@@ -250,11 +252,16 @@ const BillTable = ({
                     <HiOutlineTrash />
                 </span>
             </div>
-        );
-    };
+        )
+    }
 
     const getColumns = (): ColumnDef<Bill>[] => {
         const commonColumns = [
+            {
+                header: 'S.NO',
+                accessorKey: '_id',
+                cell: (props) => <span>{props.row.index + 1}</span>,
+            },
             {
                 header: 'DATE',
                 accessorKey: 'billDate',
@@ -270,14 +277,14 @@ const BillTable = ({
                 header: 'Payment Method',
                 accessorKey: 'paymentMethod',
                 cell: (props) => {
-                    const method = props.row.original.paymentMethod;
+                    const method = props.row.original.paymentMethod
                     const payment = paymentMethodColor[
                         method as keyof typeof paymentMethodColor
                     ] || {
                         label: method,
                         dotClass: 'bg-gray-500',
                         textClass: 'text-gray-500',
-                    };
+                    }
                     return (
                         <div className="flex items-center gap-2">
                             <Badge className={payment.dotClass} />
@@ -287,7 +294,7 @@ const BillTable = ({
                                 {payment.label}
                             </span>
                         </div>
-                    );
+                    )
                 },
             },
             {
@@ -304,17 +311,18 @@ const BillTable = ({
                     <ActionColumn
                         row={props.row.original}
                         onDeleteClick={(bill) => {
-                            setSelectedBill(bill);
-                            setIsDeleteOpen(true);
+                            setSelectedBill(bill)
+                            setIsDeleteOpen(true)
                         }}
                     />
                 ),
             },
-        ];
+        ]
 
         if (billType === 'mess') {
             return [
-                commonColumns[0], // DATE
+                commonColumns[0], // S.NO
+                commonColumns[1], // DATE
                 {
                     header: 'Shop Name',
                     accessorKey: 'shop',
@@ -338,15 +346,16 @@ const BillTable = ({
                         <span>{props.row.original.invoiceNo || 'N/A'}</span>
                     ),
                 },
-                commonColumns[1], // Payment Method
-                commonColumns[2], // Amount
-                commonColumns[3], // Action
-            ];
+                commonColumns[2], // Payment Method
+                commonColumns[3], // Amount
+                commonColumns[4], // Action
+            ]
         }
 
         if (billType === 'general') {
             return [
-                commonColumns[0], // DATE
+                commonColumns[0], // S.NO
+                commonColumns[1], // DATE
                 {
                     header: 'Category',
                     accessorKey: 'category',
@@ -379,8 +388,8 @@ const BillTable = ({
                         <span>{props.row.original.invoiceNo || 'N/A'}</span>
                     ),
                 },
-                commonColumns[1], // Payment Method
-                commonColumns[2], // Amount
+                commonColumns[2], // Payment Method
+                commonColumns[3], // Amount
                 {
                     header: 'REMARK',
                     accessorKey: 'remarks',
@@ -388,13 +397,14 @@ const BillTable = ({
                         <span>{props.row.original.remarks || 'N/A'}</span>
                     ),
                 },
-                commonColumns[3], // Action
-            ];
+                commonColumns[4], // Action
+            ]
         }
 
         if (billType === 'fuel') {
             return [
-                commonColumns[0], // DATE
+                commonColumns[0], // S.NO
+                commonColumns[1], // DATE
                 {
                     header: 'Description',
                     accessorKey: 'remarks',
@@ -411,8 +421,8 @@ const BillTable = ({
                         </span>
                     ),
                 },
-                commonColumns[1], // Payment Method
-                commonColumns[2], // Amount
+                commonColumns[2], // Payment Method
+                commonColumns[3], // Amount
                 {
                     header: 'Kilometer',
                     accessorKey: 'kilometer',
@@ -438,13 +448,14 @@ const BillTable = ({
                         <span>{props.row.original.remarks || 'N/A'}</span>
                     ),
                 },
-                commonColumns[3], // Action
-            ];
+                commonColumns[4], // Action
+            ]
         }
 
         if (billType === 'vehicle') {
             return [
-                commonColumns[0], // DATE
+                commonColumns[0], // S.NO
+                commonColumns[1], // DATE
                 {
                     header: 'Purpose Of Use',
                     accessorKey: 'remarks',
@@ -456,7 +467,7 @@ const BillTable = ({
                     header: 'Vehicle No',
                     accessorKey: 'vehicle',
                     cell: (props) => {
-                        const vehicle = props.row.original.vehicle;
+                        const vehicle = props.row.original.vehicle
                         if (Array.isArray(vehicle)) {
                             return (
                                 <span>
@@ -464,11 +475,11 @@ const BillTable = ({
                                         .map((v) => v.vehicleNumber)
                                         .join(', ') || 'N/A'}
                                 </span>
-                            );
+                            )
                         } else if (vehicle) {
-                            return <span>{vehicle.vehicleNumber || 'N/A'}</span>;
+                            return <span>{vehicle.vehicleNumber || 'N/A'}</span>
                         }
-                        return <span>N/A</span>;
+                        return <span>N/A</span>
                     },
                 },
                 {
@@ -478,8 +489,8 @@ const BillTable = ({
                         <span>{props.row.original.invoiceNo || 'N/A'}</span>
                     ),
                 },
-                commonColumns[1], // Payment Method
-                commonColumns[2], // Amount
+                commonColumns[2], // Payment Method
+                commonColumns[3], // Amount
                 {
                     header: 'Shop Name',
                     accessorKey: 'shop',
@@ -496,18 +507,14 @@ const BillTable = ({
                         <span>{props.row.original.remarks || 'N/A'}</span>
                     ),
                 },
-                commonColumns[3], // Action
-            ];
+                commonColumns[4], // Action
+            ]
         }
 
         if (billType === 'accommodation') {
             return [
-                {
-                    header: 'S.NO',
-                    accessorKey: '_id',
-                    cell: (props) => <span>{props.row.index + 1}</span>,
-                },
-                commonColumns[0], // DATE
+                commonColumns[0], // S.NO
+                commonColumns[1], // DATE
                 {
                     header: 'Company Name',
                     accessorKey: 'shop',
@@ -535,24 +542,24 @@ const BillTable = ({
                     header: 'Payment Mode',
                     accessorKey: 'paymentMethod',
                     cell: (props) => {
-                        const method = props.row.original.paymentMethod;
+                        const method = props.row.original.paymentMethod
                         const payment = paymentMethodColor[
                             method as keyof typeof paymentMethodColor
                         ] || {
                             label: method,
                             dotClass: 'bg-gray-500',
                             textClass: 'text-gray-500',
-                        };
+                        }
                         return (
                             <span
                                 className={`capitalize font-semibold ${payment.textClass}`}
                             >
                                 {payment.label}
                             </span>
-                        );
+                        )
                     },
                 },
-                commonColumns[2], // Amount
+                commonColumns[3], // Amount
                 {
                     header: 'Note',
                     accessorKey: 'remarks',
@@ -567,31 +574,40 @@ const BillTable = ({
                         <span>{props.row.original.remarks || 'N/A'}</span>
                     ),
                 },
-                commonColumns[3], // Action
-            ];
+                commonColumns[4], // Action
+            ]
         }
 
-        return commonColumns;
-    };
+        if (billType === 'commission') {
+            return [
+                commonColumns[0], // S.NO
+                commonColumns[1], // DATE
+                commonColumns[3], // Amount
+                commonColumns[4], // Action
+            ]
+        }
 
-    const columns = useMemo(() => getColumns(), [billType]);
+        return commonColumns
+    }
+
+    const columns = useMemo(() => getColumns(), [billType])
 
     const onPaginationChange = (page: number) => {
-        setPagination((prev) => ({ ...prev, page }));
-    };
+        setPagination((prev) => ({ ...prev, page }))
+    }
 
     const onSelectChange = (limit: number) => {
-        setPagination((prev) => ({ page: 1, limit }));
-    };
+        setPagination((prev) => ({ page: 1, limit }))
+    }
 
     const openDrawer = () => {
-        setIsOpen(true);
-    };
+        setIsOpen(true)
+    }
 
     const onDrawerClose = (e: MouseEvent) => {
-        console.log('onDrawerClose', e);
-        setIsOpen(false);
-    };
+        console.log('onDrawerClose', e)
+        setIsOpen(false)
+    }
 
     const handleResetAll = () => {
         setFilters({
@@ -601,16 +617,16 @@ const BillTable = ({
             shop: '',
             vehicleNo: '',
             paymentMethod: '',
-        });
-        setSearchTerm('');
-        setMonth(new Date().getMonth() + 1);
-        setYear(new Date().getFullYear());
-        setPagination({ page: 1, limit: 10 });
-        tableRef.current?.resetSorting?.();
-    };
+        })
+        setSearchTerm('')
+        setMonth(new Date().getMonth() + 1)
+        setYear(new Date().getFullYear())
+        setPagination({ page: 1, limit: 10 })
+        tableRef.current?.resetSorting?.()
+    }
 
     const handleExport = async () => {
-        setIsExporting(true);
+        setIsExporting(true)
         try {
             const blob = await exportBillToExcel({
                 page: pagination.page,
@@ -625,28 +641,31 @@ const BillTable = ({
                 shop: filters.shop,
                 vehicle: filters.vehicleNo,
                 paymentMethod: filters.paymentMethod,
-            });
+            })
 
             // Generate filename with current date and bill type
-            const filename = `bills_${billType}_${dayjs().format('YYYY-MM-DD')}.xlsx`;
-            
+            const filename = `bills_${billType}_${dayjs().format(
+                'YYYY-MM-DD',
+            )}.xlsx`
+
             // Use file-saver to download the file
-            saveAs(blob, filename);
+            saveAs(blob, filename)
         } catch (error) {
-            console.error('Error exporting bills:', error);
+            console.error('Error exporting bills:', error)
             // You might want to show a toast notification here
         } finally {
-            setIsExporting(false);
+            setIsExporting(false)
         }
-    };
+    }
 
     useEffect(() => {
-        const selectedMonthName = months.find(m => m.value === month)?.label || '';
-        onDropdownSelect(selectedMonthName);
-    }, [month, onDropdownSelect]);
+        const selectedMonthName =
+            months.find((m) => m.value === month)?.label || ''
+        onDropdownSelect(selectedMonthName)
+    }, [month, onDropdownSelect])
 
     if (error) {
-        return <div>Error loading bills: {(error as Error).message}</div>;
+        return <div>Error loading bills: {(error as Error).message}</div>
     }
 
     return (
@@ -662,12 +681,12 @@ const BillTable = ({
                         className="p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
                         value={month}
                         onChange={(e) => {
-                            const selectedValue = Number(e.target.value);
+                            const selectedValue = Number(e.target.value)
                             const selectedLabel =
                                 months.find((m) => m.value === selectedValue)
-                                    ?.label || '';
-                            setMonth(selectedValue);
-                            onDropdownSelect(selectedLabel);
+                                    ?.label || ''
+                            setMonth(selectedValue)
+                            onDropdownSelect(selectedLabel)
                         }}
                     >
                         {months.map((m) => (
@@ -698,7 +717,11 @@ const BillTable = ({
                     <button
                         onClick={handleExport}
                         disabled={isExporting}
-                        className={`p-2 ${isExporting ? 'text-gray-400' : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'}`}
+                        className={`p-2 ${
+                            isExporting
+                                ? 'text-gray-400'
+                                : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
+                        }`}
                         title={isExporting ? 'Exporting...' : 'Export bills'}
                     >
                         <HiOutlineDownload size={18} />
@@ -742,7 +765,7 @@ const BillTable = ({
                 onApplyFilters={handleApplyFilters}
             />
         </>
-    );
-};
+    )
+}
 
-export default BillTable;
+export default BillTable

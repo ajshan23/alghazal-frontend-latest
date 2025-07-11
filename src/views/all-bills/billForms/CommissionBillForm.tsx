@@ -19,6 +19,7 @@ type InitialData = {
     billType?: string
     billDate?: string
     amount: number | string
+    paymentMethod?: string
 }
 
 export type FormModel = InitialData
@@ -37,6 +38,13 @@ type CommissionBillFormProps = {
     ) => Promise<any>
 }
 
+const paymentMethodOptions = [
+    { label: 'ADVANCE', value: 'advance' },
+    { label: 'ADIB', value: 'adib' },
+    { label: 'Cash', value: 'cash' },
+    { label: 'MASHREQ CARD', value: 'masherq_card' },
+]
+
 const CommissionBillForm = forwardRef<FormikRef, CommissionBillFormProps>((props, ref) => {
     const {
         type,
@@ -44,6 +52,7 @@ const CommissionBillForm = forwardRef<FormikRef, CommissionBillFormProps>((props
             billType: 'commission',
             billDate: new Date().toISOString().split('T')[0],
             amount: '',
+            paymentMethod: 'cash',
         },
         onFormSubmit,
         onDiscard,
@@ -55,6 +64,7 @@ const CommissionBillForm = forwardRef<FormikRef, CommissionBillFormProps>((props
         amount: Yup.number()
             .typeError('Amount must be a number')
             .required('Amount is required'),
+        paymentMethod: Yup.string().required('Payment method is required'),
     })
 
     return (
@@ -65,6 +75,7 @@ const CommissionBillForm = forwardRef<FormikRef, CommissionBillFormProps>((props
                 billType: initialData.billType || 'commission',
                 billDate: initialData.billDate || new Date().toISOString().split('T')[0],
                 amount: initialData.amount ?? '',
+                paymentMethod: initialData.paymentMethod || 'cash',
             }}
             validationSchema={validationSchema}
             onSubmit={async (values, { setSubmitting }) => {
@@ -72,6 +83,7 @@ const CommissionBillForm = forwardRef<FormikRef, CommissionBillFormProps>((props
                 formData.append('billType', values.billType)
                 formData.append('billDate', values.billDate)
                 formData.append('amount', values.amount.toString())
+                formData.append('paymentMethod', values.paymentMethod)
 
                 await onFormSubmit(formData, setSubmitting)
             }}
@@ -141,6 +153,26 @@ const CommissionBillForm = forwardRef<FormikRef, CommissionBillFormProps>((props
                                                         {...field}
                                                         onChange={(e) =>
                                                             form.setFieldValue(field.name, e.target.value)
+                                                        }
+                                                    />
+                                                )}
+                                            </Field>
+                                        </FormItem>
+
+                                        <FormItem
+                                            label="Payment Method"
+                                            invalid={!!errors.paymentMethod && touched.paymentMethod}
+                                            errorMessage={errors.paymentMethod as string}
+                                        >
+                                            <Field name="paymentMethod">
+                                                {({ field, form }: FieldProps) => (
+                                                    <Select
+                                                        options={paymentMethodOptions}
+                                                        value={paymentMethodOptions.find(
+                                                            (option) => option.value === field.value
+                                                        )}
+                                                        onChange={(option) =>
+                                                            form.setFieldValue(field.name, option?.value)
                                                         }
                                                     />
                                                 )}

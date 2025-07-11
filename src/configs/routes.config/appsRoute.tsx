@@ -400,7 +400,12 @@ const appsRoute: Routes = [
         component: lazy(() => import('@/views/all-bills/newBills/NewComBill')),
         authority: [ADMIN, USER,SUPERADMIN],
     },
-    
+    {
+        key: 'apps.commissionBillView', 
+        path: `${APP_PREFIX_PATH}/new-commission-bill/:id`,
+        component: lazy(() => import('@/views/all-bills/newBills/NewComBill')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
    
     
     

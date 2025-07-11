@@ -221,7 +221,7 @@ const InvoiceContent = () => {
                             <br />
                             GRN Number: {data.vendee.grnNumber}
                             <br />
-                            Supplier No.: {data.vendee.supplierNumber}
+                            LPO No.: {data.vendee.supplierNumber}
                             <br />
                             Service Period: {data.vendee.servicePeriod}
                         </p>
