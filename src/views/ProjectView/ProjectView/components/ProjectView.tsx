@@ -122,8 +122,6 @@ const DocumentCard = ({
               <Avatar 
                 size={40} 
                 icon={getDocumentIcon()}
-                className="bg-gray-100 dark:bg-gray-600 p-2"
-                shape="square"
               />
               <h6 className="font-bold text-gray-800 dark:text-gray-100">{data.title}</h6>
             </div>
