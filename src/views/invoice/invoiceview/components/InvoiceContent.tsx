@@ -9,7 +9,8 @@ import { useAppSelector } from '@/store';
 import dayjs from 'dayjs';
 import { fetchInvoiceData, downloadInvoicePdf } from '../../api/api';
 import ContentTable from './ContentTable';
-
+import GrnModal from './GrnModal';
+                                    
 type InvoiceData = {
     _id: string;
     invoiceNumber: string;
@@ -64,6 +65,7 @@ const InvoiceContent = () => {
     const [data, setData] = useState<InvoiceData | null>(null);
     const [error, setError] = useState<string | null>(null);
     const [pdfLoading, setPdfLoading] = useState(false);
+    const [openModal, setOpenModal] = useState(false);
     const { projectId } = useParams();
 
     const fetchData = async () => {
@@ -142,6 +144,14 @@ const InvoiceContent = () => {
         }
     };
 
+    const openGrnModal = () => {
+        setOpenModal(true);
+    }
+    
+    const closeGrnModal = () => {
+        setOpenModal(false);
+    }
+
     if (error) {
         return (
             <div className="p-4 text-center text-red-500">
@@ -193,11 +203,7 @@ const InvoiceContent = () => {
                             <br />
                             {data.vendee.address}
                             <br />
-                            PB {data.vendee.poBox}
-                            <br />
                             Phone: {data.vendee.phone}
-                            <br />
-                            Fax: {data.vendee.fax}
                             <br />
                             TRN#: {data.vendee.trn}
                         </p>
@@ -247,7 +253,14 @@ const InvoiceContent = () => {
                 </div> */}
             </div>
 
-            <div className="print:hidden mt-6 flex items-center justify-end">
+            <div className="print:hidden mt-6 flex items-center justify-end gap-2">
+                <Button 
+                    variant="solid" 
+                    onClick={openGrnModal}
+                    className="mr-2"
+                >
+                    Add GRN number
+                </Button>
                 <Button 
                     variant="solid" 
                     loading={pdfLoading}
@@ -256,6 +269,13 @@ const InvoiceContent = () => {
                     {pdfLoading ? 'Generating PDF...' : 'Download Invoice'}
                 </Button>
             </div>
+            <GrnModal
+                isOpen={openModal}
+                onClose={closeGrnModal}
+                projectId={projectId}
+                number={data.vendee.grnNumber}
+                refetch={fetchData}
+            />
         </div>
     );
 };

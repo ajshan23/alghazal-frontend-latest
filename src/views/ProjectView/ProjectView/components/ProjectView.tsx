@@ -19,7 +19,13 @@ import {
   HiOutlineUserAdd,
   HiOutlineCheckCircle,
   HiOutlineXCircle,
-  HiOutlineCalendar
+  HiOutlineCalendar,
+  HiOutlineDocumentText, // For Estimation
+  HiOutlineDocumentReport, // For Quotation
+  HiOutlineClipboardList, // For LPO
+  HiOutlineClipboardCheck, // For Work Progress
+  HiOutlineReceiptTax, // For Invoice
+  HiOutlineCash // For Expense Tracker
 } from 'react-icons/hi';
 import { NumericFormat } from 'react-number-format';
 import dayjs from 'dayjs';
@@ -43,7 +49,6 @@ interface Document {
   amount?: number;
   date?: string;
   status?: string;
-  icon: string;
   exists: boolean;
   route: string;
   viewRoute?: string;
@@ -60,6 +65,25 @@ const DocumentCard = ({
   const { textTheme } = useThemeClass();
   const navigate = useNavigate();
   const { id } = useParams();
+
+  const getDocumentIcon = () => {
+    switch(data.type) {
+      case 'estimation':
+        return <HiOutlineDocumentText className="text-2xl" />;
+      case 'quotation':
+        return <HiOutlineDocumentReport className="text-2xl" />;
+      case 'lpo':
+        return <HiOutlineClipboardList className="text-2xl" />;
+      case 'workProgress':
+        return <HiOutlineClipboardCheck className="text-2xl" />;
+      case 'invoice':
+        return <HiOutlineReceiptTax className="text-2xl" />;
+      case 'expenseTracker':
+        return <HiOutlineCash className="text-2xl" />;
+      default:
+        return <HiOutlineDocumentText className="text-2xl" />;
+    }
+  };
 
   const handleClick = () => {
     if (data.exists) {
@@ -97,7 +121,7 @@ const DocumentCard = ({
             <div className="flex items-center gap-3">
               <Avatar 
                 size={40} 
-                src={data.icon} 
+                icon={getDocumentIcon()}
                 className="bg-gray-100 dark:bg-gray-600 p-2"
                 shape="square"
               />
@@ -551,7 +575,6 @@ const ProjectView = () => {
             route: `/app/create-estimation/${id}`,
             viewRoute: hasEstimation ? `/app/estimation-view/${data.data.estimationId}` : undefined,
             exists: hasEstimation,
-            icon: '/img/document-icons/estimation.png',
             roles: ['finance', 'super_admin', 'admin', 'engineer'],
           }
         ];
@@ -565,7 +588,6 @@ const ProjectView = () => {
             route: `/app/quotation-new/${id}`,
             viewRoute: hasQuotation ? `/app/quotation-view/${id}` : undefined,
             exists: hasQuotation,
-            icon: '/img/document-icons/quotation.png',
             roles: ['finance', 'super_admin', 'admin'],
           });
         }
@@ -577,7 +599,6 @@ const ProjectView = () => {
             route: `/app/lpo/${id}`,
             exists: hasLPO,
             viewRoute: hasLPO ? `/app/lpo-view/${id}` : undefined,
-            icon: '/img/document-icons/lpo.png',
             roles: ['finance', 'super_admin', 'admin'],
           });
         }
@@ -589,7 +610,6 @@ const ProjectView = () => {
             route: hasWorkProgress ? undefined : '/app/workprogress',
             viewRoute: hasWorkProgress ? `/app/workprogress/${id}` : undefined,
             exists: hasWorkProgress,
-            icon: '/img/document-icons/report.png',
             roles: ['finance', 'super_admin', 'admin', 'engineer'],
           });
         }
@@ -600,7 +620,6 @@ const ProjectView = () => {
             title: 'Completion Report',
             viewRoute: `/app/workcompletionreport/${id}`,
             exists: true,
-            icon: '/img/document-icons/completion.png',
             roles: ['finance', 'super_admin', 'admin', 'engineer'],
           });
         }
@@ -611,7 +630,6 @@ const ProjectView = () => {
             title: 'Invoice',
             viewRoute: id ? `/app/invoice-view/${id}` : undefined,
             exists: id,
-            icon: '/img/document-icons/invoice.png',
             roles: ['finance', 'super_admin', 'admin'],
           });
         }
@@ -623,7 +641,6 @@ const ProjectView = () => {
             route: `/app/expense/${id}`,
             viewRoute: `/app/expense-view/${data?.data?.expenseId}`,
             exists: hasExpenseTracker,
-            icon: '/img/document-icons/expense.png',
             roles: ['finance', 'super_admin', 'admin'],
           });
         }
