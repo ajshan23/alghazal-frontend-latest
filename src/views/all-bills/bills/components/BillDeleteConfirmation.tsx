@@ -2,9 +2,9 @@ import { FC, useState } from 'react'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import toast from '@/components/ui/toast'
 import Notification from '@/components/ui/Notification'
-import { deleteBill } from '../../api/api';
+import { deleteAdibReportAndExpenses, deleteBill } from '../../api/api';
 
-type BillType = "general" | "fuel" | "mess" | "vehicle" | "accommodation";
+type BillType = "general" | "fuel" | "mess" | "vehicle" | "accommodation" | "adib" | "expense";
 
 type DeleteProps = {
     isOpen: boolean
@@ -37,7 +37,7 @@ const BillDeleteConfirmation: FC<DeleteProps> = ({
     if (!isOpen || !bill) return null
 
     const getTitle = () => {
-        switch (bill.billType) {
+        switch (bill.billType||bill.reportType) {
             case 'general':
                 return `Delete General Bill ${bill.invoiceNo ? `#${bill.invoiceNo}` : ''}`
             case 'fuel':
@@ -48,13 +48,17 @@ const BillDeleteConfirmation: FC<DeleteProps> = ({
                 return `Delete Vehicle Bill ${bill.vehicle?.vehicleNumber ? `(Vehicle ${bill.vehicle.vehicleNumber})` : ''}`
             case 'accommodation':
                 return `Delete Accommodation Bill ${bill.accommodation?.location ? `(${bill.accommodation.location})` : ''}`
+            case 'adib':
+                return `Delete Adib Report`
+            case 'expense':
+                return `Delete Expense Report`
             default:
                 return 'Delete Bill'
         }
     }
 
     const getDescription = () => {
-        switch (bill.billType) {
+        switch (bill.billType||bill.reportType) {
             case 'general':
                 return `Are you sure you want to delete this general bill${bill.invoiceNo ? ` (Invoice #${bill.invoiceNo})` : ''}? This action cannot be undone.`
             case 'fuel':
@@ -65,6 +69,10 @@ const BillDeleteConfirmation: FC<DeleteProps> = ({
                 return `Are you sure you want to delete this vehicle bill${bill.vehicle?.vehicleNumber ? ` for vehicle ${bill.vehicle.vehicleNumber}` : ''}? This action cannot be undone.`
             case 'accommodation':
                 return `Are you sure you want to delete this accommodation bill${bill.accommodation?.location ? ` for ${bill.accommodation.location}` : ''}? This action cannot be undone.`
+            case 'adib':
+                return `Are you sure you want to delete this adib report? This action cannot be undone.`
+            case 'expense':
+                return `Are you sure you want to delete this expense report? This action cannot be undone.`
             default:
                 return 'Are you sure you want to delete this bill? This action cannot be undone.'
         }
@@ -73,7 +81,7 @@ const BillDeleteConfirmation: FC<DeleteProps> = ({
     const handleDelete = async () => {
         setIsDeleting(true)
         try {
-            await deleteBill(bill._id)
+            await bill.billType ? deleteBill(bill._id) : deleteAdibReportAndExpenses(bill._id)
             refetch()
             toast.push(
                 <Notification
@@ -81,7 +89,7 @@ const BillDeleteConfirmation: FC<DeleteProps> = ({
                     type="success"
                     duration={2500}
                 >
-                    The bill has been successfully deleted.
+                   {bill.billType ? "The bill has been successfully deleted." : "The report has been successfully deleted."}
                 </Notification>,
                 { placement: 'top-center' }
             )

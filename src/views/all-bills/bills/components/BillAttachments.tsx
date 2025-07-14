@@ -11,6 +11,7 @@ interface Attachment {
 const BillAttachments = () => {
     const location = useLocation()
     const attachments = location.state?.data || []
+    const type = location.state?.type || ''
     if (attachments.length === 0) {
         return (
             <div className="flex justify-center items-center h-64">
@@ -24,7 +25,7 @@ const BillAttachments = () => {
             <AdaptableCard>
                 <div className="flex items-center gap-3 mb-6">
                     <HiOutlinePaperClip className="text-2xl text-amber-500" />
-                    <h3 className="text-xl font-semibold">Bill Attachments</h3>
+                    <h3 className="text-xl font-semibold">{type === 'bill' ? 'Bill Attachments' : 'Report Attachments'}</h3>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

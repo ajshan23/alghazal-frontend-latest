@@ -24,7 +24,7 @@ const appsNavigationConfig: NavigationTree[] = [
                 path: '',
                 title: 'Staff',
                 translateKey: 'nav.appsUsers.users',
-                icon: 'crm',
+                icon: 'staff',
                 type: NAV_ITEM_TYPE_COLLAPSE,
                 authority: [ADMIN, USER,SUPERADMIN],
                 subMenu: [
@@ -50,7 +50,7 @@ const appsNavigationConfig: NavigationTree[] = [
                 path: '',
                 title: 'Attandance',
                 translateKey: 'nav.attandance.Attandance',
-                icon: 'crm',
+                icon: 'attendance',
                 type: NAV_ITEM_TYPE_COLLAPSE,
                 authority: [ADMIN, SUPERADMIN],
                 subMenu: [

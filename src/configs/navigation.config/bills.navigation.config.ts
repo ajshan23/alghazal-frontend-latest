@@ -22,7 +22,7 @@ const billsNavigationConfig: NavigationTree[] = [
                 path: `${APP_PREFIX_PATH}/shop-view`,
                 title: 'Shops Details',
                 translateKey: 'Dashboard',
-                icon: 'crm',
+                icon: 'shop',
                 type: NAV_ITEM_TYPE_ITEM,
                 authority: [ADMIN, USER, SUPERADMIN],
                 subMenu: [],
@@ -32,7 +32,7 @@ const billsNavigationConfig: NavigationTree[] = [
                 path: `${APP_PREFIX_PATH}/cat-view`,
                 title: 'Categories',
                 translateKey: 'Dashboard',
-                icon: 'crm',
+                icon: 'categories',
                 type: NAV_ITEM_TYPE_ITEM,
                 authority: [ADMIN, USER, SUPERADMIN],
                 subMenu: [],
@@ -42,7 +42,7 @@ const billsNavigationConfig: NavigationTree[] = [
                 path: `${APP_PREFIX_PATH}/vehicle-view`,
                 title: 'Vehicle',
                 translateKey: 'Dashboard',
-                icon: 'crm',
+                icon: 'vehicles',
                 type: NAV_ITEM_TYPE_ITEM,
                 authority: [ADMIN, USER, SUPERADMIN],
                 subMenu: [],
@@ -121,6 +121,37 @@ const billsNavigationConfig: NavigationTree[] = [
             },
         ],
     },
+    {
+        key: 'bills',
+        path: '',
+        title: 'Reports',
+        translateKey: 'bills',
+        icon: 'report', // Changed from 'hr' to 'report' or use an appropriate icon name
+        type: NAV_ITEM_TYPE_COLLAPSE,
+        authority: [ADMIN, SUPERADMIN],
+        subMenu: [
+            {
+                key: 'reports.adib',
+                path: `${APP_PREFIX_PATH}/adib-report-view`,
+                title: 'ADIB Report',
+                translateKey: 'nav.reports.adib',
+                icon: 'document', // Add an appropriate icon
+                type: NAV_ITEM_TYPE_ITEM,
+                authority: [ADMIN, SUPERADMIN],
+                subMenu: [],
+            },
+            {
+                key: 'reports.expense',
+                path: `${APP_PREFIX_PATH}/expense-report-view`,
+                title: 'Expense Report',
+                translateKey: 'nav.reports.expense',
+                icon: 'document', // Add an appropriate icon
+                type: NAV_ITEM_TYPE_ITEM,
+                authority: [ADMIN, SUPERADMIN],
+                subMenu: [],
+            },
+        ],
+    }
 ]
 
 export default billsNavigationConfig
