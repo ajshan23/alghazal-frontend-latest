@@ -180,7 +180,9 @@ const BillFilterDrawer: React.FC<BillFilterDrawerProps> = ({
                         {(billType === 'general' ||
                             billType === 'mess' ||
                             billType === 'accommodation' ||
-                            billType === 'vehicle') && (
+                            billType === 'vehicle' ||
+                            billType === 'adib'
+                        ) && (
                             <FormItem label="Shop Name">
                                 <Field name="shop">
                                     {({ field, form }: FieldProps) => (
@@ -204,7 +206,7 @@ const BillFilterDrawer: React.FC<BillFilterDrawerProps> = ({
                         )}
 
                         {/* Category */}
-                        {billType === 'general' && (
+                        {billType === 'general' || billType === 'adib' && (
                             <FormItem label="Category">
                                 <Field name="category">
                                     {({ field, form }: FieldProps) => (

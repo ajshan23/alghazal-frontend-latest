@@ -23,6 +23,12 @@ import {
     HiOutlineShare,
     HiOutlineVariable,
     HiOutlineCode,
+    HiOutlineTruck,
+    HiOutlineShoppingCart,
+    HiOutlineClipboardList,
+    HiOutlineBriefcase,
+    HiOutlineIdentification,
+    HiOutlineUsers,
 } from 'react-icons/hi'
 import type { JSX } from 'react'
 
@@ -56,6 +62,14 @@ const navigationIcon: NavigationIcons = {
     sharedComponentDoc: <HiOutlineShare />,
     utilsDoc: <HiOutlineVariable />,
     changeLog: <HiOutlineCode />,
+    report: <HiOutlineDocumentText />,
+    vehicles: <HiOutlineTruck />,  
+shop: <HiOutlineShoppingCart/>,
+categories: <HiOutlineViewGridAdd />,
+attendance: <HiOutlineClipboardList/>,  
+project: <HiOutlineBriefcase />,  
+staff: <HiOutlineIdentification />,  
+client: <HiOutlineUsers />,  
 }
 
 export default navigationIcon

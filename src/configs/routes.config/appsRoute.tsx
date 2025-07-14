@@ -406,8 +406,43 @@ const appsRoute: Routes = [
         component: lazy(() => import('@/views/all-bills/newBills/NewComBill')),
         authority: [ADMIN, USER,SUPERADMIN],
     },
+   {
+    key: 'apps.adibReportView',
+    path: `${APP_PREFIX_PATH}/adib-report-view`,
+    component: lazy(() => import('@/views/all-bills/bills/AdibReportList')),
+    authority: [ADMIN, USER,SUPERADMIN],
+   },
+   {
+    key: 'apps.adibReportView', 
+    path: `${APP_PREFIX_PATH}/new-adib-report`,
+    component: lazy(() => import('@/views/all-bills/newBills/NewAdibReport')),
+    authority: [ADMIN, USER,SUPERADMIN],
+   },
+   {
+    key: 'apps.adibReportView', 
+    path: `${APP_PREFIX_PATH}/new-adib-report/:id`,
+    component: lazy(() => import('@/views/all-bills/newBills/NewAdibReport')),
+    authority: [ADMIN, USER,SUPERADMIN],
+   },
+   {
+    key: 'apps.expenseReportView',
+    path: `${APP_PREFIX_PATH}/expense-report-view`,
+    component: lazy(() => import('@/views/all-bills/bills/ExpenseReportList')),
+    authority: [ADMIN, USER,SUPERADMIN],
+   },
+   {
+    key: 'apps.expenseReportView',
+    path: `${APP_PREFIX_PATH}/new-expense-report`,
+    component: lazy(() => import('@/views/all-bills/newBills/NewExpenseReport')),
+    authority: [ADMIN, USER,SUPERADMIN],
+   },
    
-    
+    {
+        key: 'apps.expenseReportView',
+        path: `${APP_PREFIX_PATH}/new-expense-report/:id`,
+        component: lazy(() => import('@/views/all-bills/newBills/NewExpenseReport')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
     
     
 ]
