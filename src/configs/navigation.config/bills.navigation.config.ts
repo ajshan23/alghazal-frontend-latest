@@ -1,0 +1,157 @@
+import { APP_PREFIX_PATH } from '@/constants/route.constant'
+import {
+    NAV_ITEM_TYPE_TITLE,
+    NAV_ITEM_TYPE_COLLAPSE,
+    NAV_ITEM_TYPE_ITEM,
+} from '@/constants/navigation.constant'
+import { ADMIN, USER, SUPERADMIN } from '@/constants/roles.constant'
+import type { NavigationTree } from '@/@types/navigation'
+
+const billsNavigationConfig: NavigationTree[] = [
+    {
+        key: 'bills',
+        path: '',
+        title: 'Bills',
+        translateKey: 'bills',
+        icon: 'bills',
+        type: NAV_ITEM_TYPE_TITLE,
+        authority: [ADMIN, USER, SUPERADMIN],
+        subMenu: [
+            {
+                key: 'bills.dashboard',
+                path: `${APP_PREFIX_PATH}/shop-view`,
+                title: 'Shops Details',
+                translateKey: 'Dashboard',
+                icon: 'shop',
+                type: NAV_ITEM_TYPE_ITEM,
+                authority: [ADMIN, USER, SUPERADMIN],
+                subMenu: [],
+            },
+             {
+                key: 'cate.dashboard',
+                path: `${APP_PREFIX_PATH}/cat-view`,
+                title: 'Categories',
+                translateKey: 'Dashboard',
+                icon: 'categories',
+                type: NAV_ITEM_TYPE_ITEM,
+                authority: [ADMIN, USER, SUPERADMIN],
+                subMenu: [],
+            },
+             {
+                key: 'vehicle.dashboard',
+                path: `${APP_PREFIX_PATH}/vehicle-view`,
+                title: 'Vehicle',
+                translateKey: 'Dashboard',
+                icon: 'vehicles',
+                type: NAV_ITEM_TYPE_ITEM,
+                authority: [ADMIN, USER, SUPERADMIN],
+                subMenu: [],
+            },
+            {
+                key: 'bills.clients',
+                path: '',
+                title: 'Bills',
+                translateKey: 'nav.billsClients.clients',
+                icon: 'project',
+                type: NAV_ITEM_TYPE_COLLAPSE,
+                authority: [ADMIN, USER, SUPERADMIN],
+                subMenu: [
+               
+                    {
+                        key: 'bills.clients.general',
+                        path: `${APP_PREFIX_PATH}/bill-view`,
+                        title: 'General Bills',
+                        translateKey: 'nav.billsClients.general',
+                        icon: '',
+                        type: NAV_ITEM_TYPE_ITEM,
+                        authority: [ADMIN, SUPERADMIN],
+                        subMenu: [],
+                    },
+                       {
+                        key: 'bills.clients.mess',
+                        path: `${APP_PREFIX_PATH}/mess-bill-view`,
+                        title: 'Mess Bills',
+                        translateKey: 'nav.billsClients.mess',
+                        icon: '',
+                        type: NAV_ITEM_TYPE_ITEM,
+                        authority: [ADMIN, SUPERADMIN],
+                        subMenu: [],
+                    },
+                       {
+                        key: 'bills.clients.acc',
+                        path: `${APP_PREFIX_PATH}/acc-bill-view`,
+                        title: 'Accommodation Bills',
+                        translateKey: 'nav.billsClients.acc',
+                        icon: '',
+                        type: NAV_ITEM_TYPE_ITEM,
+                        authority: [ADMIN, SUPERADMIN],
+                        subMenu: [],
+                    },
+                    {
+                        key: 'bills.clients.fuel',
+                        path: `${APP_PREFIX_PATH}/fuel-bill-view`,
+                        title: 'Fuel Bills',
+                        translateKey: 'nav.billsClients.fuel',
+                        icon: '',
+                        type: NAV_ITEM_TYPE_ITEM,
+                        authority: [ADMIN, SUPERADMIN],
+                        subMenu: [],
+                    },
+                        {
+                            key: 'bills.clients.vehicles',
+                            path: `${APP_PREFIX_PATH}/vehicle-bill-view`,
+                            title: 'Vehicle Bills',
+                            translateKey: 'nav.billsClients.vehicles',
+                            icon: '',
+                            type: NAV_ITEM_TYPE_ITEM,
+                            authority: [ADMIN, SUPERADMIN],
+                            subMenu: [],
+                        },
+                        {
+                            key: 'bills.clients.commission',
+                            path: `${APP_PREFIX_PATH}/commission-bill-view`,
+                            title: 'Commission Bills',
+                            translateKey: 'nav.billsClients.commission',
+                            icon: '',
+                            type: NAV_ITEM_TYPE_ITEM,
+                            authority: [ADMIN, SUPERADMIN],
+                            subMenu: [],
+                        },
+                ],
+            },
+        ],
+    },
+    {
+        key: 'bills',
+        path: '',
+        title: 'Reports',
+        translateKey: 'bills',
+        icon: 'report', // Changed from 'hr' to 'report' or use an appropriate icon name
+        type: NAV_ITEM_TYPE_COLLAPSE,
+        authority: [ADMIN, SUPERADMIN],
+        subMenu: [
+            {
+                key: 'reports.adib',
+                path: `${APP_PREFIX_PATH}/adib-report-view`,
+                title: 'ADIB Report',
+                translateKey: 'nav.reports.adib',
+                icon: 'document', // Add an appropriate icon
+                type: NAV_ITEM_TYPE_ITEM,
+                authority: [ADMIN, SUPERADMIN],
+                subMenu: [],
+            },
+            {
+                key: 'reports.expense',
+                path: `${APP_PREFIX_PATH}/expense-report-view`,
+                title: 'Expense Report',
+                translateKey: 'nav.reports.expense',
+                icon: 'document', // Add an appropriate icon
+                type: NAV_ITEM_TYPE_ITEM,
+                authority: [ADMIN, SUPERADMIN],
+                subMenu: [],
+            },
+        ],
+    }
+]
+
+export default billsNavigationConfig

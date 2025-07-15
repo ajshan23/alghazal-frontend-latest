@@ -90,7 +90,7 @@ const appsNavigationConfig: NavigationTree[] = [
                 path: '',
                 title: 'Clients',
                 translateKey: 'nav.appsClients.clients',
-                icon: 'crm',
+                icon: 'client',
                 type: NAV_ITEM_TYPE_COLLAPSE,
                 authority: [ADMIN, USER,SUPERADMIN],
                 subMenu: [
@@ -134,7 +134,7 @@ const appsNavigationConfig: NavigationTree[] = [
                 path: '',
                 title: 'Project',
                 translateKey: 'nav.appsProjectNew.project',
-                icon: 'crm',
+                icon: 'project',
                 type: NAV_ITEM_TYPE_COLLAPSE,
                 authority: [ADMIN, USER,SUPERADMIN,ENGINEER],
                 subMenu: [

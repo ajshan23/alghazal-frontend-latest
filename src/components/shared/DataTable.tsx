@@ -49,6 +49,7 @@ type DataTableProps<T> = {
         pageIndex: number
         pageSize: number
     }
+    totalAmount?: number | string // Added totalAmount prop
 }
 
 type CheckBoxChangeEvent = ChangeEvent<HTMLInputElement>
@@ -123,6 +124,7 @@ function _DataTable<T>(
             pageIndex: 1,
             pageSize: 10,
         },
+        totalAmount,
     } = props
 
     const { pageSize, pageIndex, total } = pagingData
@@ -275,11 +277,6 @@ function _DataTable<T>(
                                                         .header,
                                                     header.getContext(),
                                                 )}
-                                                {header.column.getCanSort() && (
-                                                    <Sorter
-                                                        sort={header.column.getIsSorted()}
-                                                    />
-                                                )}
                                             </div>
                                         )}
                                     </Th>
@@ -290,7 +287,6 @@ function _DataTable<T>(
                 </THead>
                 {loading && data.length === 0 ? (
                     <TableRowSkeleton
-                        // eslint-disable-next-line  @typescript-eslint/no-explicit-any
                         columns={(finalColumns as Array<T>).length}
                         rows={pagingData.pageSize}
                         avatarInColumns={skeletonAvatarColumns}
@@ -298,49 +294,97 @@ function _DataTable<T>(
                     />
                 ) : (
                     <TBody>
-                        {table
-                            .getRowModel()
-                            .rows.slice(0, pageSize)
-                            .map((row) => {
-                                return (
-                                    <Tr key={row.id}>
-                                        {row.getVisibleCells().map((cell) => {
-                                            return (
-                                                <Td key={cell.id}>
-                                                    {flexRender(
-                                                        cell.column.columnDef
-                                                            .cell,
-                                                        cell.getContext(),
-                                                    )}
-                                                </Td>
-                                            )
-                                        })}
-                                    </Tr>
-                                )
-                            })}
+                        {data.length === 0 ? (
+                            <Tr>
+                                <Td 
+                                    colSpan={finalColumns.length} 
+                                    className="text-center py-8"
+                                >
+                                    <div className="flex flex-col items-center justify-center">
+                                        <span className="text-lg font-semibold text-gray-500 dark:text-gray-400">
+                                            No data found
+                                        </span>
+                                        {!loading && (
+                                            <span className="text-sm text-gray-400 dark:text-gray-500">
+                                                There are no records to display
+                                            </span>
+                                        )}
+                                    </div>
+                                </Td>
+                            </Tr>
+                        ) : (
+                            table
+                                .getRowModel()
+                                .rows.slice(0, pageSize)
+                                .map((row) => {
+                                    return (
+                                        <Tr key={row.id}>
+                                            {row.getVisibleCells().map((cell) => {
+                                                return (
+                                                    <Td key={cell.id}>
+                                                        {flexRender(
+                                                            cell.column.columnDef
+                                                                .cell,
+                                                            cell.getContext(),
+                                                        )}
+                                                    </Td>
+                                                )
+                                            })}
+                                        </Tr>
+                                    )
+                                })
+                        )}
                     </TBody>
                 )}
             </Table>
-            <div className="flex items-center justify-between mt-4">
-                <Pagination
-                    pageSize={pageSize}
-                    currentPage={pageIndex}
-                    total={total}
-                    onChange={handlePaginationChange}
-                />
-                <div style={{ minWidth: 130 }}>
-                    <Select
-                        size="sm"
-                        menuPlacement="top"
-                        isSearchable={false}
-                        value={pageSizeOption.filter(
-                            (option) => option.value === pageSize,
-                        )}
-                        options={pageSizeOption}
-                        onChange={(option) => handleSelectChange(option?.value)}
-                    />
+            
+            {data.length > 0 && (
+                <div className="space-y-2 mt-4">
+                    {totalAmount !== undefined && (
+                       <div className="flex justify-end mb-2">
+                       <div className="bg-gray-50 dark:bg-gray-700 px-3 py-2 rounded-md border border-gray-200 dark:border-gray-600 inline-flex items-center">
+                           <span className="font-medium text-gray-700 dark:text-gray-200 mr-2">
+                               Total Amount:
+                           </span>
+                           <span className="font-semibold text-gray-900 dark:text-white">
+                               {typeof totalAmount === 'number' 
+                                   ? totalAmount.toLocaleString(undefined, {
+                                       minimumFractionDigits: 2,
+                                       maximumFractionDigits: 2
+                                     })
+                                   : totalAmount || 'N/A'}
+                           </span>
+                       </div>
+                   </div>
+                    )}
+                    <div className="flex items-center justify-between">
+                        <Pagination
+                            pageSize={pageSize}
+                            currentPage={pageIndex}
+                            total={total}
+                            onChange={handlePaginationChange}
+                        />
+                        <div className="flex items-center gap-4">
+                            <div className="text-sm text-gray-500 dark:text-gray-400 hidden sm:block">
+                                Showing {(pageIndex - 1) * pageSize + 1} to{' '}
+                                {Math.min(pageIndex * pageSize, total)} entries
+                            </div>
+                            <div style={{ minWidth: 130 }}>
+                                <Select
+                                    size="sm"
+                                    menuPlacement="top"
+                                    isSearchable={false}
+                                    value={pageSizeOption.filter(
+                                        (option) => option.value === pageSize,
+                                    )}
+                                    options={pageSizeOption}
+                                    onChange={(option) => handleSelectChange(option?.value)}
+                                />
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            )}
         </Loading>
     )
 }

@@ -120,12 +120,13 @@ const ActivitySection = ({ projectId, refresh = false }: { projectId: string, re
             
             const formattedComments = commentsData.map((item: any) => {
                 const user = item.user || {}
+                console.log(user,"231")
                 const userName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'Unknown User'
                 
                 return {
                     id: item._id,
                     name: userName,
-                    img: user.profileImage || '/img/avatars/thumb-1.jpg',
+img: user.profileImage ? user.profileImage : '/img/avatars/thumb-1.jpg',
                     time: item.createdAt 
                         ? new Date(item.createdAt).toLocaleString('en-US', {
                             hour: 'numeric',
