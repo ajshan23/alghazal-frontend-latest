@@ -2,9 +2,9 @@ import { FC, useState } from 'react'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import toast from '@/components/ui/toast'
 import Notification from '@/components/ui/Notification'
-import { deleteAdibReportAndExpenses, deleteBill } from '../../api/api';
+import { deleteAdibReportAndExpenses, deleteBill, deleteLabourExpensesReport, deleteProjectProfitReport } from '../../api/api';
 
-type BillType = "general" | "fuel" | "mess" | "vehicle" | "accommodation" | "adib" | "expense";
+type BillType = "general" | "fuel" | "mess" | "vehicle" | "accommodation" | "adib" | "expense" | "profit" | "labour";
 
 type DeleteProps = {
     isOpen: boolean
@@ -31,13 +31,16 @@ const BillDeleteConfirmation: FC<DeleteProps> = ({
     onClose,
     bill,
     refetch,
+    reportType
 }) => {
     const [isDeleting, setIsDeleting] = useState(false)
 
+
+    console.log(reportType,"123 reportType inn BillDeleteConfirmation")
     if (!isOpen || !bill) return null
 
     const getTitle = () => {
-        switch (bill.billType||bill.reportType) {
+        switch (bill.billType||bill.reportType||reportType) {
             case 'general':
                 return `Delete General Bill ${bill.invoiceNo ? `#${bill.invoiceNo}` : ''}`
             case 'fuel':
@@ -52,13 +55,19 @@ const BillDeleteConfirmation: FC<DeleteProps> = ({
                 return `Delete Adib Report`
             case 'expense':
                 return `Delete Expense Report`
+            case 'profit':
+                return `Delete Profit Report`
+            case 'labour':
+                return `Delete Labour Expenses Report`
             default:
                 return 'Delete Bill'
         }
     }
 
+
+    console.log(bill,"123 bill.billType inn BillDeleteConfirmation")
     const getDescription = () => {
-        switch (bill.billType||bill.reportType) {
+        switch (bill.billType||bill.reportType||reportType) {
             case 'general':
                 return `Are you sure you want to delete this general bill${bill.invoiceNo ? ` (Invoice #${bill.invoiceNo})` : ''}? This action cannot be undone.`
             case 'fuel':
@@ -73,6 +82,10 @@ const BillDeleteConfirmation: FC<DeleteProps> = ({
                 return `Are you sure you want to delete this adib report? This action cannot be undone.`
             case 'expense':
                 return `Are you sure you want to delete this expense report? This action cannot be undone.`
+            case 'profit':
+                return `Are you sure you want to delete this profit report? This action cannot be undone.`
+            case 'labour':
+                return `Are you sure you want to delete this labour expenses report? This action cannot be undone.`
             default:
                 return 'Are you sure you want to delete this bill? This action cannot be undone.'
         }
@@ -81,7 +94,7 @@ const BillDeleteConfirmation: FC<DeleteProps> = ({
     const handleDelete = async () => {
         setIsDeleting(true)
         try {
-            await bill.billType ? deleteBill(bill._id) : deleteAdibReportAndExpenses(bill._id)
+            await bill.billType ? deleteBill(bill._id) : reportType === 'profit' ? deleteProjectProfitReport(bill._id) : reportType === 'labour' ? deleteLabourExpensesReport(bill._id) : deleteAdibReportAndExpenses(bill._id)
             refetch()
             toast.push(
                 <Notification

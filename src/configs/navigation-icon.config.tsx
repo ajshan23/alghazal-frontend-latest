@@ -63,13 +63,13 @@ const navigationIcon: NavigationIcons = {
     utilsDoc: <HiOutlineVariable />,
     changeLog: <HiOutlineCode />,
     report: <HiOutlineDocumentText />,
-    vehicles: <HiOutlineTruck />,  
-shop: <HiOutlineShoppingCart/>,
-categories: <HiOutlineViewGridAdd />,
-attendance: <HiOutlineClipboardList/>,  
-project: <HiOutlineBriefcase />,  
-staff: <HiOutlineIdentification />,  
-client: <HiOutlineUsers />,  
+    vehicles: <HiOutlineTruck />,
+    shop: <HiOutlineShoppingCart />,
+    categories: <HiOutlineViewGridAdd />,
+    attendance: <HiOutlineClipboardList />,
+    project: <HiOutlineBriefcase />,
+    staff: <HiOutlineIdentification />,
+    client: <HiOutlineUsers />,
 }
 
 export default navigationIcon

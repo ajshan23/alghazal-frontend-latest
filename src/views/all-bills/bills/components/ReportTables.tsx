@@ -1,11 +1,11 @@
 import { useState, useMemo, useRef, useEffect, useCallback } from 'react'
 import DataTable from '@/components/shared/DataTable'
-import { 
-    HiOutlineEye, 
-    HiOutlinePencil, 
-    HiOutlineTrash, 
-    HiOutlineRefresh, 
-    HiOutlineDownload 
+import {
+    HiOutlineEye,
+    HiOutlinePencil,
+    HiOutlineTrash,
+    HiOutlineRefresh,
+    HiOutlineDownload,
 } from 'react-icons/hi'
 import { FiFilter } from 'react-icons/fi'
 import useThemeClass from '@/utils/hooks/useThemeClass'
@@ -17,7 +17,14 @@ import type {
 import { useQuery } from '@tanstack/react-query'
 import debounce from 'lodash/debounce'
 import Input from '@/components/ui/Input'
-import { exportReportToExcel, getAdibReportAndExpenses } from '../../api/api'
+import {
+    exportReportToExcel,
+    getAdibReportAndExpenses,
+    getProfitReport,
+    exportProfitReportToExcel,
+    getLabourExpensesReport,
+    exportEmployeeExpensesToExcel,
+} from '../../api/api'
 import moment from 'moment'
 import BillDeleteConfirmation from './BillDeleteConfirmation'
 import BillFilterDrawer from './BillFilterDrawer'
@@ -27,14 +34,18 @@ type ReportItem = {
     reportDate: string
     amount: number
     description?: string
-    category: {
+    category?: {
         name: string
     }
-    shop: {
+    shop?: {
         shopName: string
     }
     remarks: string
     attachments?: any[]
+    // Profit-specific fields
+    revenue?: number
+    expenses?: number
+    profit?: number
 }
 
 type PaginationData = {
@@ -86,11 +97,22 @@ const ActionColumn = ({ row, onDeleteClick }: ActionColumnProps) => {
     const navigate = useNavigate()
     const location = useLocation()
 
-    const reportType = location.pathname.includes('/adib-report-view') ? 'adib' : 'expense'
+    const reportType = location.pathname.includes('/adib-report-view')
+        ? 'adib'
+        : location.pathname.includes('/profit-and-loss-report-view')
+          ? 'profit'
+          : location.pathname.includes('/labour-expenses-report-view')
+            ? 'labour'
+            : location.pathname.includes('/payroll-report-view')
+            ? 'payroll'
+            : 'expense'
 
     const editPaths = {
         adib: '/app/new-adib-report',
-        expense: '/app/new-expense-report'
+        expense: '/app/new-expense-report',
+        profit: '/app/new-profit-and-loss-report',
+        labour: '/app/new-labour-expenses-report',
+        payroll: '/app/new-payroll-report',
     }
 
     const handleViewAttachments = () => {
@@ -106,12 +128,15 @@ const ActionColumn = ({ row, onDeleteClick }: ActionColumnProps) => {
 
     return (
         <div className="flex text-lg">
-            <span
-                className={`cursor-pointer p-2 hover:${textTheme}`}
-                onClick={handleViewAttachments}
-            >
-                <HiOutlineEye />
-            </span>
+            {reportType !== 'labour' && (
+                <span
+                    className={`cursor-pointer p-2 hover:${textTheme}`}
+                    onClick={handleViewAttachments}
+                >
+                    <HiOutlineEye />
+                </span>
+            )}
+
             <span
                 className={`cursor-pointer p-2 hover:${textTheme}`}
                 onClick={handleEdit}
@@ -143,7 +168,9 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
         limit: 10,
     })
     const [isDeleteOpen, setIsDeleteOpen] = useState(false)
-    const [selectedReport, setSelectedReport] = useState<ReportItem | null>(null)
+    const [selectedReport, setSelectedReport] = useState<ReportItem | null>(
+        null,
+    )
     const [isFilterOpen, setIsFilterOpen] = useState(false)
     const [filters, setFilters] = useState<FilterParams>({
         startDate: '',
@@ -152,63 +179,124 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
         shop: '',
     })
     const location = useLocation()
-    
+
     const getReportTypeFromRoute = useCallback(() => {
-        return location.pathname.includes('/adib-report-view') ? 'adib' : 'expense'
+        return location.pathname.includes('/adib-report-view')
+            ? 'adib'
+            : location.pathname.includes('/profit-and-loss-report-view')
+              ? 'profit'
+              : location.pathname.includes('/labour-expenses-report-view')
+                ? 'labour'
+                : location.pathname.includes('/payroll-report-view')
+                ? 'payroll'
+                : 'expense'
     }, [location.pathname])
-    
+
     const reportType = getReportTypeFromRoute()
+
+    console.log(reportType, '123 reportType')
 
     const handleApplyFilters = (data: FilterParams) => {
         setFilters(data)
-        setPagination(prev => ({ ...prev, page: 1 }))
+        setPagination((prev) => ({ ...prev, page: 1 }))
+    }
+    //API FOR  ALL REPORTS
+    const reportApiMap = {
+        profit: getProfitReport,
+        labour: getLabourExpensesReport,
+        default: getAdibReportAndExpenses,
     }
 
-    const { 
-        data: response, 
-        isLoading, 
-        error, 
-        refetch 
-    } = useQuery({
-        queryKey: [
-            'reports', 
-            reportType, 
-            pagination.page, 
-            pagination.limit, 
-            searchTerm, 
-            month, 
-            year,
-            filters
-        ],
-        queryFn: () => getAdibReportAndExpenses({
+    const buildReportParams = () => {
+        const baseParams = {
             page: pagination.page,
             limit: pagination.limit,
             search: searchTerm,
-            category: filters.category,
-            shop: filters.shop,
             month,
             year,
-            reportType
-        }),
-        keepPreviousData: true
+        }
+
+        const filterParams = {
+            startDate: filters.startDate,
+            endDate: filters.endDate,
+            category: filters.category,
+            shop: filters.shop,
+            reportType,
+        }
+
+        switch (reportType) {
+            case 'profit':
+                return {
+                    ...baseParams,
+                    startDate: filters.startDate,
+                    endDate: filters.endDate,
+                }
+            case 'expenses':
+                return {
+                    ...baseParams,
+                    category: filters.category,
+                    shop: filters.shop,
+                    startDate: filters.startDate,
+                    endDate: filters.endDate,
+                }
+            default:
+                return {
+                    ...baseParams,
+                    ...filterParams,
+                }
+        }
+    }
+
+    const fetchReportData = async () => {
+        const selectedApi = reportApiMap[reportType] || reportApiMap.default
+        const params = buildReportParams()
+        return await selectedApi(params)
+    }
+    //--------------------------------------------
+
+    const {
+        data: response,
+        isLoading,
+        error,
+        refetch,
+    } = useQuery({
+        queryKey: [
+            'reports',
+            reportType,
+            pagination.page,
+            pagination.limit,
+            searchTerm,
+            month,
+            year,
+            filters,
+        ],
+        queryFn: fetchReportData,
+        keepPreviousData: true,
     })
 
-    const reports = response?.data?.reports || []
+    const reports =
+        response?.data?.reports ||
+        response?.data?.projects ||
+        response?.data?.expenses ||
+        []
+
+    console.log(reports, '123 re')
     const paginationData = response?.data?.pagination || {
         total: 0,
         page: 1,
         limit: 10,
         totalPages: 1,
         hasNextPage: false,
-        hasPreviousPage: false
+        hasPreviousPage: false,
     }
 
     const debouncedSearch = useMemo(
-        () => debounce((value: string) => {
-            setSearchTerm(value)
-            setPagination(prev => ({ ...prev, page: 1 }))
-        }, 500),
-        []
+        () =>
+            debounce((value: string) => {
+                setSearchTerm(value)
+                setPagination((prev) => ({ ...prev, page: 1 }))
+            }, 500),
+        [],
     )
 
     const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -232,156 +320,617 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
     const handleExport = async () => {
         setIsExporting(true)
         try {
-            // Get all data without pagination limits
-            const exportResponse = await exportReportToExcel({
-                page: pagination.page,
-                limit: pagination.limit, 
-                search: searchTerm,
-                category: filters.category,
-                shop: filters.shop,
-                month,
-                year,
-                reportType,
-                export: true // Add this flag if your API supports it
-            })
-    
-            const allReports = exportResponse?.data?.reports || []
+            let exportResponse
+            if (reportType === 'profit') {
+                exportResponse = await exportProfitReportToExcel({
+                    page: pagination.page,
+                    limit: pagination.limit,
+                    search: searchTerm,
+                    month,
+                    year,
+                    startDate: filters.startDate,
+                    endDate: filters.endDate,
+                })
+            } else if (reportType === 'labour') {
+                exportResponse = await exportEmployeeExpensesToExcel({
+                    page: pagination.page,
+                    limit: pagination.limit,
+                    search: searchTerm,
+                    startDate: filters.startDate,
+                    endDate: filters.endDate,
+                })
+            } else {
+                exportResponse = await exportReportToExcel({
+                    page: pagination.page,
+                    limit: pagination.limit,
+                    search: searchTerm,
+                    category: filters.category,
+                    shop: filters.shop,
+                    startDate: filters.startDate,
+                    endDate: filters.endDate,
+                    month,
+                    year,
+                    reportType,
+                    export: true,
+                })
+            }
             
+
+            const allReports = exportResponse?.data?.reports || []
+
             if (allReports.length === 0) {
                 console.log('No data to export')
                 return
             }
-    
-            // Convert data to CSV format
+
             const headers = Object.keys(allReports[0]).join(',') + '\n'
             const csvContent = allReports.reduce((content, report) => {
                 const row = Object.values(report).join(',') + '\n'
                 return content + row
             }, headers)
-    
-            // Create download link
-            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+
+            const blob = new Blob([csvContent], {
+                type: 'text/csv;charset=utf-8;',
+            })
             const url = URL.createObjectURL(blob)
             const link = document.createElement('a')
             link.href = url
-            link.setAttribute('download', `reports-${new Date().toISOString()}.csv`)
+            link.setAttribute(
+                'download',
+                `${reportType}-reports-${new Date().toISOString()}.csv`,
+            )
             document.body.appendChild(link)
             link.click()
             document.body.removeChild(link)
-            
+
             console.log('Data exported successfully')
         } catch (error) {
             console.error('Export failed:', error)
-            // You might want to show an error notification here
         } finally {
             setIsExporting(false)
         }
     }
+
+    const handleDeleteSuccess = useCallback(() => {
+        setIsDeleteOpen(false)
+        refetch() // This will trigger a new API call
+    }, [refetch])
 
     const handleDeleteClick = (row: ReportItem) => {
         setSelectedReport(row)
         setIsDeleteOpen(true)
     }
 
-    // Define columns based on report type
-    const columns: ColumnDef<ReportItem>[] = useMemo(
-        () => {
-            if (reportType === 'expense') {
-                // For expense reports, show only: reportDate, description, amount, remarks
-                return [
-                    {
-                        header: 'DATE',
-                        accessorKey: 'reportDate',
-                        cell: (props) => (
-                            <span>
-                                {moment(props.row.original.reportDate).format(
-                                    'DD MMM YYYY',
-                                )}
-                            </span>
-                        ),
-                    },
-                    {
-                        header: 'Description',
-                        accessorKey: 'description',
-                        cell: (props) => <span>{props.row.original.description || '-'}</span>,
-                    },
-                    {
-                        header: 'Amount',
-                        accessorKey: 'amount',
-                        cell: (props) => (
-                            <span>{props.row.original.amount.toFixed(2)}</span>
-                        ),
-                    },
-                    {
-                        header: 'Remarks',
-                        accessorKey: 'remarks',
-                        cell: (props) => <span>{props.row.original.remarks}</span>,
-                    },
-                    {
-                        header: 'Action',
-                        id: 'action',
-                        cell: (props) => (
-                            <ActionColumn 
-                                row={props.row.original} 
-                                onDeleteClick={handleDeleteClick} 
-                            />
-                        ),
-                    },
-                ]
-            } else {
-                // For adib reports, show all columns
-                return [
-                    {
-                        header: 'DATE',
-                        accessorKey: 'reportDate',
-                        cell: (props) => (
-                            <span>
-                                {moment(props.row.original.reportDate).format(
-                                    'DD MMM YYYY',
-                                )}
-                            </span>
-                        ),
-                    },
-                    {
-                        header: 'Amount',
-                        accessorKey: 'amount',
-                        cell: (props) => (
-                            <span>{props.row.original.amount.toFixed(2)}</span>
-                        ),
-                    },
-                    {
-                        header: 'Category',
-                        accessorKey: 'category',
-                        cell: (props) => <span>{props.row.original.category?.name}</span>,
-                    },
-                    {
-                        header: 'Shop',
-                        accessorKey: 'shop',
-                        cell: (props) => <span>{props.row.original.shop?.shopName}</span>,
-                    },
-                    {
-                        header: 'Remarks',
-                        accessorKey: 'remarks',
-                        cell: (props) => <span>{props.row.original.remarks}</span>,
-                    },
-                    {
-                        header: 'Action',
-                        id: 'action',
-                        cell: (props) => (
-                            <ActionColumn 
-                                row={props.row.original} 
-                                onDeleteClick={handleDeleteClick} 
-                            />
-                        ),
-                    },
-                ]
-            }
-        },
-        [reportType]
-    )
+    const columns: ColumnDef<ReportItem>[] = useMemo(() => {
+        if (reportType === 'expense') {
+            return [
+                {
+                    header: 'DATE',
+                    accessorKey: 'reportDate',
+                    cell: (props) => (
+                        <span>
+                            {moment(props.row.original.reportDate).format(
+                                'DD MMM YYYY',
+                            )}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Description',
+                    accessorKey: 'description',
+                    cell: (props) => (
+                        <span>{props.row.original.description || '-'}</span>
+                    ),
+                },
+                {
+                    header: 'Amount',
+                    accessorKey: 'amount',
+                    cell: (props) => (
+                        <span>{props.row.original.amount.toFixed(2)}</span>
+                    ),
+                },
+                {
+                    header: 'Remarks',
+                    accessorKey: 'remarks',
+                    cell: (props) => <span>{props.row.original.remarks}</span>,
+                },
+                {
+                    header: 'Action',
+                    id: 'action',
+                    cell: (props) => (
+                        <ActionColumn
+                            row={props.row.original}
+                            onDeleteClick={handleDeleteClick}
+                        />
+                    ),
+                },
+            ]
+        } else if (reportType === 'profit') {
+            return [
+                {
+                    header: 'DATE',
+                    accessorKey: 'reportDate',
+                    cell: (props) => (
+                        <span>
+                            {moment(props.row.original.reportDate).format(
+                                'DD MMM YYYY',
+                            )}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Project Name',
+                    accessorKey: 'projectName',
+                    cell: (props) => (
+                        <span>{props.row.original.projectName}</span>
+                    ),
+                },
+                {
+                    header: 'PO Number',
+                    accessorKey: 'poNumber',
+                    cell: (props) => <span>{props.row.original.poNumber}</span>,
+                },
+                {
+                    header: 'Budget',
+                    accessorKey: 'budget',
+                    cell: (props) => (
+                        <span className="text-green-500">
+                            {props.row.original.budget?.toFixed(2) || '0.00'}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Expenses',
+                    accessorKey: 'expenses',
+                    cell: (props) => (
+                        <span className="text-red-500">
+                            {props.row.original.expenses?.toFixed(2) || '0.00'}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Profit',
+                    accessorKey: 'profit',
+                    cell: (props) => (
+                        <span
+                            className={
+                                props.row.original.profit >= 0
+                                    ? 'text-green-500'
+                                    : 'text-red-500'
+                            }
+                        >
+                            {props.row.original.profit?.toFixed(2) || '0.00'}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Remarks',
+                    accessorKey: 'description',
+                    cell: (props) => (
+                        <span>{props.row.original.description || '-'}</span>
+                    ),
+                },
+                {
+                    header: 'Action',
+                    id: 'action',
+                    cell: (props) => (
+                        <ActionColumn
+                            row={props.row.original}
+                            onDeleteClick={handleDeleteClick}
+                        />
+                    ),
+                },
+            ]
+        } else if (reportType === 'labour') {
+            return [
+                {
+                    header: 'Employee',
+                    accessorKey: 'employee',
+                    cell: (props) => (
+                        <span>
+                            {props.row.original?.employee?.firstName}{' '}
+                            {props.row.original?.employee?.lastName}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Designation',
+                    accessorKey: 'designation',
+                    cell: (props) => (
+                        <span>{props.row.original.designation}</span>
+                    ),
+                },
+                {
+                    header: 'Country',
+                    accessorKey: 'country',
+                    cell: (props) => <span>{props.row.original.country}</span>,
+                },
+                {
+                    header: 'Basic Salary',
+                    accessorKey: 'basicSalary',
+                    cell: (props) => (
+                        <span>
+                            {props.row.original.basicSalary?.toFixed(2)}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Allowance',
+                    accessorKey: 'allowance',
+                    cell: (props) => (
+                        <span>{props.row.original.allowance?.toFixed(2)}</span>
+                    ),
+                },
+                {
+                    header: 'Total Salary',
+                    accessorKey: 'totalSalary',
+                    cell: (props) => (
+                        <span>
+                            {props.row.original.totalSalary?.toFixed(2)}
+                        </span>
+                    ),
+                },
+                {
+                    header: '2 Year Salary',
+                    accessorKey: 'twoYearSalary',
+                    cell: (props) => (
+                        <span>
+                            {props.row.original.twoYearSalary?.toFixed(2)}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Yearly Expenses',
+                    accessorKey: 'perYearExpenses',
+                    cell: (props) => (
+                        <span>
+                            {props.row.original.perYearExpenses?.toFixed(2)}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Monthly Expenses',
+                    accessorKey: 'perMonthExpenses',
+                    cell: (props) => (
+                        <span>
+                            {props.row.original.perMonthExpenses?.toFixed(2)}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Daily Expenses',
+                    accessorKey: 'perDayExpenses',
+                    cell: (props) => (
+                        <span>
+                            {props.row.original.perDayExpenses?.toFixed(2)}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Total Expenses',
+                    accessorKey: 'totalExpensesPerPerson',
+                    cell: (props) => (
+                        <span>
+                            {props.row.original.totalExpensesPerPerson?.toFixed(
+                                2,
+                            )}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Visa Expenses',
+                    accessorKey: 'visaExpenses',
+                    cell: (props) => (
+                        <span>
+                            {props.row.original.visaExpenses?.toFixed(2)}
+                        </span>
+                    ),
+                },
+                {
+                    header: '2 Year Uniform',
+                    accessorKey: 'twoYearUniform',
+                    cell: (props) => (
+                        <span>
+                            {props.row.original.twoYearUniform?.toFixed(2)}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Shoes',
+                    accessorKey: 'shoes',
+                    cell: (props) => (
+                        <span>{props.row.original.shoes?.toFixed(2)}</span>
+                    ),
+                },
+                {
+                    header: '2 Year Accommodation',
+                    accessorKey: 'twoYearAccommodation',
+                    cell: (props) => (
+                        <span>
+                            {props.row.original.twoYearAccommodation?.toFixed(
+                                2,
+                            )}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'SEWA Bills',
+                    accessorKey: 'sewaBills',
+                    cell: (props) => (
+                        <span>{props.row.original.sewaBills?.toFixed(2)}</span>
+                    ),
+                },
+                {
+                    header: 'DEWA Bills',
+                    accessorKey: 'dewaBills',
+                    cell: (props) => (
+                        <span>{props.row.original.dewaBills?.toFixed(2)}</span>
+                    ),
+                },
+                {
+                    header: 'Insurance',
+                    accessorKey: 'insurance',
+                    cell: (props) => (
+                        <span>{props.row.original.insurance?.toFixed(2)}</span>
+                    ),
+                },
+                {
+                    header: 'Transport',
+                    accessorKey: 'transport',
+                    cell: (props) => (
+                        <span>{props.row.original.transport?.toFixed(2)}</span>
+                    ),
+                },
+                {
+                    header: 'Water',
+                    accessorKey: 'water',
+                    cell: (props) => (
+                        <span>{props.row.original.water?.toFixed(2)}</span>
+                    ),
+                },
+                {
+                    header: '3rd Party Liabilities',
+                    accessorKey: 'thirdPartyLiabilities',
+                    cell: (props) => (
+                        <span>
+                            {props.row.original.thirdPartyLiabilities?.toFixed(
+                                2,
+                            )}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Fairmont Certificate',
+                    accessorKey: 'fairmontCertificate',
+                    cell: (props) => (
+                        <span>
+                            {props.row.original.fairmontCertificate?.toFixed(2)}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Leave Salary',
+                    accessorKey: 'leaveSalary',
+                    cell: (props) => (
+                        <span>
+                            {props.row.original.leaveSalary?.toFixed(2)}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Ticket',
+                    accessorKey: 'ticket',
+                    cell: (props) => (
+                        <span>{props.row.original.ticket?.toFixed(2)}</span>
+                    ),
+                },
+                {
+                    header: 'Gratuity',
+                    accessorKey: 'gratuity',
+                    cell: (props) => (
+                        <span>{props.row.original.gratuity?.toFixed(2)}</span>
+                    ),
+                },
+                {
+                    header: 'Custom Expenses',
+                    accessorKey: 'customExpenses',
+                    cell: (props) => (
+                        <span>
+                            {props.row.original?.customExpenses
+                                ?.map(
+                                    (exp: any) => `${exp.name}: ${exp.amount}`,
+                                )
+                                .join(', ')}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Action',
+                    id: 'action',
+                    cell: (props) => (
+                        <ActionColumn
+                            row={props.row.original}
+                            onDeleteClick={handleDeleteClick}
+                        />
+                    ),
+                },
+            ]
+        }else if (reportType === 'payroll') {
+            const columns = [
+                {
+                    header: 'Employee',
+                    accessorKey: 'employee',
+                    cell: (props) => <span>{props.row.original.employee || '-'}</span>,
+                },
+                {
+                    header: 'Designation',
+                    accessorKey: 'designation',
+                    cell: (props) => <span>{props.row.original.designation || '-'}</span>,
+                },
+                {
+                    header: 'Emirates ID',
+                    accessorKey: 'emiratesId',
+                    cell: (props) => <span>{props.row.original.emiratesId || '-'}</span>,
+                },
+                {
+                    header: 'Labour Card',
+                    accessorKey: 'labourCard',
+                    cell: (props) => <span>{props.row.original.labourCard || '-'}</span>,
+                },
+                {
+                    header: 'Personal No.',
+                    accessorKey: 'labourCardPersonalNo',
+                    cell: (props) => <span>{props.row.original.labourCardPersonalNo || '-'}</span>,
+                },
+                {
+                    header: 'Period',
+                    accessorKey: 'period',
+                    cell: (props) => <span>{props.row.original.period || '-'}</span>,
+                },
+                {
+                    header: 'Basic Salary',
+                    accessorKey: 'basicSalary',
+                    cell: (props) => (
+                        <span className="font-medium">
+                            {props.row.original.basicSalary?.toFixed(2)}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Allowances',
+                    accessorKey: 'allowances',
+                    cell: (props) => (
+                        <span className="text-green-500">
+                            {props.row.original.allowances?.toFixed(2)}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Deductions',
+                    accessorKey: 'deductions',
+                    cell: (props) => (
+                        <span className="text-red-500">
+                            {props.row.original.deductions?.toFixed(2)}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Mess',
+                    accessorKey: 'mess',
+                    cell: (props) => (
+                        <span>{props.row.original.mess?.toFixed(2)}</span>
+                    ),
+                },
+                {
+                    header: 'Advance',
+                    accessorKey: 'advance',
+                    cell: (props) => (
+                        <span>{props.row.original.advance?.toFixed(2)}</span>
+                    ),
+                },
+                {
+                    header: 'Net Salary',
+                    accessorKey: 'netSalary',
+                    cell: (props) => (
+                        <span className="font-semibold text-blue-500">
+                            {props.row.original.netSalary?.toFixed(2)}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Payment Date',
+                    accessorKey: 'paymentDate',
+                    cell: (props) => (
+                        <span>
+                            {moment(props.row.original.paymentDate).format('DD MMM YYYY')}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Status',
+                    accessorKey: 'status',
+                    cell: (props) => (
+                        <span className={`capitalize ${
+                            props.row.original.status === 'pending' ? 'text-yellow-500' : 
+                            props.row.original.status === 'paid' ? 'text-green-500' : 
+                            'text-gray-500'
+                        }`}>
+                            {props.row.original.status}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Remarks',
+                    accessorKey: 'remark',
+                    cell: (props) => <span>{props.row.original.remark || '-'}</span>,
+                },
+                {
+                    header: 'Action',
+                    id: 'action',
+                    cell: (props) => (
+                        <ActionColumn 
+                            row={props.row.original} 
+                            onDeleteClick={handleDeleteClick} 
+                        />
+                    ),
+                },
+            ];
+        }
+         else {
+            return [
+                {
+                    header: 'DATE',
+                    accessorKey: 'reportDate',
+                    cell: (props) => (
+                        <span>
+                            {moment(props.row.original.reportDate).format(
+                                'DD MMM YYYY',
+                            )}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Amount',
+                    accessorKey: 'amount',
+                    cell: (props) => (
+                        <span>{props.row.original.amount.toFixed(2)}</span>
+                    ),
+                },
+                {
+                    header: 'Category',
+                    accessorKey: 'category',
+                    cell: (props) => (
+                        <span>{props.row.original.category?.name}</span>
+                    ),
+                },
+                {
+                    header: 'Shop',
+                    accessorKey: 'shop',
+                    cell: (props) => (
+                        <span>{props.row.original.shop?.shopName}</span>
+                    ),
+                },
+                {
+                    header: 'Remarks',
+                    accessorKey: 'remarks',
+                    cell: (props) => <span>{props.row.original.remarks}</span>,
+                },
+                {
+                    header: 'Action',
+                    id: 'action',
+                    cell: (props) => (
+                        <ActionColumn
+                            row={props.row.original}
+                            onDeleteClick={handleDeleteClick}
+                        />
+                    ),
+                },
+            ]
+        }
+    }, [reportType, handleDeleteClick])
 
     const onPaginationChange = (page: number) => {
-        setPagination(prev => ({ ...prev, page }))
+        setPagination((prev) => ({ ...prev, page }))
     }
 
     const onSelectChange = (limit: number) => {
@@ -389,7 +938,8 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
     }
 
     useEffect(() => {
-        const selectedMonthName = months.find((m) => m.value === month)?.label || ''
+        const selectedMonthName =
+            months.find((m) => m.value === month)?.label || ''
         onDropdownSelect(selectedMonthName)
     }, [month, onDropdownSelect])
 
@@ -400,7 +950,11 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
     }, [debouncedSearch])
 
     if (error) {
-        return <div className="p-4 text-red-500">Error loading reports: {(error as Error).message}</div>
+        return (
+            <div className="p-4 text-red-500">
+                Error loading reports: {(error as Error).message}
+            </div>
+        )
     }
 
     return (
@@ -414,41 +968,53 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
                         value={searchTerm}
                     />
                     <div className="flex flex-wrap gap-2 items-center w-full md:w-auto">
-                        <select
-                            className="p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
-                            value={month}
-                            onChange={(e) => {
-                                const selectedValue = Number(e.target.value)
-                                const selectedLabel = months.find((m) => m.value === selectedValue)?.label || ''
-                                setMonth(selectedValue)
-                                onDropdownSelect(selectedLabel)
-                            }}
-                        >
-                            {months.map((m) => (
-                                <option key={m.value} value={m.value}>
-                                    {m.label}
-                                </option>
-                            ))}
-                        </select>
-                        <select
-                            className="p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
-                            value={year}
-                            onChange={(e) => setYear(Number(e.target.value))}
-                        >
-                            {generateYears().map((y) => (
-                                <option key={y.value} value={y.value}>
-                                    {y.label}
-                                </option>
-                            ))}
-                        </select>
+                        {reportType !== 'labour' && (
+                            <>
+                                <select
+                                    className="p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
+                                    value={month}
+                                    onChange={(e) => {
+                                        const selectedValue = Number(
+                                            e.target.value,
+                                        )
+                                        const selectedLabel =
+                                            months.find(
+                                                (m) =>
+                                                    m.value === selectedValue,
+                                            )?.label || ''
+                                        setMonth(selectedValue)
+                                        onDropdownSelect(selectedLabel)
+                                    }}
+                                >
+                                    {months.map((m) => (
+                                        <option key={m.value} value={m.value}>
+                                            {m.label}
+                                        </option>
+                                    ))}
+                                </select>
+                                <select
+                                    className="p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
+                                    value={year}
+                                    onChange={(e) =>
+                                        setYear(Number(e.target.value))
+                                    }
+                                >
+                                    {generateYears().map((y) => (
+                                        <option key={y.value} value={y.value}>
+                                            {y.label}
+                                        </option>
+                                    ))}
+                                </select>
 
-                        <button
-                            onClick={handleResetAll}
-                            className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
-                            title="Reset filters"
-                        >
-                            <HiOutlineRefresh size={18} />
-                        </button>
+                                <button
+                                    onClick={handleResetAll}
+                                    className="p-2 text-gray-500 hover:text-gray-700 dark:hover:text-gray-300"
+                                    title="Reset filters"
+                                >
+                                    <HiOutlineRefresh size={18} />
+                                </button>
+                            </>
+                        )}
                         <button
                             onClick={handleExport}
                             disabled={isExporting}
@@ -457,7 +1023,9 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
                                     ? 'text-gray-400'
                                     : 'text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'
                             }`}
-                            title={isExporting ? 'Exporting...' : 'Export reports'}
+                            title={
+                                isExporting ? 'Exporting...' : 'Export reports'
+                            }
                         >
                             <HiOutlineDownload size={18} />
                         </button>
@@ -471,7 +1039,7 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
                     </div>
                 </div>
             </div>
-            
+
             <DataTable
                 ref={tableRef}
                 columns={columns}
@@ -492,7 +1060,8 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
                 isOpen={isDeleteOpen}
                 onClose={() => setIsDeleteOpen(false)}
                 bill={selectedReport}
-                refetch={refetch}
+                refetch={handleDeleteSuccess}
+                reportType={reportType}
             />
 
             <BillFilterDrawer

@@ -126,6 +126,12 @@ const appsRoute: Routes = [
         authority: [ADMIN, USER,SUPERADMIN],
     },
     {
+        key: 'appsQuotationEdit.quotationEdit',
+        path: `${APP_PREFIX_PATH}/quotation-edit/:projectId/:quotationId`,
+        component: lazy(() => import('@/views/quotation/quotationcreation/QuotationCreations')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+    {
         key: 'apps.ongoingworks',
         path: `${APP_PREFIX_PATH}/ongoingworks`,
         component: lazy(() => import('@/views/workstatus/ProjectDashboard/ProjectDashboard')),
@@ -444,7 +450,65 @@ const appsRoute: Routes = [
         authority: [ADMIN, USER,SUPERADMIN],
     },
     
+    {
+        key: 'apps.profitAndLossReportView',
+        path: `${APP_PREFIX_PATH}/profit-and-loss-report-view`,
+        component: lazy(() => import('@/views/all-bills/bills/ProfitAndLossReport')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+    {
+        key: 'apps.profitAndLossReportView',
+        path: `${APP_PREFIX_PATH}/new-profit-and-loss-report`,
+        component: lazy(() => import('@/views/all-bills/newBills/NewProfitAndLossReport')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+    {
+        key: 'apps.profitAndLossReportView',
+        path: `${APP_PREFIX_PATH}/new-profit-and-loss-report/:id`,
+        component: lazy(() => import('@/views/all-bills/newBills/NewProfitAndLossReport')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
     
+    {
+        key: 'apps.labourExpensesReportView',
+        path: `${APP_PREFIX_PATH}/labour-expenses-report-view`,
+        component: lazy(() => import('@/views/all-bills/bills/LabourExpensesReport')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+    
+    {
+        key: 'apps.labourExpensesReportView',
+        path: `${APP_PREFIX_PATH}/new-labour-expenses-report`,
+        component: lazy(() => import('@/views/all-bills/newBills/NewLabourExpensesReport')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+    {
+        key: 'apps.labourExpensesReportView',
+        path: `${APP_PREFIX_PATH}/new-labour-expenses-report/:id`,
+        component: lazy(() => import('@/views/all-bills/newBills/NewLabourExpensesReport')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+    {
+        key: 'apps.payrollReportView',
+        path: `${APP_PREFIX_PATH}/payroll-report-view`,
+        component: lazy(() => import('@/views/all-bills/bills/PayrollReport')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+    {
+        key: 'apps.payrollReportView',
+        path: `${APP_PREFIX_PATH}/new-payroll-report`,
+        component: lazy(() => import('@/views/all-bills/newBills/NewPayrollReport')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+    {
+        key: 'apps.payrollReportView',
+        path: `${APP_PREFIX_PATH}/new-payroll-report/:id`,
+        component: lazy(() => import('@/views/all-bills/newBills/NewPayrollReport')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },          
+        
+
+        
 ]
 
 export default appsRoute

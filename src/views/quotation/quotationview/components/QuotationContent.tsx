@@ -1,10 +1,11 @@
+import { APP_PREFIX_PATH } from '@/constants/route.constant'
 import { useEffect, useState } from 'react'
 import Button from '@/components/ui/Button'
 import Loading from '@/components/shared/Loading'
 import Logo from '@/components/template/Logo'
 import ContentTable from './ContentTable'
-import { useParams } from 'react-router-dom'
-import { HiLocationMarker, HiPhone, HiUser } from 'react-icons/hi'
+import { useNavigate, useParams } from 'react-router-dom'
+import { HiLocationMarker, HiPencil, HiPhone, HiUser } from 'react-icons/hi'
 import useThemeClass from '@/utils/hooks/useThemeClass'
 import { useAppSelector } from '@/store'
 import dayjs from 'dayjs'
@@ -56,10 +57,13 @@ const QuotationContent = () => {
     const { projectId } = useParams()
     const [loading, setLoading] = useState(true)
     const [data, setData] = useState<QuotationData | null>(null)
+
+
+    console.log(data," 12q123132")
     const mode = useAppSelector((state) => state.theme.mode)
     const [error, setError] = useState<string | null>(null)
-        const [pdfLoading, setPdfLoading] = useState(false) // Local state for PDF loading
-    
+    const [pdfLoading, setPdfLoading] = useState(false) // Local state for PDF loading
+    const navigate = useNavigate()
 
     useEffect(() => {
         const fetchQuotationData = async () => {
@@ -143,7 +147,12 @@ const QuotationContent = () => {
                 setPdfLoading(false)
             }
         }
-
+        const handleEdit = (data: QuotationData) => {
+            navigate(`${APP_PREFIX_PATH}/quotation-edit/${data.project._id}/${data._id}`,{ state: { estimationId: data?.estimation, quotationId: data?._id } })
+            console.log("handleEdit called with:", data)
+console.log("project ID:", data.project._id)
+console.log("quotation ID:", data._id)
+        }
     return (
         <Loading loading={loading}>
             <div className="flex flex-col md:flex-row justify-between gap-4 mb-10">
@@ -219,6 +228,8 @@ const QuotationContent = () => {
                 <small className="italic">
                     Quotation is valid until {dayjs(data.validUntil).format('DD MMMM, YYYY')}
                 </small>
+                <div className="flex gap-2">
+
                 <Button 
                                 variant="solid" 
                                 loading={pdfLoading}
@@ -226,6 +237,14 @@ const QuotationContent = () => {
                             >
                                 {pdfLoading ? 'Generating PDF...' : 'Download PDF'}
                             </Button>
+                            <Button 
+                variant="solid" 
+                icon={<HiPencil />}
+                onClick={() => handleEdit(data)}
+            >
+                Edit
+            </Button>
+            </div>
             </div>
         </Loading>
     )

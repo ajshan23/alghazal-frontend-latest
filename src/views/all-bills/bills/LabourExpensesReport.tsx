@@ -3,25 +3,21 @@ import { useState } from 'react'
 import ReportTables from './components/ReportTables'
 import BillTableTools from './components/BillTableTools'
 
-const ProfitAndLossReport = () => {
-    const [selectedDropdownMonth, setSelectedDropdownMonth] = useState('')
+const LabourExpensesReport = () => {
 
-    const handleDropdownSelect = (value: string) => {
-        setSelectedDropdownMonth(value)
-    }
 
     return (
         <AdaptableCard className="h-full" bodyClass="h-full">
             <div className="lg:flex items-center justify-between mb-4">
-                <h3 className="mb-4 lg:mb-0">Profit and Loss Report {selectedDropdownMonth}</h3>
+                <h3 className="mb-4 lg:mb-0">Labour Expenses Report </h3>
                 <BillTableTools 
-                    to="/app/new-profit-and-loss-report" 
+                    to="/app/new-labour-expenses-report" 
                     title="Add Report" 
                 />
             </div>
-            <ReportTables onDropdownSelect={handleDropdownSelect} />
+            <ReportTables  onDropdownSelect={() => {}} />
         </AdaptableCard>    
     )
 }
 
-export default ProfitAndLossReport
+export default LabourExpensesReport
