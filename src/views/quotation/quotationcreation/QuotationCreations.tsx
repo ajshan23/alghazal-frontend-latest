@@ -16,33 +16,26 @@ import DatePicker from '@/components/ui/DatePicker';
 import Select from '@/components/ui/Select';
 import { createQuotation, getQuotationByProject, updateQuotation } from '../api/api';
 import { APP_PREFIX_PATH } from '@/constants/route.constant';
-import { Upload } from '@/components/ui';
 
 const measurementUnits = [
-  // Mass
   { value: 'kg', label: 'Kilogram (kg)' },
   { value: 'g', label: 'Gram (g)' },
   { value: 'mg', label: 'Milligram (mg)' },
   { value: 'lb', label: 'Pound (lb)' },
   { value: 'oz', label: 'Ounce (oz)' },
   { value: 'ton', label: 'Ton (ton)' },
-
-  // Volume
   { value: 'l', label: 'Liter (L)' },
   { value: 'ml', label: 'Milliliter (mL)' },
   { value: 'gal', label: 'Gallon (gal)' },
   { value: 'pt', label: 'Pint (pt)' },
   { value: 'qt', label: 'Quart (qt)' },
   { value: 'fl_oz', label: 'Fluid Ounce (fl oz)' },
-
-  // Length
   { value: 'm', label: 'Meter (m)' },
   { value: 'cm', label: 'Centimeter (cm)' },
   { value: 'mm', label: 'Millimeter (mm)' },
   { value: 'in', label: 'Inch (in)' },
   { value: 'ft', label: 'Foot (ft)' },
   { value: 'yd', label: 'Yard (yd)' },
-  
   { value: 'sq_m', label: 'Square Meter (m²)' },
   { value: 'sq_cm', label: 'Square Centimeter (cm²)' },
   { value: 'sq_mm', label: 'Square Millimeter (mm²)' },
@@ -52,8 +45,6 @@ const measurementUnits = [
   { value: 'sq_yd', label: 'Square Yard (yd²)' },
   { value: 'acre', label: 'Acre' },
   { value: 'hectare', label: 'Hectare (ha)' },
-
-  // Count/Other
   { value: 'pcs', label: 'Pieces (pcs)' },
   { value: 'box', label: 'Box (box)' },
   { value: 'dozen', label: 'Dozen (dozen)' },
@@ -63,7 +54,6 @@ const measurementUnits = [
 const termsCategories = [
   { value: 'The work will be started after receiving the PO', label: 'The work will be started after receiving the PO' },
   { value: 'The work will be started after the confirmation of client', label: 'The work will be started after receiving the PO' },
-  // ... other categories
 ];
 
 const termsTypes = [
@@ -72,8 +62,7 @@ const termsTypes = [
   { value: 'The payment as per accounting terms 30 days', label: 'The payment as per accounting terms 30 days' },
   { value: '50% advance and 50% after completion of work', label: '50% advance and 50% after completion of work' },
   { value: '50% advance before starting the work and 30% work on progress and 20% after completion of work', label: '50% advance before starting the work and 30% work on progress and 20% after completion of work' },
-  { value: 'Cash on delivery', label: 'Cash on delivery' },
-  // ... other types
+  { value: 'Cash on delivery', label: 'Cash on delivery' },
 ];
 
 interface IQuotationItem {
@@ -111,6 +100,7 @@ type FormikRef = FormikProps<QuotationFormModel>;
 type QuotationFormProps = {
   onDiscard?: () => void;
 };
+
 const validationSchema = Yup.object().shape({
   validUntil: Yup.date().required('Valid Until date is required'),
   items: Yup.array()
@@ -147,7 +137,7 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
   const [initialValues, setInitialValues] = useState<QuotationFormModel>({
     quotationNumber: '',
     date: new Date(),
-    validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 days from now
+    validUntil: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
     items: [
       { description: '', uom: '', quantity: 0, unitPrice: 0, totalPrice: 0 },
     ],
@@ -168,12 +158,13 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
     const fetchQuotationData = async () => {
       if (quotationId) {
         try {
-          const quotation = await getQuotationByProject(projectId!);
+          const response = await getQuotationByProject(projectId!);
+          const quotation = response.data;
           
           const newExistingImages: {[key: number]: string} = {};
           const initialFiles: (File | null)[] = [];
           
-          quotation.items.forEach((item, index) => {
+          quotation.items?.forEach((item, index) => {
             if (item.image?.url) {
               newExistingImages[index] = item.image.url;
             }
@@ -203,14 +194,14 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
             subtotal: quotation.subtotal,
             vatAmount: quotation.vatAmount,
             netAmount: quotation.netAmount,
-            project: quotation.project._id,
-            estimation: quotation.estimation._id,
+            project: quotation.project?._id || projectId,
+            estimation: quotation.estimation?._id || estimationId,
           });
         } catch (error) {
           console.error('Error fetching quotation:', error);
           toast.push(
             <Notification title="Error" type="danger" duration={2500}>
-              Failed to load quotation data.
+              Failed to load quotation data
             </Notification>,
             { placement: 'top-center' }
           );
@@ -221,11 +212,10 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
     };
 
     fetchQuotationData();
-  }, [quotationId, projectId]);
+  }, [quotationId, projectId, estimationId]);
 
   const handleFormSubmit = async (values: QuotationFormModel) => {
     try {
-      // Filter out null files
       const filesToUpload = files.filter(file => file !== null) as File[];
       
       if (quotationId) {
@@ -253,7 +243,7 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
           { placement: 'top-center' }
         );
       }
-      navigate(-1)
+      navigate(-1);
     } catch (error) {
       console.error(`Error ${quotationId ? 'updating' : 'creating'} quotation:`, error);
       toast.push(
@@ -270,7 +260,6 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
     newFiles[index] = file;
     setFiles(newFiles);
     
-    // Clear existing image if new file is uploaded
     if (file && existingImages[index]) {
       const newExistingImages = {...existingImages};
       delete newExistingImages[index];
@@ -295,9 +284,7 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
       enableReinitialize
     >
       {({ values, touched, errors, isSubmitting, setFieldValue }) => {
-        // Calculate totals whenever values change
         useEffect(() => {
-          // Calculate items totals
           values.items.forEach((item, index) => {
             const totalPrice = parseFloat((item.quantity * item.unitPrice).toFixed(2));
             if (item.totalPrice !== totalPrice) {
@@ -305,13 +292,11 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
             }
           });
 
-          // Calculate subtotal
           const subtotal = values.items.reduce((sum, item) => sum + item.totalPrice, 0);
           if (values.subtotal !== subtotal) {
             setFieldValue('subtotal', subtotal);
           }
 
-          // Calculate VAT and net amount
           const vatAmount = parseFloat((subtotal * (values.vatPercentage / 100)).toFixed(2));
           const netAmount = parseFloat((subtotal + vatAmount).toFixed(2));
           
@@ -326,15 +311,30 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
         return (
           <Form>
             <FormContainer>
-              {/* Quotation Details Section */}
               <AdaptableCard divider className="mb-4">
                 <h5>Quotation Details</h5>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   <FormItem label="Quotation Number">
-                    <Field name="quotationNumber" type="text" readOnly component={Input} />
+                    <Field 
+                      name="quotationNumber" 
+                      type="text" 
+                      component={Input} 
+                      readOnly 
+                      value={values.quotationNumber}
+                    />
                   </FormItem>
                   <FormItem label="Date">
-                    <Field name="date" type="date" readOnly component={Input} />
+                    <Field name="date">
+                      {({ field }: any) => (
+                        <DatePicker
+                          placeholder="Select date"
+                          value={field.value}
+                          onChange={(date) => {
+                            setFieldValue('date', date);
+                          }}
+                        />
+                      )}
+                    </Field>
                   </FormItem>
                   <FormItem
                     label="Valid Until *"
@@ -342,12 +342,12 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
                     errorMessage={errors.validUntil as string}
                   >
                     <Field name="validUntil">
-                      {({ field, form }: any) => (
+                      {({ field }: any) => (
                         <DatePicker
                           placeholder="Select date"
                           value={field.value}
                           onChange={(date) => {
-                            form.setFieldValue(field.name, date);
+                            setFieldValue('validUntil', date);
                           }}
                         />
                       )}
@@ -356,7 +356,6 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
                 </div>
               </AdaptableCard>
 
-              {/* Quotation Items Section */}
               <AdaptableCard divider className="mb-4">
                 <h5>Quotation Items</h5>
                 <FieldArray name="items">
@@ -364,7 +363,6 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
                     <div className="space-y-4">
                       {values.items.map((item, index) => (
                         <div key={index} className="grid grid-cols-1 md:grid-cols-6 gap-4 items-end border-b pb-4">
-                          {/* Item Description */}
                           <FormItem
                             label={`Item ${index + 1}`}
                             invalid={!!errors.items?.[index]?.description && touched.items?.[index]?.description}
@@ -374,23 +372,23 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
                               as={Input}
                               name={`items[${index}].description`}
                               placeholder="Description"
-                              textArea={true}
+                              value={item.description}
+                              textArea
                             />
                           </FormItem>
 
-                          {/* Unit of Measurement */}
                           <FormItem
                             label="UOM"
                             invalid={!!errors.items?.[index]?.uom && touched.items?.[index]?.uom}
                             errorMessage={errors.items?.[index]?.uom}
                           >
                             <Field name={`items[${index}].uom`}>
-                              {({ field, form }: any) => (
+                              {({ field }: any) => (
                                 <Select
                                   options={measurementUnits}
                                   value={measurementUnits.find(option => option.value === field.value) || null}
                                   onChange={(option: any) => {
-                                    form.setFieldValue(field.name, option?.value || '');
+                                    setFieldValue(`items[${index}].uom`, option?.value || '');
                                   }}
                                   placeholder="Select unit"
                                 />
@@ -398,7 +396,6 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
                             </Field>
                           </FormItem>
 
-                          {/* Quantity */}
                           <FormItem
                             label="Qty"
                             invalid={!!errors.items?.[index]?.quantity && touched.items?.[index]?.quantity}
@@ -411,6 +408,7 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
                               component={Input}
                               min={0}
                               step="any"
+                              value={item.quantity || ''}
                               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                 const value = parseFloat(e.target.value) || 0;
                                 setFieldValue(`items[${index}].quantity`, value);
@@ -418,7 +416,6 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
                             />
                           </FormItem>
 
-                          {/* Unit Price */}
                           <FormItem
                             label="Unit Price"
                             invalid={!!errors.items?.[index]?.unitPrice && touched.items?.[index]?.unitPrice}
@@ -430,6 +427,7 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
                               placeholder="Unit price"
                               component={Input}
                               min={0}
+                              value={item.unitPrice || ''}
                               onChange={(e: React.ChangeEvent<HTMLInputElement>) => {
                                 const value = parseFloat(e.target.value) || 0;
                                 setFieldValue(`items[${index}].unitPrice`, value);
@@ -437,7 +435,6 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
                             />
                           </FormItem>
 
-                          {/* Total Price */}
                           <FormItem label="Total">
                             <Input
                               readOnly
@@ -446,7 +443,6 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
                             />
                           </FormItem>
 
-                          {/* File Upload and Actions */}
                           <div className="flex flex-col gap-2">
                             <div className="flex justify-end">
                               {values.items.length > 1 && (
@@ -470,28 +466,43 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
                                 />
                               )}
                             </div>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              onChange={(e) => {
-                                if (e.target.files && e.target.files[0]) {
-                                  handleFileChange(index, e.target.files[0]);
-                                } else {
-                                  handleFileChange(index, null);
-                                }
-                              }}
-                              className="text-sm"
-                            />
-                            {(existingImages[index] || (item.image?.url)) && (
-                              <div className="mt-1">
-                                <img 
-                                  src={existingImages[index] || item.image?.url} 
-                                  alt="Item" 
-                                  className="h-10 w-10 object-cover rounded"
-                                />
-                              </div>
-                            )}
-                          </div>  
+                            <div className="flex flex-col gap-1">
+                              <label className="block w-full text-sm text-gray-500">
+                                <button className="file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 dark:file:bg-blue-900/30 dark:file:text-blue-300 dark:hover:file:bg-blue-900/20">
+                                  <input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={(e) => {
+                                      if (e.target.files && e.target.files[0]) {
+                                        handleFileChange(index, e.target.files[0]);
+                                      } else {
+                                        handleFileChange(index, null);
+                                      }
+                                    }}
+                                    className="sr-only"
+                                  />
+                                  Choose Image
+                                </button>
+                              </label>
+                              {(existingImages[index] || (item.image?.url)) && (
+                                <div className="mt-1 flex items-center gap-2">
+                                  <img 
+                                    src={existingImages[index] || item.image?.url} 
+                                    alt="Item" 
+                                    className="h-10 w-10 object-cover rounded"
+                                  />
+                                  <span className="text-xs text-gray-500 truncate max-w-[100px]">
+                                    {files[index]?.name || 'Uploaded image'}
+                                  </span>
+                                </div>
+                              )}
+                              {files[index] && !existingImages[index] && !item.image?.url && (
+                                <span className="text-xs text-gray-500 truncate max-w-[100px]">
+                                  {files[index]?.name}
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       ))}
 
@@ -512,7 +523,6 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
                 </FieldArray>
               </AdaptableCard>
 
-              {/* Terms & Conditions Section */}
               <AdaptableCard divider className="mb-4">
                 <h5>Terms & Conditions</h5>
                 <FieldArray name="termsAndConditions">
@@ -527,13 +537,13 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
                           >
                             {index < 2 ? (
                               <Field name={`termsAndConditions[${index}]`}>
-                                {({ field, form }: any) => (
+                                {({ field }: any) => (
                                   <Select
                                     options={index === 0 ? termsCategories : termsTypes}
                                     value={(index === 0 ? termsCategories : termsTypes)
                                       .find(option => option.value === field.value) || null}
                                     onChange={(option: any) => {
-                                      form.setFieldValue(field.name, option?.value || '');
+                                      setFieldValue(`termsAndConditions[${index}]`, option?.value || '');
                                     }}
                                     placeholder={index === 0 ? 'Select work start term' : 'Select payment term'}
                                   />
@@ -544,6 +554,7 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
                                 as={Input}
                                 name={`termsAndConditions[${index}]`}
                                 placeholder="Additional term or condition"
+                                value={term}
                               />
                             )}
                           </FormItem>
@@ -571,7 +582,6 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
                 </FieldArray>
               </AdaptableCard>
 
-              {/* Financial Summary Section */}
               <AdaptableCard divider className="mb-4">
                 <h5>Financial Summary</h5>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -594,6 +604,7 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
                       placeholder="VAT percentage"
                       min={0}
                       max={100}
+                      value={values.vatPercentage}
                     />
                   </FormItem>
                   <FormItem label="VAT Amount">
@@ -613,7 +624,6 @@ const QuotationForm = forwardRef<FormikRef, QuotationFormProps>((props, ref) => 
                 </div>
               </AdaptableCard>
 
-              {/* Footer with Action Buttons */}
               <StickyFooter
                 className="-mx-8 px-8 flex items-center justify-between py-4"
                 stickyClass="border-t bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"

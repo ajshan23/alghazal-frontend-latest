@@ -9,9 +9,11 @@ export const apiMarkAttendance = (data: {
     projectId: string
     userId: string
     present: boolean
+    hour?: number
 }) => {
     return BaseService.post(`/attandance/project/${data.projectId}/user/${data.userId}`, {
-        present: data.present
+        present: data.present,
+        workingHour: data.hour
     })
 }
 

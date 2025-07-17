@@ -141,7 +141,6 @@ export const deleteBill = async (id: string) => {
     }
 }
 export const exportBillToExcel = async ({
-  
     search,
     billType,
     month,
@@ -151,85 +150,90 @@ export const exportBillToExcel = async ({
     category,
     shop,
     vehicle,
-    paymentMethod,  
+    paymentMethod,
 }: {
-   
-    search?: string;
-    billType?: string;
-    month?: number;
-    year?: number;
-    startDate?: string;
-    endDate?: string;
-    category?: string;
-    shop?: string;
-    vehicle?: string;
-    paymentMethod?: string;
+    search?: string
+    billType?: string
+    month?: number
+    year?: number
+    startDate?: string
+    endDate?: string
+    category?: string
+    shop?: string
+    vehicle?: string
+    paymentMethod?: string
 }) => {
     try {
         // Prepare params object with proper typing
         const params: Record<string, any> = {
-            
-            
             search,
             billType,
             month,
             year,
-            startDate: startDate ? new Date(startDate).toISOString() : undefined,
+            startDate: startDate
+                ? new Date(startDate).toISOString()
+                : undefined,
             endDate: endDate ? new Date(endDate).toISOString() : undefined,
             category,
             shop,
             vehicle,
             paymentMethod,
-        };
+        }
 
         // Clean up undefined parameters
-        Object.keys(params).forEach(key => params[key] === undefined && delete params[key]);
+        Object.keys(params).forEach(
+            (key) => params[key] === undefined && delete params[key],
+        )
 
         const response = await BaseService.get('/bills/export/excel', {
             params,
             responseType: 'blob',
-        });
+        })
 
         // Validate response
         if (!response.data) {
-            throw new Error('No data received from server');
+            throw new Error('No data received from server')
         }
 
         // Create filename with current date and bill type
-        const filename = `bills_export_${billType || 'all'}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        const filename = `bills_export_${billType || 'all'}_${new Date()
+            .toISOString()
+            .slice(0, 10)}.xlsx`
 
         // Create download link
-        const url = window.URL.createObjectURL(new Blob([response.data], { 
-            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-        }));
-        
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', filename);
-        document.body.appendChild(link);
-        link.click();
-        
+        const url = window.URL.createObjectURL(
+            new Blob([response.data], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            }),
+        )
+
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', filename)
+        document.body.appendChild(link)
+        link.click()
+
         // Clean up
         setTimeout(() => {
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
-        }, 100);
+            document.body.removeChild(link)
+            window.URL.revokeObjectURL(url)
+        }, 100)
 
-        return true;
+        return true
     } catch (error) {
-        console.error('Error exporting bills:', error);
-        
+        console.error('Error exporting bills:', error)
+
         // Enhanced error handling
-        let errorMessage = 'Failed to export bills';
+        let errorMessage = 'Failed to export bills'
         if (error instanceof Error) {
-            errorMessage = error.message;
+            errorMessage = error.message
         } else if (typeof error === 'string') {
-            errorMessage = error;
+            errorMessage = error
         }
-        
-        throw new Error(errorMessage);
+
+        throw new Error(errorMessage)
     }
-};
+}
 //Report Sections and Expenses --- [ADIB REPORT & EXPENSES]
 export const getAdibReportAndExpenses = async ({
     page,
@@ -242,7 +246,6 @@ export const getAdibReportAndExpenses = async ({
     endDate,
     category,
     shop,
-    
 }) => {
     try {
         const response = await BaseService.get(`/bank`, {
@@ -257,7 +260,6 @@ export const getAdibReportAndExpenses = async ({
                 endDate,
                 category,
                 shop,
-               
             },
         })
         return response.data
@@ -281,7 +283,10 @@ export const addAdibReportAndExpenses = async (formData: FormData) => {
     }
 }
 
-export const editAdibReportAndExpenses = async (id: string, formData: FormData) => {
+export const editAdibReportAndExpenses = async (
+    id: string,
+    formData: FormData,
+) => {
     try {
         const response = await BaseService.put(`/bank/${id}`, formData, {
             headers: {
@@ -300,11 +305,13 @@ export const fetchAdibReportAndExpensesById = async (id: string) => {
         const response = await BaseService.get(`/bank/${id}`)
         return {
             ...response.data,
-            reportDate: response.data.reportDate || new Date().toISOString().split('T')[0],
+            reportDate:
+                response.data.reportDate ||
+                new Date().toISOString().split('T')[0],
             amount: Number(response.data.amount) || 0,
             category: response.data.category || { _id: '', name: '' },
             shop: response.data.shop || { _id: '', shopName: '' },
-            remarks: response.data.remarks || ''
+            remarks: response.data.remarks || '',
         }
     } catch (error) {
         console.error('Error fetching Aadib report:', error)
@@ -322,7 +329,6 @@ export const deleteAdibReportAndExpenses = async (id: string) => {
     }
 }
 export const exportReportToExcel = async ({
-  
     search,
     billType,
     month,
@@ -331,89 +337,699 @@ export const exportReportToExcel = async ({
     endDate,
     category,
     shop,
-
 }: {
-   
-    search?: string;
-    billType?: string;
-    month?: number;
-    year?: number;
-    startDate?: string;
-    endDate?: string;
-    category?: string;
-    shop?: string;
-
+    search?: string
+    billType?: string
+    month?: number
+    year?: number
+    startDate?: string
+    endDate?: string
+    category?: string
+    shop?: string
 }) => {
     try {
         // Prepare params object with proper typing
         const params: Record<string, any> = {
-            
-            
             search,
             billType,
             month,
             year,
-            startDate: startDate ? new Date(startDate).toISOString() : undefined,
+            startDate: startDate
+                ? new Date(startDate).toISOString()
+                : undefined,
             endDate: endDate ? new Date(endDate).toISOString() : undefined,
             category,
             shop,
-      
-        };
+        }
 
         // Clean up undefined parameters
-        Object.keys(params).forEach(key => params[key] === undefined && delete params[key]);
+        Object.keys(params).forEach(
+            (key) => params[key] === undefined && delete params[key],
+        )
 
         const response = await BaseService.get('/bank/export/excel', {
             params,
             responseType: 'blob',
-        });
+        })
 
         // Validate response
         if (!response.data) {
-            throw new Error('No data received from server');
+            throw new Error('No data received from server')
         }
 
         // Create filename with current date and bill type
-        const filename = `bills_export_${billType || 'all'}_${new Date().toISOString().slice(0, 10)}.xlsx`;
+        const filename = `bills_export_${billType || 'all'}_${new Date()
+            .toISOString()
+            .slice(0, 10)}.xlsx`
 
         // Create download link
-        const url = window.URL.createObjectURL(new Blob([response.data], { 
-            type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' 
-        }));
-        
-        const link = document.createElement('a');
-        link.href = url;
-        link.setAttribute('download', filename);
-        document.body.appendChild(link);
-        link.click();
-        
+        const url = window.URL.createObjectURL(
+            new Blob([response.data], {
+                type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            }),
+        )
+
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', filename)
+        document.body.appendChild(link)
+        link.click()
+
         // Clean up
         setTimeout(() => {
-            document.body.removeChild(link);
-            window.URL.revokeObjectURL(url);
-        }, 100);
+            document.body.removeChild(link)
+            window.URL.revokeObjectURL(url)
+        }, 100)
 
-        return true;
+        return true
     } catch (error) {
-        console.error('Error exporting bills:', error);
-        
+        console.error('Error exporting bills:', error)
+
         // Enhanced error handling
-        let errorMessage = 'Failed to export bills';
+        let errorMessage = 'Failed to export bills'
         if (error instanceof Error) {
-            errorMessage = error.message;
+            errorMessage = error.message
         } else if (typeof error === 'string') {
-            errorMessage = error;
+            errorMessage = error
         }
-        
-        throw new Error(errorMessage);
+
+        throw new Error(errorMessage)
     }
-};
+}
+//Project Profit Report
+export const getProfitReport = async ({
+    page,
+    limit,
+    search,
+    month,
+    year,
+    startDate,
+    endDate,
+}) => {
+    try {
+        const response = await BaseService.get(`/project-profit`, {
+            params: {
+                page,
+                limit,
+                search,
+                month,
+                year,
+                startDate,
+                endDate,
+            },
+        })
+        return response.data
+    } catch (error) {
+        console.error('Error fetching reports:', error)
+        throw error
+    }
+}
+export const addProjectProfitReport = async (formData: FormData) => {
+    try {
+        const response = await BaseService.post('/project-profit/', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        })
+        return response
+    } catch (error) {
+        console.error('Error adding Aadib report:', error)
+        throw error
+    }
+}
+export const editProjectProfitReport = async (
+    id: string,
+    formData: FormData,
+) => {
+    try {
+        const response = await BaseService.put(
+            `/project-profit/${id}`,
+            formData,
+            {
+                headers: {
+                    'Content-Type': 'multipart/form-data',
+                },
+            },
+        )
+        return response
+    } catch (error) {
+        console.error('Error editing Aadib report:', error)
+        throw error
+    }
+}
+export const fetchProjectProfitReportById = async (id: string) => {
+    try {
+        const response = await BaseService.get(`/project-profit/${id}`)
+        return {
+            ...response.data,
+            reportDate:
+                response.data.reportDate ||
+                new Date().toISOString().split('T')[0],
+            amount: Number(response.data.amount) || 0,
+            category: response.data.category || { _id: '', name: '' },
+            shop: response.data.shop || { _id: '', shopName: '' },
+            remarks: response.data.remarks || '',
+        }
+    } catch (error) {
+        console.error('Error fetching Aadib report:', error)
+        throw error
+    }
+}
+export const deleteProjectProfitReport = async (id: string) => {
+    try {
+        const response = await BaseService.delete(`/project-profit/${id}`)
+        return response
+    } catch (error) {
+        console.error('Error deleting Aadib report:', error)
+        throw error
+    }
+}
+export const exportProfitReportToExcel = async ({
+    search,
+    month,
+    year,
+    startDate,
+    endDate,
+    page,
+    limit,
+}: {
+    search?: string
+    month?: number
+    year?: number
+    startDate?: string
+    endDate?: string
+    page?: number
+    limit?: number
+}) => {
+    try {
+        // Prepare params object with proper typing
+        const params: {
+            search?: string
+            month?: number
+            year?: number
+            startDate?: string
+            endDate?: string
+            page?: number
+            limit?: number
+        } = {
+            search,
+            month,
+            year,
+            page,
+            limit,
+        }
 
+        // Add date params only if they exist
+        if (startDate) {
+            params.startDate = new Date(startDate).toISOString()
+        }
+        if (endDate) {
+            params.endDate = new Date(endDate).toISOString()
+        }
 
+        // Clean up undefined parameters
+        Object.keys(params).forEach(
+            (key) =>
+                params[key as keyof typeof params] === undefined &&
+                delete params[key as keyof typeof params],
+        )
 
+        const response = await BaseService.get('/project-profit/export/excel', {
+            params,
+            responseType: 'blob',
+        })
 
+        // Validate response
+        if (!response.data) {
+            throw new Error('No data received from server')
+        }
 
+        // Create filename with current date
+        const now = new Date()
+        const formattedDate = `${now.getFullYear()}-${String(
+            now.getMonth() + 1,
+        ).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+        const filename = `profit_report_${formattedDate}.xlsx`
 
+        // Create download link
+        const url = window.URL.createObjectURL(
+            new Blob([response.data], {
+                type:
+                    response.headers['content-type'] ||
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            }),
+        )
 
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', filename)
+        document.body.appendChild(link)
+        link.click()
 
+        // Clean up
+        setTimeout(() => {
+            document.body.removeChild(link)
+            window.URL.revokeObjectURL(url)
+        }, 100)
 
+        return true
+    } catch (error) {
+        console.error('Error exporting profit report:', error)
+
+        // Enhanced error handling
+        let errorMessage = 'Failed to export profit report'
+        if (error instanceof Error) {
+            errorMessage = error.message
+        } else if (typeof error === 'string') {
+            errorMessage = error
+        } else if (error && typeof error === 'object' && 'message' in error) {
+            errorMessage = (error as { message: string }).message
+        }
+
+        throw new Error(errorMessage)
+    }
+}
+//Payroll Report
+export const getPayrollReport = async ({
+    page,
+    limit,
+    search,
+    month,
+    year,
+    startDate,
+    endDate,
+    status,
+}: {
+    page?: number
+    limit?: number
+    search?: string
+    month?: number
+    year?: number
+    startDate?: string
+    endDate?: string
+    status?: string
+}) => {
+    try {
+        const response = await BaseService.get(`/payroll`, {
+            params: {
+                page,
+                limit,
+                search,
+                month,
+                year,
+                startDate,
+                endDate,
+                status,
+            },
+        })
+        return response.data
+    } catch (error) {
+        console.error('Error fetching payroll reports:', error)
+        throw error
+    }
+}
+
+export const addPayrollReport = async (formData: FormData) => {
+    try {
+        const response = await BaseService.post('/payroll/', formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        })
+        return response
+    } catch (error) {
+        console.error('Error adding payroll report:', error)
+        throw error
+    }
+}
+
+export const editPayrollReport = async (id: string, formData: FormData) => {
+    try {
+        const response = await BaseService.put(`/payroll/${id}`, formData, {
+            headers: {
+                'Content-Type': 'multipart/form-data',
+            },
+        })
+        return response
+    } catch (error) {
+        console.error('Error editing payroll report:', error)
+        throw error
+    }
+}
+
+export const fetchPayrollReportById = async (id: string) => {
+    try {
+        const response = await BaseService.get(`/payroll/${id}`)
+        return {
+            ...response.data,
+            paymentDate:
+                response.data.paymentDate ||
+                new Date().toISOString().split('T')[0],
+            basicSalary: Number(response.data.basicSalary) || 0,
+            allowances: Number(response.data.allowances) || 0,
+            deductions: Number(response.data.deductions) || 0,
+            netSalary: Number(response.data.netSalary) || 0,
+            status: response.data.status || 'pending',
+            employee: response.data.employee || {
+                _id: '',
+                name: '',
+                designation: '',
+            },
+        }
+    } catch (error) {
+        console.error('Error fetching payroll report:', error)
+        throw error
+    }
+}
+
+export const deletePayrollReport = async (id: string) => {
+    try {
+        const response = await BaseService.delete(`/payroll/${id}`)
+        return response
+    } catch (error) {
+        console.error('Error deleting payroll report:', error)
+        throw error
+    }
+}
+
+export const exportPayrollReportToExcel = async ({
+    search,
+    month,
+    year,
+    startDate,
+    endDate,
+    status,
+    page,
+    limit,
+}: {
+    search?: string
+    month?: number
+    year?: number
+    startDate?: string
+    endDate?: string
+    status?: string
+    page?: number
+    limit?: number
+}) => {
+    try {
+        // Prepare params object with proper typing
+        const params: {
+            page?: number
+            limit?: number
+            search?: string
+            month?: number
+            year?: number
+            startDate?: string
+            endDate?: string
+            status?: string
+        } = {
+            search,
+            month,
+            year,
+            status,
+            page,
+            limit,
+        }
+
+        // Add date params only if they exist
+        if (startDate) {
+            params.startDate = new Date(startDate).toISOString()
+        }
+        if (endDate) {
+            params.endDate = new Date(endDate).toISOString()
+        }
+
+        // Clean up undefined parameters
+        Object.keys(params).forEach(
+            (key) =>
+                params[key as keyof typeof params] === undefined &&
+                delete params[key as keyof typeof params],
+        )
+
+        const response = await BaseService.get('/payroll/export/excel', {
+            params,
+            responseType: 'blob',
+        })
+
+        // Validate response
+        if (!response.data) {
+            throw new Error('No data received from server')
+        }
+
+        // Create filename with current date
+        const now = new Date()
+        const formattedDate = `${now.getFullYear()}-${String(
+            now.getMonth() + 1,
+        ).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+        const filename = `payroll_report_${formattedDate}.xlsx`
+
+        // Create download link
+        const url = window.URL.createObjectURL(
+            new Blob([response.data], {
+                type:
+                    response.headers['content-type'] ||
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            }),
+        )
+
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', filename)
+        document.body.appendChild(link)
+        link.click()
+
+        // Clean up
+        setTimeout(() => {
+            document.body.removeChild(link)
+            window.URL.revokeObjectURL(url)
+        }, 100)
+
+        return true
+    } catch (error) {
+        console.error('Error exporting payroll report:', error)
+
+        // Enhanced error handling
+        let errorMessage = 'Failed to export payroll report'
+        if (error instanceof Error) {
+            errorMessage = error.message
+        } else if (typeof error === 'string') {
+            errorMessage = error
+        } else if (error && typeof error === 'object' && 'message' in error) {
+            errorMessage = (error as { message: string }).message
+        }
+
+        throw new Error(errorMessage)
+    }
+}
+
+//Labour Expenses Report
+
+export const getLabourExpensesReport = async ({
+    page,
+    limit,
+    search,
+
+    startDate,
+    endDate,
+}: {
+    page?: number
+    limit?: number
+    search?: string
+
+    startDate?: string
+    endDate?: string
+}) => {
+    try {
+        const response = await BaseService.get(`/employee-expenses/`, {
+            params: {
+                page,
+                limit,
+                search,
+
+                startDate,
+                endDate,
+            },
+        })
+        return response.data
+    } catch (error) {
+        console.error('Error fetching payroll reports:', error)
+        throw error
+    }
+}
+
+export const addLabourExpensesReport = async (data: any) => {
+    try {
+        const response = await BaseService.post('/employee-expenses/', data)
+        return response
+    } catch (error) {
+        console.error('Error adding labour expenses report:', error)
+        throw error
+    }
+}
+export const editLabourExpensesReport = async (
+    id: string,
+    data: {
+        reportType: string
+        expenses: LabourExpenseItem[]
+    },
+) => {
+    try {
+        const response = await BaseService.put(`/employee-expenses/${id}`, data)
+        return response
+    } catch (error) {
+        console.error('Error editing labour expenses report:', error)
+        throw error
+    }
+}
+export const deleteLabourExpensesReport = async (id: string) => {
+    try {
+        const response = await BaseService.delete(`/employee-expenses/${id}`)
+        return response
+    } catch (error) {
+        console.error('Error deleting labour expenses report:', error)
+        throw error
+    }
+}
+export const fetchLabourExpensesById = async (id: string) => {
+    try {
+        const response = await BaseService.get(`/employee-expenses/${id}`)
+        return {
+            ...response.data,
+            expenses:
+                response.data.expenses?.map((expense: any) => ({
+                    employee: expense.employee || '',
+                    designation: expense.designation || '',
+                    country: expense.country || '',
+                    basicSalary: Number(expense.basicSalary) || 0,
+                    allowance: Number(expense.allowance) || 0,
+                    total: Number(expense.total) || 0,
+                    twoYearSalary: Number(expense.twoYearSalary) || 0,
+                    visaExpenses: Number(expense.visaExpenses) || 0,
+                    twoYearUniform: Number(expense.twoYearUniform) || 0,
+                    shoes: Number(expense.shoes) || 0,
+                    twoYearAccommodation:
+                        Number(expense.twoYearAccommodation) || 0,
+                    sewaBills: Number(expense.sewaBills) || 0,
+                    dewaBills: Number(expense.dewaBills) || 0,
+                    insurance: Number(expense.insurance) || 0,
+                    transport: Number(expense.transport) || 0,
+                    water: Number(expense.water) || 0,
+                    thirdPartyLiabilities:
+                        Number(expense.thirdPartyLiabilities) || 0,
+                    fairmontCertificate:
+                        Number(expense.fairmontCertificate) || 0,
+                    leaveSalary: Number(expense.leaveSalary) || 0,
+                    ticket: Number(expense.ticket) || 0,
+                    gratuity: Number(expense.gratuity) || 0,
+                })) || [],
+        }
+    } catch (error) {
+        console.error('Error fetching labour expenses report:', error)
+        throw error
+    }
+}
+export const exportEmployeeExpensesToExcel = async ({
+    search,
+    startDate,
+    endDate,
+
+    page,
+    limit,
+}: {
+    search?: string
+    startDate?: string
+    endDate?: string
+
+    page?: number
+    limit?: number
+}) => {
+    try {
+        // Prepare params object with proper typing
+        const params: {
+            search?: string
+
+            startDate?: string
+            endDate?: string
+            page?: number
+            limit?: number
+        } = {
+            search,
+            page,
+            limit,
+            startDate,
+            endDate,
+        }
+
+        // Add date params only if they exist
+        if (startDate) {
+            params.startDate = new Date(startDate).toISOString()
+        }
+        if (endDate) {
+            params.endDate = new Date(endDate).toISOString()
+        }
+
+        // Clean up undefined parameters
+        Object.keys(params).forEach(
+            (key) =>
+                params[key as keyof typeof params] === undefined &&
+                delete params[key as keyof typeof params],
+        )
+
+        const response = await BaseService.get(
+            '/employee-expenses/export/excel',
+            {
+                params,
+                responseType: 'blob',
+            },
+        )
+
+        // Validate response
+        if (!response.data) {
+            throw new Error('No data received from server')
+        }
+
+        // Create filename with current date
+        const now = new Date()
+        const formattedDate = `${now.getFullYear()}-${String(
+            now.getMonth() + 1,
+        ).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
+        const filename = `Expense_report_${formattedDate}.xlsx`
+
+        // Create download link
+        const url = window.URL.createObjectURL(
+            new Blob([response.data], {
+                type:
+                    response.headers['content-type'] ||
+                    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            }),
+        )
+
+        const link = document.createElement('a')
+        link.href = url
+        link.setAttribute('download', filename)
+        document.body.appendChild(link)
+        link.click()
+
+        // Clean up
+        setTimeout(() => {
+            document.body.removeChild(link)
+            window.URL.revokeObjectURL(url)
+        }, 100)
+
+        return true
+    } catch (error) {
+        console.error('Error exporting payroll report:', error)
+
+        // Enhanced error handling
+        let errorMessage = 'Failed to export payroll report'
+        if (error instanceof Error) {
+            errorMessage = error.message
+        } else if (typeof error === 'string') {
+            errorMessage = error
+        } else if (error && typeof error === 'object' && 'message' in error) {
+            errorMessage = (error as { message: string }).message
+        }
+
+        throw new Error(errorMessage)
+    }
+}

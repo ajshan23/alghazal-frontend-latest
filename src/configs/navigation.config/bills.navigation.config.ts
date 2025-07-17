@@ -126,7 +126,7 @@ const billsNavigationConfig: NavigationTree[] = [
         path: '',
         title: 'Reports',
         translateKey: 'bills',
-        icon: 'report', // Changed from 'hr' to 'report' or use an appropriate icon name
+        icon: 'report', 
         type: NAV_ITEM_TYPE_COLLAPSE,
         authority: [ADMIN, SUPERADMIN],
         subMenu: [
@@ -135,7 +135,7 @@ const billsNavigationConfig: NavigationTree[] = [
                 path: `${APP_PREFIX_PATH}/adib-report-view`,
                 title: 'ADIB Report',
                 translateKey: 'nav.reports.adib',
-                icon: 'document', // Add an appropriate icon
+                icon: 'document',
                 type: NAV_ITEM_TYPE_ITEM,
                 authority: [ADMIN, SUPERADMIN],
                 subMenu: [],
@@ -145,11 +145,42 @@ const billsNavigationConfig: NavigationTree[] = [
                 path: `${APP_PREFIX_PATH}/expense-report-view`,
                 title: 'Expense Report',
                 translateKey: 'nav.reports.expense',
-                icon: 'document', // Add an appropriate icon
+                icon: 'document', 
                 type: NAV_ITEM_TYPE_ITEM,
                 authority: [ADMIN, SUPERADMIN],
                 subMenu: [],
             },
+            {
+                key: 'reports.profitAndLoss',
+                path: `${APP_PREFIX_PATH}/profit-and-loss-report-view`,
+                title: 'Profit and Loss Report',
+                translateKey: 'nav.reports.profitAndLoss',
+                icon: 'document',
+                type: NAV_ITEM_TYPE_ITEM,
+                authority: [ADMIN, SUPERADMIN],
+                subMenu: []
+            },
+            {
+                key: 'reports.labourExpenses',
+                path: `${APP_PREFIX_PATH}/labour-expenses-report-view`,
+                title: 'Labour Expenses Report',
+                translateKey: 'nav.reports.labourExpenses',
+                icon: 'document',
+                type: NAV_ITEM_TYPE_ITEM,
+                authority: [ADMIN, SUPERADMIN],
+                subMenu: [],
+            },
+            {
+                key: 'reports.payroll',
+                path: `${APP_PREFIX_PATH}/payroll-report-view`,
+                title: 'Payroll Report',
+                translateKey: 'nav.reports.payroll',
+                icon: 'document',
+                type: NAV_ITEM_TYPE_ITEM,
+                authority: [ADMIN, SUPERADMIN],
+                subMenu: [],
+            }
+            
         ],
     }
 ]

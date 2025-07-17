@@ -7,6 +7,7 @@ import useThemeClass from '@/utils/hooks/useThemeClass'
 import dayjs from 'dayjs'
 import { Loading } from '@/components/shared'
 import { FiUser } from 'react-icons/fi'
+import MarkAttendanceModal from './components/MarkAttendanceModal'
 
 interface Worker {
   _id: string
@@ -42,6 +43,8 @@ const AttendanceManagement = () => {
   const [project, setProject] = useState<ProjectData | null>(null)
   const [workers, setWorkers] = useState<Worker[]>([])
   const [date, setDate] = useState(dayjs().format('DD MMM YYYY'))
+  const [attendanceModal, setAttendanceModal] = useState(false)
+  const [selectedWorker, setSelectedWorker] = useState<string | null>(null)
 
   const fetchAttendanceData = async () => {
     try {
@@ -65,13 +68,14 @@ const AttendanceManagement = () => {
     fetchAttendanceData()
   }, [projectId])
 
-  const handleMarkAttendance = async (workerId: string, present: boolean) => {
+  const handleMarkAttendance = async (workerId: string, present: boolean, hour?: number) => {
     try {
       setSubmitting(true)
       await apiMarkAttendance({
         projectId,
         userId: workerId,
-        present
+        present,
+        hour // Pass the selected hour if provided
       })
       
       // Update local state
@@ -103,6 +107,7 @@ const AttendanceManagement = () => {
       )
     } finally {
       setSubmitting(false)
+      setAttendanceModal(false)
     }
   }
 
@@ -145,6 +150,16 @@ const AttendanceManagement = () => {
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const openModal = (workerId: string) => {
+    setSelectedWorker(workerId)
+    setAttendanceModal(true)
+  }
+
+  const closeModal = () => {
+    setSelectedWorker(null)
+    setAttendanceModal(false)
   }
 
   if (loading) {
@@ -200,7 +215,6 @@ const AttendanceManagement = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Status
                 </th>
-               
                 <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider">
                   Actions
                 </th>
@@ -238,7 +252,6 @@ const AttendanceManagement = () => {
                         }`}
                       />
                     </td>
-                   
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex justify-end gap-2">
                         <Button
@@ -246,7 +259,7 @@ const AttendanceManagement = () => {
                           variant="solid"
                           color="green"
                           icon={<HiCheck />}
-                          onClick={() => handleMarkAttendance(worker._id, true)}
+                          onClick={() => openModal(worker._id)}
                           disabled={submitting || worker.present}
                         >
                           Present
@@ -276,6 +289,15 @@ const AttendanceManagement = () => {
           </table>
         </div>
       </Card>
+      <MarkAttendanceModal
+        isOpen={attendanceModal}
+        onClose={closeModal}
+        onConfirm={(e, selectedHour) => {
+          if (selectedWorker) {
+            handleMarkAttendance(selectedWorker, true, selectedHour)
+          }
+        }}
+      />
     </div>
   )
 }

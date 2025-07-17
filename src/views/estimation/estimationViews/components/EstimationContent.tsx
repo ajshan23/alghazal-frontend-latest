@@ -77,8 +77,7 @@ const EstimationContent = () => {
 
 
     const handleEdit = () => {
-        console.log("shaaaa",data);
-        console.log("ajaaaaaa",id)
+     
         
         if (data) {
             navigate(`${APP_PREFIX_PATH}/estimation/edit/${data.project._id}/${id}`, { state: { estimationId: id } })
