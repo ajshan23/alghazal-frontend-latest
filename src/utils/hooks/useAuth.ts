@@ -31,7 +31,7 @@ function useAuth() {
                 email: values.userName.includes('@') ? values.userName : `${values.userName}@yourdomain.com`,
                 password: values.password
             });
-            console.log(response);
+            console.log(response,"123");
             
 
             if (response.status===200) {

@@ -1,4 +1,4 @@
-import { useAppDispatch, useAppSelector } from '@/store'
+import { fetchUserDetails, useAppDispatch, useAppSelector } from '@/store'
 import { useEffect } from 'react'
 import Input from '@/components/ui/Input'
 import Avatar from '@/components/ui/Avatar'
@@ -10,52 +10,58 @@ import {
     HiOutlineCog,        
     HiOutlineCash,      
     HiOutlineTruck,      
-    HiOutlineChip ,    
-    HiOutlineClipboardCheck 
+    HiOutlineChip,    
+    HiOutlineClipboardCheck,
+    HiOutlinePhone
 } from 'react-icons/hi'
 
-const getRoleTitle = (authority: string) => {
-    switch(authority) {
+const getRoleTitle = (role: string) => {
+    switch(role) {
         case 'super_admin':
-            return { title: 'Super Administrator', icon: <HiOutlineShieldCheck className="text-xl" /> };
+            return { title: 'Super Administrator', icon: <HiOutlineShieldCheck className="text-xl" /> }
         case 'admin':
-            return { title: 'Administrator', icon: <HiOutlineShieldCheck className="text-xl" /> };
+            return { title: 'Administrator', icon: <HiOutlineShieldCheck className="text-xl" /> }
         case 'engineer':
-            return { title: 'Engineer', icon: <HiOutlineCog className="text-xl" /> };
+            return { title: 'Engineer', icon: <HiOutlineCog className="text-xl" /> }
         case 'finance':
-            return { title: 'Finance Officer', icon: <HiOutlineCash className="text-xl" /> };
+            return { title: 'Finance Officer', icon: <HiOutlineCash className="text-xl" /> }
         case 'driver':
-            return { title: 'Driver', icon: <HiOutlineTruck className="text-xl" /> };
+            return { title: 'Driver', icon: <HiOutlineTruck className="text-xl" /> }
         case 'worker':
-            return { title: 'Worker', icon: <HiOutlineChip  className="text-xl" /> };
+            return { title: 'Worker', icon: <HiOutlineChip className="text-xl" /> }
         case 'supervisor':
-            return { title: 'Supervisor', icon: <HiOutlineClipboardCheck className="text-xl" /> };
+            return { title: 'Supervisor', icon: <HiOutlineClipboardCheck className="text-xl" /> }
         default:
-            return { title: 'User', icon: <HiOutlineUser className="text-xl" /> };
+            return { title: 'User', icon: <HiOutlineUser className="text-xl" /> }
     }
 }
 
 const Profile = () => {
     const dispatch = useAppDispatch()
-    const user = useAppSelector((state) => state.auth.user)
+    const { data: userData, loading, error } = useAppSelector((state) => state.userDetails)
+    
+    // Extract user object from nested response
+    const user = userData?.data?.user
 
-
-    console.log(user,2123)
     useEffect(() => {
-        if (user) {
-            dispatch({
-                type: 'auth/setUser',
-                payload: {
-                    avatar: user.avatar ,
-                    userName: user.userName || user.email,
-                    email: user.email,
-                    authority: user.authority ? [user.authority] : ['user'],
-                },
-            })
-        }
-    }, [dispatch, user])
+        dispatch(fetchUserDetails())
+    }, [dispatch])
 
-    const roleInfo = user?.authority ? getRoleTitle(user.authority[0]) : getRoleTitle('user')
+    if (loading) {
+        return <div className="p-6 text-center">Loading profile...</div>
+    }
+
+    if (error) {
+        return <div className="p-6 text-red-500">Error: {error}</div>
+    }
+
+    if (!user) {
+        return <div className="p-6 text-center">No user data available</div>
+    }
+
+    const fullName = `${user.firstName} ${user.lastName}`.trim()
+    const roleInfo = getRoleTitle(user.role)
+    const primaryPhone = user.phoneNumbers?.[0] || 'No phone number'
 
     return (
         <div className="p-6 max-w-2xl mx-auto">
@@ -66,12 +72,12 @@ const Profile = () => {
                     <Avatar
                         size={80}
                         shape="circle"
-                        src={user?.avatar}
+                        src={user.profileImage}
                         icon={<HiOutlineUser />}
                     />
                     <div>
                         <h3 className="text-lg font-semibold">
-                            {user?.userName || 'No name'}
+                            {fullName || 'No name'}
                         </h3>
                         <p className="text-gray-500">{roleInfo.title}</p>
                     </div>
@@ -81,22 +87,29 @@ const Profile = () => {
                     <label className="block text-sm font-medium mb-1">Full Name</label>
                     <Input
                         readOnly
-                        value={user?.userName || ''}
+                        value={fullName}
                         prefix={<HiOutlineUserCircle className="text-xl" />}
                     />
                 </div>
 
-                {/* Email Field */}
                 <div>
                     <label className="block text-sm font-medium mb-1">Email</label>
                     <Input
                         readOnly
-                        value={user?.email || ''}
+                        value={user.email || ''}
                         prefix={<HiOutlineMail className="text-xl" />}
                     />
                 </div>
 
-                {/* Role Field */}
+                <div>
+                    <label className="block text-sm font-medium mb-1">Phone</label>
+                    <Input
+                        readOnly
+                        value={primaryPhone}
+                        prefix={<HiOutlinePhone className="text-xl" />}
+                    />
+                </div>
+
                 <div>
                     <label className="block text-sm font-medium mb-1">Role</label>
                     <Input
@@ -105,6 +118,17 @@ const Profile = () => {
                         prefix={roleInfo.icon}
                     />
                 </div>
+
+                {user.signatureImage && (
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Signature</label>
+                        <img 
+                            src={user.signatureImage} 
+                            alt="User Signature" 
+                            className="h-20 border rounded"
+                        />
+                    </div>
+                )}
             </div>
         </div>
     )

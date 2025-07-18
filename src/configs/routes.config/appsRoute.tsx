@@ -505,7 +505,25 @@ const appsRoute: Routes = [
         path: `${APP_PREFIX_PATH}/new-payroll-report/:id`,
         component: lazy(() => import('@/views/all-bills/newBills/NewPayrollReport')),
         authority: [ADMIN, USER,SUPERADMIN],
-    },          
+    },    
+    {
+        key: 'apps.visaExpenseReportView',
+        path: `${APP_PREFIX_PATH}/visa-expense-report-view`,
+        component: lazy(() => import('@/views/all-bills/bills/VisaExpenseReport')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+    {
+        key: 'apps.visaExpenseReportView',
+        path: `${APP_PREFIX_PATH}/new-visa-expense-report`,
+        component: lazy(() => import('@/views/all-bills/newBills/NewVisaExpenseReport')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
+    {
+        key: 'apps.visaExpenseReportView',
+        path: `${APP_PREFIX_PATH}/new-visa-expense-report/:id`,
+        component: lazy(() => import('@/views/all-bills/newBills/NewVisaExpenseReport')),
+        authority: [ADMIN, USER,SUPERADMIN],
+    },
         
 
         

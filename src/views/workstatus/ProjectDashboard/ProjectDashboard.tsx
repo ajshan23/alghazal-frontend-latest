@@ -14,11 +14,16 @@ import Schedule from './components/Schedule'
 
 
 injectReducer('projectDashboard', reducer)
+
+
+let user = JSON.parse(localStorage.getItem('user') || '{}')
+
+console.log(user, 'user')
 // projectDashboardData.ts
  const projectDashboardData = {
     dashboardData: {
-        userName: 'Raja',
-        taskCount: 12,
+        userName: user?.name || 'user',
+    
         projectOverviewData: {
             chart: {
                 weekly: {

@@ -14,10 +14,17 @@ import Schedule from './components/Schedule'
 import Activities from './components/Activities'
 
 injectReducer('projectDashboard', reducer)
+
+let user = JSON.parse(localStorage.getItem('user') || '{}')
+
+console.log(user, 'user')
+
+
+
 // projectDashboardData.ts
  const projectDashboardData = {
     dashboardData: {
-        userName: 'Raja',
+        userName: user?.name || 'user',
         taskCount: 12,
         projectOverviewData: {
             chart: {

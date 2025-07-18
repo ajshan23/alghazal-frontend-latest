@@ -2,18 +2,15 @@ import toast from '@/components/ui/toast'
 import Notification from '@/components/ui/notification'
 import { useNavigate, useParams } from 'react-router-dom'
 import { useEffect, useState } from 'react'
-import {  
+import {
     addPayrollReport,
     editPayrollReport,
-    fetchPayrollReportById 
+    fetchPayrollReportById,
 } from '../api/api'
 import PayrollForm from '../billForms/PayrollForm'
 
 const defaultReportData = {
-    reportDate: new Date().toISOString().split('T')[0], // Default to today's date
     name: '',
-    designation: '',
-    emiratesId: '',
     labourCard: '',
     labourCardPersonalNo: '',
     period: '',
@@ -22,7 +19,7 @@ const defaultReportData = {
     mess: '',
     advance: '',
     net: '',
-    remark: ''
+    remark: '',
 }
 
 const NewPayrollReport = () => {
@@ -48,20 +45,31 @@ const NewPayrollReport = () => {
                     throw new Error('Invalid payroll data received')
                 }
 
+                // Extract only the fields we need
+                const {
+                    employee,
+                    labourCard,
+                    labourCardPersonalNo,
+                    period,
+                    allowance,
+                    deduction,
+                    mess,
+                    advance,
+                    net,
+                    remark,
+                } = response.data
+
                 setInitialData({
-                    reportDate: response.data.reportDate || defaultReportData.reportDate,
-                    name: response.data.name || '',
-                    designation: response.data.designation || '',
-                    emiratesId: response.data.emiratesId || '',
-                    labourCard: response.data.labourCard || '',
-                    labourCardPersonalNo: response.data.labourCardPersonalNo || '',
-                    period: response.data.period || '',
-                    allowance: response.data.allowance || '',
-                    deduction: response.data.deduction || '',
-                    mess: response.data.mess || '',
-                    advance: response.data.advance || '',
-                    net: response.data.net || '',
-                    remark: response.data.remark || ''
+                    employee: employee?._id || '',
+                    labourCard: labourCard || '',
+                    labourCardPersonalNo: labourCardPersonalNo || '',
+                    period: period || '',
+                    allowance: allowance || '',
+                    deduction: deduction || '',
+                    mess: mess || '',
+                    advance: advance || '',
+                    net: net || '',
+                    remark: remark || '',
                 })
                 setError(null)
             } catch (error: any) {
@@ -75,7 +83,7 @@ const NewPayrollReport = () => {
                     >
                         {error.message || 'Something went wrong'}
                     </Notification>,
-                    { placement: 'top-center' }
+                    { placement: 'top-center' },
                 )
                 setTimeout(() => navigate('/app/payroll-view'), 2500)
             } finally {
@@ -91,27 +99,28 @@ const NewPayrollReport = () => {
         setSubmitting: (isSubmitting: boolean) => void
     ) => {
         try {
-            setSubmitting(true)
+            setSubmitting(true);
             
-            const formDataToSend = new FormData()
-            
-            // Append all form fields
-            Object.keys(formData).forEach(key => {
-                formDataToSend.append(key, formData[key])
-            })
-            
-            // Format dates if they are Date objects
-            if (formData.reportDate instanceof Date) {
-                formDataToSend.set('reportDate', formData.reportDate.toISOString())
-            }
-            if (formData.period instanceof Date) {
-                formDataToSend.set('period', formData.period.toISOString())
-            }
-
-            const response = id 
-                ? await editPayrollReport(id, formDataToSend) 
-                : await addPayrollReport(formDataToSend)
-
+            // Prepare the clean data object
+            const payload = {
+                employee: formData.employee, // This is the _id
+                labourCard: formData.labourCard,
+                labourCardPersonalNo: formData.labourCardPersonalNo,
+                period: formData.period,
+                allowance: formData.allowance,
+                deduction: formData.deduction,
+                mess: formData.mess,
+                advance: formData.advance,
+                net: formData.net,
+                remark: formData.remark,
+                // Add any date formatting if needed:
+                // reportDate: formData.reportDate?.toISOString() 
+            };
+    
+            const response = id
+                ? await editPayrollReport(id, payload)
+                : await addPayrollReport(payload);
+    
             if ([200, 201].includes(response.status)) {
                 toast.push(
                     <Notification
@@ -122,13 +131,13 @@ const NewPayrollReport = () => {
                         Payroll report {id ? 'updated' : 'added'} successfully
                     </Notification>,
                     { placement: 'top-center' }
-                )
-                navigate('/app/payroll-view')
+                );
+                navigate('/app/payroll-report-view');
             } else {
-                throw new Error(response?.response?.data?.message || 'Unexpected status code')
+                throw new Error(response?.response?.data?.message || 'Unexpected status code');
             }
         } catch (error: any) {
-            console.error('Error during form submission:', error)
+            console.error('Form submission error:', error);
             toast.push(
                 <Notification
                     title={`Error ${id ? 'updating' : 'adding'} payroll report`}
@@ -138,11 +147,11 @@ const NewPayrollReport = () => {
                     {error?.response?.data?.message || error.message}
                 </Notification>,
                 { placement: 'top-center' }
-            )
+            );
         } finally {
-            setSubmitting(false)
+            setSubmitting(false);
         }
-    }
+    };
 
     const handleDiscard = () => {
         if (JSON.stringify(initialData) !== JSON.stringify(defaultReportData)) {

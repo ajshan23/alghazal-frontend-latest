@@ -24,6 +24,8 @@ import {
     exportProfitReportToExcel,
     getLabourExpensesReport,
     exportEmployeeExpensesToExcel,
+    getPayrollReport,
+    exportPayrollReportToExcel,
 } from '../../api/api'
 import moment from 'moment'
 import BillDeleteConfirmation from './BillDeleteConfirmation'
@@ -83,7 +85,7 @@ const months = [
     { value: 11, label: 'November' },
     { value: 12, label: 'December' },
 ]
-
+//Generate Years For Dropdown
 const generateYears = () => {
     const currentYear = new Date().getFullYear()
     return Array.from({ length: 10 }, (_, i) => ({
@@ -92,6 +94,7 @@ const generateYears = () => {
     }))
 }
 
+//Action Column For Reports
 const ActionColumn = ({ row, onDeleteClick }: ActionColumnProps) => {
     const { textTheme } = useThemeClass()
     const navigate = useNavigate()
@@ -104,9 +107,9 @@ const ActionColumn = ({ row, onDeleteClick }: ActionColumnProps) => {
           : location.pathname.includes('/labour-expenses-report-view')
             ? 'labour'
             : location.pathname.includes('/payroll-report-view')
-            ? 'payroll'
-            : 'expense'
-
+              ? 'payroll'
+              : 'expense'
+    //Edit Paths For Reports
     const editPaths = {
         adib: '/app/new-adib-report',
         expense: '/app/new-expense-report',
@@ -114,21 +117,21 @@ const ActionColumn = ({ row, onDeleteClick }: ActionColumnProps) => {
         labour: '/app/new-labour-expenses-report',
         payroll: '/app/new-payroll-report',
     }
-
+    //Handle View Attachments For Reports
     const handleViewAttachments = () => {
         navigate(`/app/bill-attachments`, {
             state: { data: row?.attachments },
             type: 'report',
         })
     }
-
+    //Handle Edit For Reports
     const handleEdit = () => {
         navigate(`${editPaths[reportType]}/${row._id}`)
     }
 
     return (
         <div className="flex text-lg">
-            {reportType !== 'labour' && (
+            {reportType !== 'labour' && reportType !== 'payroll' && (
                 <span
                     className={`cursor-pointer p-2 hover:${textTheme}`}
                     onClick={handleViewAttachments}
@@ -179,7 +182,7 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
         shop: '',
     })
     const location = useLocation()
-
+    //Get Report Type From Route
     const getReportTypeFromRoute = useCallback(() => {
         return location.pathname.includes('/adib-report-view')
             ? 'adib'
@@ -188,13 +191,11 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
               : location.pathname.includes('/labour-expenses-report-view')
                 ? 'labour'
                 : location.pathname.includes('/payroll-report-view')
-                ? 'payroll'
-                : 'expense'
+                  ? 'payroll'
+                  : 'expense'
     }, [location.pathname])
 
     const reportType = getReportTypeFromRoute()
-
-    console.log(reportType, '123 reportType')
 
     const handleApplyFilters = (data: FilterParams) => {
         setFilters(data)
@@ -204,6 +205,7 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
     const reportApiMap = {
         profit: getProfitReport,
         labour: getLabourExpensesReport,
+        payroll: getPayrollReport,
         default: getAdibReportAndExpenses,
     }
 
@@ -236,6 +238,12 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
                     ...baseParams,
                     category: filters.category,
                     shop: filters.shop,
+                    startDate: filters.startDate,
+                    endDate: filters.endDate,
+                }
+            case 'payroll':
+                return {
+                    ...baseParams,
                     startDate: filters.startDate,
                     endDate: filters.endDate,
                 }
@@ -278,6 +286,7 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
         response?.data?.reports ||
         response?.data?.projects ||
         response?.data?.expenses ||
+        response?.data?.payrolls ||
         []
 
     console.log(reports, '123 re')
@@ -316,7 +325,7 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
         setPagination({ page: 1, limit: 10 })
         tableRef.current?.resetSorting()
     }
-
+    //Handle Export For Reports
     const handleExport = async () => {
         setIsExporting(true)
         try {
@@ -339,7 +348,18 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
                     startDate: filters.startDate,
                     endDate: filters.endDate,
                 })
-            } else {
+
+            }
+            else if (reportType === 'payroll') {
+                exportResponse = await exportPayrollReportToExcel({
+                    page: pagination.page,
+                    limit: pagination.limit,
+                    search: searchTerm,
+                    startDate: filters.startDate,
+                    endDate: filters.endDate,
+                })
+            }
+            else {
                 exportResponse = await exportReportToExcel({
                     page: pagination.page,
                     limit: pagination.limit,
@@ -354,7 +374,6 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
                     export: true,
                 })
             }
-            
 
             const allReports = exportResponse?.data?.reports || []
 
@@ -390,17 +409,18 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
             setIsExporting(false)
         }
     }
-
+    //Handle Delete Success For Reports
     const handleDeleteSuccess = useCallback(() => {
         setIsDeleteOpen(false)
         refetch() // This will trigger a new API call
     }, [refetch])
 
+    //Handle Delete Click For Reports
     const handleDeleteClick = (row: ReportItem) => {
         setSelectedReport(row)
         setIsDeleteOpen(true)
     }
-
+    //Columns For Reports
     const columns: ColumnDef<ReportItem>[] = useMemo(() => {
         if (reportType === 'expense') {
             return [
@@ -755,62 +775,92 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
                     ),
                 },
             ]
-        }else if (reportType === 'payroll') {
-            const columns = [
+        } else if (reportType === 'payroll') {
+            return [
                 {
                     header: 'Employee',
-                    accessorKey: 'employee',
-                    cell: (props) => <span>{props.row.original.employee || '-'}</span>,
+                    accessorKey: 'name',
+                    cell: (props) => (
+                        <span>{props.row.original.name || '-'}</span>
+                    ),
                 },
                 {
                     header: 'Designation',
                     accessorKey: 'designation',
-                    cell: (props) => <span>{props.row.original.designation || '-'}</span>,
+                    cell: (props) => (
+                        <span>{props.row.original.designation || '-'}</span>
+                    ),
                 },
                 {
                     header: 'Emirates ID',
                     accessorKey: 'emiratesId',
-                    cell: (props) => <span>{props.row.original.emiratesId || '-'}</span>,
+                    cell: (props) => (
+                        <span>{props.row.original.emiratesId || '-'}</span>
+                    ),
                 },
                 {
                     header: 'Labour Card',
                     accessorKey: 'labourCard',
-                    cell: (props) => <span>{props.row.original.labourCard || '-'}</span>,
+                    cell: (props) => (
+                        <span>{props.row.original.labourCard || '-'}</span>
+                    ),
                 },
                 {
                     header: 'Personal No.',
                     accessorKey: 'labourCardPersonalNo',
-                    cell: (props) => <span>{props.row.original.labourCardPersonalNo || '-'}</span>,
+                    cell: (props) => (
+                        <span>{props.row.original.labourCardPersonalNo || '-'}</span>
+                    ),
                 },
                 {
                     header: 'Period',
                     accessorKey: 'period',
-                    cell: (props) => <span>{props.row.original.period || '-'}</span>,
+                    cell: (props) => (
+                        <span>{props.row.original.period || '-'}</span>
+                    ),
                 },
                 {
                     header: 'Basic Salary',
-                    accessorKey: 'basicSalary',
+                    accessorKey: 'basic',
                     cell: (props) => (
                         <span className="font-medium">
-                            {props.row.original.basicSalary?.toFixed(2)}
+                            {props.row.original.basic?.toFixed(2) || '0.00'}
                         </span>
                     ),
                 },
                 {
-                    header: 'Allowances',
-                    accessorKey: 'allowances',
+                    header: 'Allowance',
+                    accessorKey: 'allowance',
                     cell: (props) => (
                         <span className="text-green-500">
-                            {props.row.original.allowances?.toFixed(2)}
+                            {props.row.original.allowance?.toFixed(2) || '0.00'}
                         </span>
                     ),
                 },
                 {
-                    header: 'Deductions',
-                    accessorKey: 'deductions',
+                    header: 'OT',
+                    accessorKey: 'ot',
+                    cell: (props) => (
+                        <span>
+                            {props.row.original.ot?.toFixed(2) || '0.00'}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Total Earning',
+                    accessorKey: 'totalEarning',
+                    cell: (props) => (
+                        <span className="font-semibold">
+                            {props.row.original.totalEarning?.toFixed(2) || '0.00'}
+                        </span>
+                    ),
+                },
+                {
+                    header: 'Deduction',
+                    accessorKey: 'deduction',
                     cell: (props) => (
                         <span className="text-red-500">
-                            {props.row.original.deductions?.toFixed(2)}
+                            {props.row.original.deduction?.toFixed(2) || '0.00'}
                         </span>
                     ),
                 },
@@ -818,65 +868,44 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
                     header: 'Mess',
                     accessorKey: 'mess',
                     cell: (props) => (
-                        <span>{props.row.original.mess?.toFixed(2)}</span>
+                        <span>{props.row.original.mess?.toFixed(2) || '0.00'}</span>
                     ),
                 },
                 {
                     header: 'Advance',
                     accessorKey: 'advance',
                     cell: (props) => (
-                        <span>{props.row.original.advance?.toFixed(2)}</span>
+                        <span>{props.row.original.advance?.toFixed(2) || '0.00'}</span>
                     ),
                 },
                 {
                     header: 'Net Salary',
-                    accessorKey: 'netSalary',
+                    accessorKey: 'net',
                     cell: (props) => (
                         <span className="font-semibold text-blue-500">
-                            {props.row.original.netSalary?.toFixed(2)}
-                        </span>
-                    ),
-                },
-                {
-                    header: 'Payment Date',
-                    accessorKey: 'paymentDate',
-                    cell: (props) => (
-                        <span>
-                            {moment(props.row.original.paymentDate).format('DD MMM YYYY')}
-                        </span>
-                    ),
-                },
-                {
-                    header: 'Status',
-                    accessorKey: 'status',
-                    cell: (props) => (
-                        <span className={`capitalize ${
-                            props.row.original.status === 'pending' ? 'text-yellow-500' : 
-                            props.row.original.status === 'paid' ? 'text-green-500' : 
-                            'text-gray-500'
-                        }`}>
-                            {props.row.original.status}
+                            {props.row.original.net?.toFixed(2) || '0.00'}
                         </span>
                     ),
                 },
                 {
                     header: 'Remarks',
                     accessorKey: 'remark',
-                    cell: (props) => <span>{props.row.original.remark || '-'}</span>,
+                    cell: (props) => (
+                        <span>{props.row.original.remark || '-'}</span>
+                    ),
                 },
                 {
                     header: 'Action',
                     id: 'action',
                     cell: (props) => (
-                        <ActionColumn 
-                            row={props.row.original} 
-                            onDeleteClick={handleDeleteClick} 
+                        <ActionColumn
+                            row={props.row.original}
+                            onDeleteClick={handleDeleteClick}
                         />
                     ),
                 },
             ];
-        }
-         else {
+        } else {
             return [
                 {
                     header: 'DATE',
@@ -968,7 +997,7 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
                         value={searchTerm}
                     />
                     <div className="flex flex-wrap gap-2 items-center w-full md:w-auto">
-                        {reportType !== 'labour' && (
+                        {reportType !== 'labour'||reportType !== 'payroll' && (
                             <>
                                 <select
                                     className="p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"

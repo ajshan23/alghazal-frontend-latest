@@ -416,7 +416,7 @@ export const exportReportToExcel = async ({
         throw new Error(errorMessage)
     }
 }
-//Project Profit Report
+//---------------------Project Profit Report
 export const getProfitReport = async ({
     page,
     limit,
@@ -609,25 +609,20 @@ export const exportProfitReportToExcel = async ({
         throw new Error(errorMessage)
     }
 }
-//Payroll Report
+//---------------------Payroll Report
 export const getPayrollReport = async ({
     page,
     limit,
     search,
-    month,
-    year,
     startDate,
     endDate,
-    status,
 }: {
     page?: number
     limit?: number
     search?: string
-    month?: number
-    year?: number
     startDate?: string
     endDate?: string
-    status?: string
+ 
 }) => {
     try {
         const response = await BaseService.get(`/payroll`, {
@@ -635,11 +630,9 @@ export const getPayrollReport = async ({
                 page,
                 limit,
                 search,
-                month,
-                year,
                 startDate,
                 endDate,
-                status,
+                
             },
         })
         return response.data
@@ -649,33 +642,25 @@ export const getPayrollReport = async ({
     }
 }
 
-export const addPayrollReport = async (formData: FormData) => {
+export const addPayrollReport = async (payrollData: any) => {
     try {
-        const response = await BaseService.post('/payroll/', formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        })
-        return response
+        const response = await BaseService.post('/payroll/', payrollData);
+        return response;
     } catch (error) {
-        console.error('Error adding payroll report:', error)
-        throw error
+        console.error('Error adding payroll report:', error);
+        throw error;
     }
-}
+};
 
-export const editPayrollReport = async (id: string, formData: FormData) => {
+export const editPayrollReport = async (id: string, payrollData: any) => {
     try {
-        const response = await BaseService.put(`/payroll/${id}`, formData, {
-            headers: {
-                'Content-Type': 'multipart/form-data',
-            },
-        })
-        return response
+        const response = await BaseService.put(`/payroll/${id}`, payrollData);
+        return response;
     } catch (error) {
-        console.error('Error editing payroll report:', error)
-        throw error
+        console.error('Error editing payroll report:', error);
+        throw error;
     }
-}
+};
 
 export const fetchPayrollReportById = async (id: string) => {
     try {
@@ -822,7 +807,7 @@ export const exportPayrollReportToExcel = async ({
     }
 }
 
-//Labour Expenses Report
+//------------Labour Expenses Report
 
 export const getLabourExpensesReport = async ({
     page,
@@ -932,14 +917,12 @@ export const exportEmployeeExpensesToExcel = async ({
     search,
     startDate,
     endDate,
-
     page,
     limit,
 }: {
     search?: string
     startDate?: string
     endDate?: string
-
     page?: number
     limit?: number
 }) => {
