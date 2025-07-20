@@ -111,46 +111,46 @@ const AttendanceManagement = () => {
     }
   }
 
-  const handleMarkAll = async (present: boolean) => {
-    try {
-      setSubmitting(true)
-      await Promise.all(
-        workers.map(worker => 
-          apiMarkAttendance({
-            projectId,
-            userId: worker._id,
-            present
-          })
-        )
-      )
+  // const handleMarkAll = async (present: boolean) => {
+  //   try {
+  //     setSubmitting(true)
+  //     await Promise.all(
+  //       workers.map(worker => 
+  //         apiMarkAttendance({
+  //           projectId,
+  //           userId: worker._id,
+  //           present
+  //         })
+  //       )
+  //     )
       
-      // Update all workers
-      setWorkers(prev => prev.map(worker => ({
-        ...worker,
-        present,
-        markedBy: {
-          _id: 'current-user',
-          firstName: 'You',
-          lastName: ''
-        },
-        markedAt: new Date()
-      })))
+  //     // Update all workers
+  //     setWorkers(prev => prev.map(worker => ({
+  //       ...worker,
+  //       present,
+  //       markedBy: {
+  //         _id: 'current-user',
+  //         firstName: 'You',
+  //         lastName: ''
+  //       },
+  //       markedAt: new Date()
+  //     })))
       
-      toast.push(
-        <Notification title="Success" type="success">
-          All workers marked as {present ? 'present' : 'absent'}
-        </Notification>
-      )
-    } catch (error) {
-      toast.push(
-        <Notification title="Error marking attendance" type="danger">
-          {error.message}
-        </Notification>
-      )
-    } finally {
-      setSubmitting(false)
-    }
-  }
+  //     toast.push(
+  //       <Notification title="Success" type="success">
+  //         All workers marked as {present ? 'present' : 'absent'}
+  //       </Notification>
+  //     )
+  //   } catch (error) {
+  //     toast.push(
+  //       <Notification title="Error marking attendance" type="danger">
+  //         {error.message}
+  //       </Notification>
+  //     )
+  //   } finally {
+  //     setSubmitting(false)
+  //   }
+  // }
 
   const openModal = (workerId: string) => {
     setSelectedWorker(workerId)
@@ -190,14 +190,14 @@ const AttendanceManagement = () => {
               >
                 Refresh
               </Button>
-              <Button
+              {/* <Button
                 size="sm"
                 variant="solid"
                 onClick={() => handleMarkAll(true)}
                 disabled={submitting}
               >
                 Mark All Present
-              </Button>
+              </Button> */}
             </div>
           </div>
         }
@@ -295,6 +295,7 @@ const AttendanceManagement = () => {
         onConfirm={(e, selectedHour) => {
           if (selectedWorker) {
             handleMarkAttendance(selectedWorker, true, selectedHour)
+            closeModal(e); 
           }
         }}
       />

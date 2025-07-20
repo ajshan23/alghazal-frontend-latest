@@ -27,10 +27,12 @@ export const apiMarkNormalAttendance = (data: {
     present: boolean
     date?: Date
     type?: 'normal'
+    hour?: number
 }) => {
     return BaseService.post(`/attandance/normal/${data.userId}`, {
         ...data,
-        type: 'normal' // Ensure type is always normal
+        type: 'normal',
+        workingHour: data.hour
     })
 }
 

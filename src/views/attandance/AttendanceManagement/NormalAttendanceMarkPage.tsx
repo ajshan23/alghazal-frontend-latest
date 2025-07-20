@@ -6,6 +6,7 @@ import useThemeClass from '@/utils/hooks/useThemeClass';
 import dayjs from 'dayjs';
 import { Loading } from '@/components/shared';
 import { FiUser } from 'react-icons/fi';
+import MarkAttendanceModal from './components/MarkAttendanceModal';
 
 interface UserAttendance {
   user: {
@@ -31,7 +32,11 @@ const NormalAttendancePage = () => {
   const [submitting, setSubmitting] = useState(false);
   const [attendanceData, setAttendanceData] = useState<UserAttendance[]>([]);
   const [date, setDate] = useState(dayjs().format('DD MMM YYYY'));
+  const [attendanceModal, setAttendanceModal] = useState(false)
+  const [selectedWorker, setSelectedWorker] = useState<string | null>(null)
 
+
+  console.log(attendanceModal,"attendanceModal")
   const fetchAttendanceData = async () => {
     try {
       setLoading(true);
@@ -57,12 +62,13 @@ const NormalAttendancePage = () => {
     fetchAttendanceData();
   }, []);
 
-  const handleMarkAttendance = async (userId: string, present: boolean) => {
+  const handleMarkAttendance = async (userId: string, present: boolean,hour?:number) => {
     try {
       setSubmitting(true);
       await apiMarkNormalAttendance({
         userId,
-        present
+        present,
+        hour
       });
       
       // Update local state
@@ -97,45 +103,55 @@ const NormalAttendancePage = () => {
     }
   };
 
-  const handleMarkAll = async (present: boolean) => {
-    try {
-      setSubmitting(true);
-      await Promise.all(
-        attendanceData.map(item => 
-          apiMarkNormalAttendance({
-            userId: item.user._id,
-            present
-          })
-        )
-      );
+  // const handleMarkAll = async (present: boolean) => {
+  //   try {
+  //     setSubmitting(true);
+  //     await Promise.all(
+  //       attendanceData.map(item => 
+  //         apiMarkNormalAttendance({
+  //           userId: item.user._id,
+  //           present
+  //         })
+  //       )
+  //     );
       
-      // Update all users
-      setAttendanceData(prev => prev.map(item => ({
-        ...item,
-        present,
-        markedBy: {
-          _id: 'current-user',
-          firstName: 'You',
-          lastName: ''
-        },
-        markedAt: new Date()
-      })));
+  //     // Update all users
+  //     setAttendanceData(prev => prev.map(item => ({
+  //       ...item,
+  //       present,
+  //       markedBy: {
+  //         _id: 'current-user',
+  //         firstName: 'You',
+  //         lastName: ''
+  //       },
+  //       markedAt: new Date()
+  //     })));
       
-      toast.push(
-        <Notification title="Success" type="success">
-          All users marked as {present ? 'present' : 'absent'}
-        </Notification>
-      );
-    } catch (error: any) {
-      toast.push(
-        <Notification title="Error marking attendance" type="danger">
-          {error.message}
-        </Notification>
-      );
-    } finally {
-      setSubmitting(false);
-    }
-  };
+  //     toast.push(
+  //       <Notification title="Success" type="success">
+  //         All users marked as {present ? 'present' : 'absent'}
+  //       </Notification>
+  //     );
+  //   } catch (error: any) {
+  //     toast.push(
+  //       <Notification title="Error marking attendance" type="danger">
+  //         {error.message}
+  //       </Notification>
+  //     );
+  //   } finally {
+  //     setSubmitting(false);
+  //   }
+  // };
+
+  const openModal = (workerId: string) => {
+    setSelectedWorker(workerId)
+    setAttendanceModal(true)
+  }
+
+  const closeModal = () => {
+    setSelectedWorker(null)
+    setAttendanceModal(false)
+  }
 
   if (loading) {
     return (
@@ -165,14 +181,14 @@ const NormalAttendancePage = () => {
               >
                 Refresh
               </Button>
-              <Button
+              {/* <Button
                 size="sm"
                 variant="solid"
                 onClick={() => handleMarkAll(true)}
                 disabled={submitting}
               >
                 Mark All Present
-              </Button>
+              </Button> */}
             </div>
           </div>
         }
@@ -240,7 +256,7 @@ const NormalAttendancePage = () => {
                           variant="solid"
                           color="green"
                           icon={<HiCheck />}
-                          onClick={() => handleMarkAttendance(item.user._id, true)}
+                          onClick={() => openModal(item?.user._id)}                          
                           disabled={submitting || item.present}
                         >
                           Present
@@ -269,7 +285,18 @@ const NormalAttendancePage = () => {
             </tbody>
           </table>
         </div>
+
       </Card>
+      <MarkAttendanceModal
+        isOpen={attendanceModal}
+        onClose={closeModal}
+        onConfirm={(e, selectedHour) => {
+          if (selectedWorker) {
+            handleMarkAttendance(selectedWorker, true, selectedHour)
+            closeModal(e); 
+          }
+        }}
+      />
     </div>
   );
 };
