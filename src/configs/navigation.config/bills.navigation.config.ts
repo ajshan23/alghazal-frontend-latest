@@ -179,6 +179,16 @@ const billsNavigationConfig: NavigationTree[] = [
                 type: NAV_ITEM_TYPE_ITEM,
                 authority: [ADMIN, SUPERADMIN],
                 subMenu: [],
+            },
+            {
+                key: 'reports.visaExpenses',
+                path: `${APP_PREFIX_PATH}/visa-expense-report-view`,
+                title: 'Visa Expenses Report',
+                translateKey: 'nav.reports.visaExpenses',
+                icon: 'document',
+                type: NAV_ITEM_TYPE_ITEM,
+                authority: [ADMIN, SUPERADMIN],
+                subMenu: [],
             }
             
         ],

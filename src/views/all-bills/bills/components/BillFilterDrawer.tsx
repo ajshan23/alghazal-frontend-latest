@@ -5,19 +5,24 @@ import * as Yup from 'yup'
 import Select from '@/components/ui/Select'
 import FormItem from '@/components/ui/Form/FormItem'
 import DatePicker from '@/components/ui/DatePicker'
-import { fetchCategories, fetchShops, fetchVehicles } from '../../api/api'
+import { fetchCategories, fetchShops, fetchUser, fetchVehicles } from '../../api/api'
 import { FiRotateCcw } from 'react-icons/fi'
 import { format } from 'date-fns'
 
 type BillFilterDrawerProps = {
     isOpen: boolean
-    onClose: (e: MouseEvent) => void
-    onRequestClose: (e: MouseEvent) => void
+    onClose: (e: React.MouseEvent) => void
+    onRequestClose: (e: React.MouseEvent) => void
     billType: string
     onApplyFilters?: (filters: any) => void
 }
 
-const paymentMethodOptions = [
+type OptionType = {
+    label: string
+    value: string
+}
+
+const paymentMethodOptions: OptionType[] = [
     { label: 'ADCB', value: 'adcb' },
     { label: 'ADIB', value: 'adib' },
     { label: 'Cash', value: 'cash' },
@@ -33,36 +38,48 @@ const BillFilterDrawer: React.FC<BillFilterDrawerProps> = ({
     billType,
     onApplyFilters,
 }) => {
-    const [shopOptions, setShopOptions] = useState([])
-    const [categoryOptions, setCategoryOptions] = useState([])
-    const [vehicleOptions, setVehicleOptions] = useState([])
+    const [shopOptions, setShopOptions] = useState<OptionType[]>([])
+    const [categoryOptions, setCategoryOptions] = useState<OptionType[]>([])
+    const [vehicleOptions, setVehicleOptions] = useState<OptionType[]>([])
+    const [userOptions, setUserOptions] = useState<OptionType[]>([])
     const [isLoading, setIsLoading] = useState(true)
 
     useEffect(() => {
         const loadData = async () => {
             try {
-                const shopData = await fetchShops()
+                const [shopData, categoryData, vehicleData, userData] = await Promise.all([
+                    fetchShops(),
+                    fetchCategories(),
+                    fetchVehicles(),
+                    fetchUser()
+                ])
+
                 setShopOptions(
-                    shopData?.data?.shops.map((shop: any) => ({
+                    shopData?.data?.shops?.map((shop: any) => ({
                         label: `${shop.shopName} (${shop.shopNo})`,
                         value: shop._id,
-                    })) || [],
+                    })) || []
                 )
 
-                const categoryData = await fetchCategories()
                 setCategoryOptions(
-                    categoryData?.data?.categories.map((cat: any) => ({
+                    categoryData?.data?.categories?.map((cat: any) => ({
                         label: cat.name,
                         value: cat._id,
-                    })) || [],
+                    })) || []
                 )
 
-                const vehicleData = await fetchVehicles()
                 setVehicleOptions(
-                    vehicleData?.data?.vehicles.map((v: any) => ({
+                    vehicleData?.data?.vehicles?.map((v: any) => ({
                         label: v.vehicleNumber,
                         value: v._id,
-                    })) || [],
+                    })) || []
+                )
+
+                setUserOptions(
+                    userData?.data?.users?.map((user: any) => ({
+                        label: `${user.firstName} ${user.lastName}`,
+                        value: user._id,
+                    })) || []
                 )
             } catch (err) {
                 console.error('Error loading filter options', err)
@@ -78,7 +95,7 @@ const BillFilterDrawer: React.FC<BillFilterDrawerProps> = ({
 
     return (
         <Drawer
-            title="Filter Bills"
+            title={`Filter Reports and Bills`}
             isOpen={isOpen}
             onClose={onClose}
             onRequestClose={onRequestClose}
@@ -91,16 +108,13 @@ const BillFilterDrawer: React.FC<BillFilterDrawerProps> = ({
                     shop: '',
                     vehicleNo: '',
                     paymentMethod: '',
+                    employee: '',
                 }}
                 validationSchema={Yup.object({})}
                 onSubmit={(values) => {
-                    if (onApplyFilters) {
-                        onApplyFilters(values)
-                    }
+                    onApplyFilters?.(values)
                     setTimeout(() => {
-                        if (onClose) {
-                            onClose(new MouseEvent('click'))
-                        }
+                        onClose?.(new MouseEvent('click') as React.MouseEvent)
                     }, 100)
                 }}
             >
@@ -181,8 +195,7 @@ const BillFilterDrawer: React.FC<BillFilterDrawerProps> = ({
                             billType === 'mess' ||
                             billType === 'accommodation' ||
                             billType === 'vehicle' ||
-                            billType === 'adib'
-                        ) && (
+                            billType === 'adib') && (
                             <FormItem label="Shop Name">
                                 <Field name="shop">
                                     {({ field, form }: FieldProps) => (
@@ -206,7 +219,7 @@ const BillFilterDrawer: React.FC<BillFilterDrawerProps> = ({
                         )}
 
                         {/* Category */}
-                        {billType === 'general' || billType === 'adib' && (
+                        {(billType === 'general' || billType === 'adib') && (
                             <FormItem label="Category">
                                 <Field name="category">
                                     {({ field, form }: FieldProps) => (
@@ -270,6 +283,29 @@ const BillFilterDrawer: React.FC<BillFilterDrawerProps> = ({
                                             options={paymentMethodOptions}
                                             value={paymentMethodOptions.find(
                                                 (m) => m.value === field.value,
+                                            )}
+                                            onChange={(option) =>
+                                                form.setFieldValue(
+                                                    field.name,
+                                                    option?.value || '',
+                                                )
+                                            }
+                                        />
+                                    )}
+                                </Field>
+                            </FormItem>
+                        )}
+
+                        {/* Employee */}
+                        {(billType === 'visaExpense' || billType === 'labour' || billType === 'payroll') && (
+                            <FormItem label="Employee">
+                                <Field name="employee">
+                                    {({ field, form }: FieldProps) => (
+                                        <Select
+                                            placeholder="Select Employee"
+                                            options={userOptions}
+                                            value={userOptions.find(
+                                                (u) => u.value === field.value,
                                             )}
                                             onChange={(option) =>
                                                 form.setFieldValue(

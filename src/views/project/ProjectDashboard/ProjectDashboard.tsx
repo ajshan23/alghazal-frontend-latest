@@ -218,18 +218,14 @@ const ProjectDashboard = () => {
                 />
                 <div className="flex flex-col xl:flex-row gap-4">
                     <div className="flex flex-col gap-4 flex-auto">
+                    <Projects data={dashboardData?.projectsData} />
+
                         <TaskOverview
                             data={dashboardData?.projectOverviewData}
                         />
-                        <MyTasks data={dashboardData?.myTasksData} />
-                        <Projects data={dashboardData?.projectsData} />
+                        {/* <MyTasks data={dashboardData?.myTasksData} /> */}
                     </div>
-                    <div className="flex flex-col gap-4">
-                        <div className="xl:w-[380px]">
-                            <Schedule data={dashboardData?.scheduleData} />
-                            <Activities data={dashboardData?.activitiesData} />
-                        </div>
-                    </div>
+                 
                 </div>
             </Loading>
         </div>

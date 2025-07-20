@@ -1,71 +1,50 @@
 import Card from '@/components/ui/Card'
-import ItemDropdown from './ItemDropdown'
-import Members from './Members'
-import ProgressionBar from './ProgressionBar'
-import { HiOutlineClipboardCheck } from 'react-icons/hi'
-import { Link } from 'react-router-dom'
-
-export type ListItemData = {
-    id: number
-    name: string
-    category: string
-    desc: string
-    attachmentCount: number
-    totalTask: number
-    completedTask: number
-    progression: number
-    dayleft: number
-    status: string
-    member: {
-        name: string
-        img: string
-    }[]
-}
+import { motion } from 'framer-motion'
+import { HiChartBar } from 'react-icons/hi' // graph icon
+// or use: import { FiBarChart2 } from 'react-icons/fi'
 
 type ListItemProps = {
-    data: ListItemData
-    cardBorder?: boolean
+    range: 'monthly' | 'yearly'
+    onDownload: (range: 'monthly' | 'yearly') => void
 }
 
-const ListItem = ({ data, cardBorder }: ListItemProps) => {
-    const { name, totalTask, completedTask, progression, member, category } =
-        data
+const ListItem = ({ range ,onDownload}: ListItemProps) => {
+    const reportName = range === 'monthly' ? 'Monthly Report' : 'Yearly Report'
+
+    const cardColor = range === 'monthly' ? 'bg-blue-50' : 'bg-yellow-50'
+    const buttonColor =
+        range === 'monthly' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-yellow-500 hover:bg-yellow-600'
 
     return (
-        <div className="mb-4">
-            <Card bordered={cardBorder}>
+        <motion.div
+            className={`mb-4 transition-all duration-500 ease-in-out`}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            key={range}
+        >
+            <Card className={`${cardColor} transition-colors duration-300`} bordered>
                 <div className="grid gap-x-4 grid-cols-12">
-                    <div className="my-1 sm:my-0 col-span-12 sm:col-span-2 md:col-span-3 lg:col-span-3 md:flex md:items-center">
-                        <div className="flex flex-col">
-                            <h6 className="font-bold">
-                                <Link to="/app/project/scrum-board">
-                                    {name}
-                                </Link>
-                            </h6>
-                            <span>{category}</span>
-                        </div>
+                    {/* Title with Icon */}
+                    <div className="col-span-12 sm:col-span-6 flex items-center gap-2">
+                        <HiChartBar className="text-2xl text-gray-700" />
+                        <h6 className="font-bold capitalize text-gray-800">{reportName}</h6>
                     </div>
-                    <div className="my-1 sm:my-0 col-span-12 sm:col-span-2 md:col-span-2 lg:col-span-2 md:flex md:items-center md:justify-end">
-                        <div className="inline-flex items-center px-2 py-1 border border-gray-300 rounded-full">
-                            <HiOutlineClipboardCheck className="text-base" />
-                            <span className="ml-1 rtl:mr-1 whitespace-nowrap">
-                                {completedTask} / {totalTask}
-                            </span>
-                        </div>
-                    </div>
-                    <div className="my-1 sm:my-0 col-span-12 md:col-span-2 lg:col-span-3 md:flex md:items-center">
-                        <ProgressionBar progression={progression} />
-                    </div>
-                    <div className="my-1 sm:my-0 col-span-12 md:col-span-3 lg:col-span-3 md:flex md:items-center">
-                        <Members members={member} />
-                    </div>
-                    <div className="my-1 sm:my-0 col-span-12 sm:col-span-1 flex md:items-center justify-end">
-                        <ItemDropdown />
+
+                    {/* Download Button */}
+                    <div className="col-span-12 sm:col-span-6 flex items-center justify-end">
+                        <button
+                            className={`text-white px-4 py-2 rounded ${buttonColor} transition duration-300 flex items-center gap-2`}
+                            onClick={() => onDownload(range)}
+                        >
+                            <HiChartBar className="text-lg" />
+                            Download
+                        </button>
                     </div>
                 </div>
             </Card>
-        </div>
+        </motion.div>
     )
 }
+
 
 export default ListItem

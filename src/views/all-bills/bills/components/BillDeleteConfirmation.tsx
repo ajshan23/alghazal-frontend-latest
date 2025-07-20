@@ -2,9 +2,9 @@ import { FC, useState } from 'react'
 import ConfirmDialog from '@/components/shared/ConfirmDialog'
 import toast from '@/components/ui/toast'
 import Notification from '@/components/ui/Notification'
-import { deleteAdibReportAndExpenses, deleteBill, deleteLabourExpensesReport, deletePayrollReport, deleteProjectProfitReport } from '../../api/api';
+import { deleteAdibReportAndExpenses, deleteBill, deleteLabourExpensesReport, deletePayrollReport, deleteProjectProfitReport, deleteVisaExpensesReport } from '../../api/api';
 
-type BillType = "general" | "fuel" | "mess" | "vehicle" | "accommodation" | "adib" | "expense" | "profit" | "labour"|"payroll";
+type BillType = "general" | "fuel" | "mess" | "vehicle" | "accommodation" | "adib" | "expense" | "profit" | "labour"|"payroll"|"visaExpense";
 
 type DeleteProps = {
     isOpen: boolean
@@ -61,6 +61,8 @@ const BillDeleteConfirmation: FC<DeleteProps> = ({
                 return `Delete Labour Expenses Report`
             case 'payroll':
                 return `Delete Payroll Report`
+            case 'visaExpense':
+                return `Delete Visa Expense Report`
             default:
                 return 'Delete Bill'
         }
@@ -90,6 +92,8 @@ const BillDeleteConfirmation: FC<DeleteProps> = ({
                 return `Are you sure you want to delete this labour expenses report? This action cannot be undone.`
             case 'payroll':
                 return `Are you sure you want to delete this payroll report? This action cannot be undone.`
+            case 'visaExpense':
+                return `Are you sure you want to delete this visa expense report? This action cannot be undone.`
             default:
                 return 'Are you sure you want to delete this bill? This action cannot be undone.'
         }
@@ -98,7 +102,7 @@ const BillDeleteConfirmation: FC<DeleteProps> = ({
     const handleDelete = async () => {
         setIsDeleting(true)
         try {
-            await bill.billType ? deleteBill(bill._id) : reportType === 'profit' ? deleteProjectProfitReport(bill._id) : reportType === 'labour' ? deleteLabourExpensesReport(bill._id) : reportType === 'payroll' ? deletePayrollReport(bill._id) : deleteAdibReportAndExpenses(bill._id)
+            await bill.billType ? deleteBill(bill._id) : reportType === 'profit' ? deleteProjectProfitReport(bill._id) : reportType === 'labour' ? deleteLabourExpensesReport(bill._id) : reportType === 'payroll' ? deletePayrollReport(bill._id) : reportType === 'visaExpense' ? deleteVisaExpensesReport(bill._id) : deleteAdibReportAndExpenses(bill._id)
             refetch()
             toast.push(
                 <Notification

@@ -1,6 +1,6 @@
 import AdaptableCard from '@/components/shared/AdaptableCard'
-import BillTable from './components/BillTables'
 import BillTableTools from './components/BillTableTools'
+import ReportTables from './components/ReportTables'
 
 
 
@@ -13,7 +13,7 @@ const VisaExpenseReport = () => {
                 <h3 className="mb-4 lg:mb-0">Visa Expense Report</h3>
                 <BillTableTools to="/app/new-visa-expense-report" title="Add Expense" />
             </div>
-            <BillTable onDropdownSelect={() => { }} />
+            <ReportTables onDropdownSelect={() => { }} />
         </AdaptableCard>
     )
 }

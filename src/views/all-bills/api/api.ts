@@ -616,13 +616,18 @@ export const getPayrollReport = async ({
     search,
     startDate,
     endDate,
+    month,
+    year,
+    employee,
 }: {
     page?: number
     limit?: number
     search?: string
     startDate?: string
     endDate?: string
- 
+    month?: number
+    year?: number
+    employee?: string
 }) => {
     try {
         const response = await BaseService.get(`/payroll`, {
@@ -632,7 +637,9 @@ export const getPayrollReport = async ({
                 search,
                 startDate,
                 endDate,
-                
+                month,
+                year,
+                employee,
             },
         })
         return response.data
@@ -706,6 +713,7 @@ export const exportPayrollReportToExcel = async ({
     status,
     page,
     limit,
+    employee,
 }: {
     search?: string
     month?: number
@@ -715,6 +723,7 @@ export const exportPayrollReportToExcel = async ({
     status?: string
     page?: number
     limit?: number
+    employee?: string
 }) => {
     try {
         // Prepare params object with proper typing
@@ -727,6 +736,7 @@ export const exportPayrollReportToExcel = async ({
             startDate?: string
             endDate?: string
             status?: string
+            employee?: string
         } = {
             search,
             month,
@@ -734,6 +744,7 @@ export const exportPayrollReportToExcel = async ({
             status,
             page,
             limit,
+            employee,
         }
 
         // Add date params only if they exist
@@ -813,16 +824,20 @@ export const getLabourExpensesReport = async ({
     page,
     limit,
     search,
-
     startDate,
+    month,
+    year,
     endDate,
+    employee,
 }: {
     page?: number
     limit?: number
     search?: string
-
+    month?: number
+    year?: number
     startDate?: string
     endDate?: string
+    employee?: string
 }) => {
     try {
         const response = await BaseService.get(`/employee-expenses/`, {
@@ -830,7 +845,9 @@ export const getLabourExpensesReport = async ({
                 page,
                 limit,
                 search,
-
+                month,
+                year,
+                employee,
                 startDate,
                 endDate,
             },
@@ -919,31 +936,287 @@ export const exportEmployeeExpensesToExcel = async ({
     endDate,
     page,
     limit,
+    employee,
+    month,
+    year,
+}: {
+    search?: string;
+    startDate?: string;
+    endDate?: string;
+    page?: number;
+    limit?: number;
+    employee?: string;
+    month?: number;
+    year?: number;
+}): Promise<boolean> => {
+    try {
+        // Prepare params object
+        const params: Record<string, string | number> = {
+            ...(search && { search }),
+            ...(page && { page }),
+            ...(limit && { limit }),
+            ...(month && { month }),
+            ...(year && { year }),
+            ...(employee && { employee }),
+        };
+
+        // Handle date formatting
+        if (startDate) {
+            params.startDate = new Date(startDate).toISOString();
+        }
+        if (endDate) {
+            params.endDate = new Date(endDate).toISOString();
+        }
+
+        // Make the API request
+        const response = await BaseService.get('/employee-expenses/export/excel', {
+            params,
+            responseType: 'blob',
+        });
+
+        if (!response.data) {
+            throw new Error('No data received from server');
+        }
+
+        // Create filename with current date
+        const now = new Date();
+        const formattedDate = [
+            now.getFullYear(),
+            String(now.getMonth() + 1).padStart(2, '0'),
+            String(now.getDate()).padStart(2, '0'),
+        ].join('-');
+        const filename = `Employee_Expenses_Report_${formattedDate}.xlsx`;
+
+        // Create and trigger download
+        const blob = new Blob([response.data], {
+            type: response.headers['content-type'] || 
+                 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+        });
+
+        const downloadUrl = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = downloadUrl;
+        link.setAttribute('download', filename);
+        document.body.appendChild(link);
+        link.click();
+
+        // Cleanup
+        setTimeout(() => {
+            document.body.removeChild(link);
+            URL.revokeObjectURL(downloadUrl);
+        }, 100);
+
+        return true;
+    } catch (error: unknown) {
+        console.error('Error exporting employee expenses:', error);
+
+        let errorMessage = 'Failed to export employee expenses report';
+        if (error instanceof Error) {
+            errorMessage = error.message;
+        } else if (typeof error === 'string') {
+            errorMessage = error;
+        }
+
+        throw new Error(errorMessage);
+    }
+};
+//--------------Visa Expenses Report
+
+export const getVisaExpensesReport = async ({
+    page,
+    limit,
+    search,
+    startDate,
+    month,
+    year,
+    endDate,
+    employee,
+}: {
+    page?: number
+    limit?: number
+    search?: string
+    startDate?: string
+    endDate?: string
+    employee?: string
+    month?: number
+    year?: number
+}) => {
+    try {
+        const response = await BaseService.get(`/visa-expenses/`, {
+            params: {
+                page,
+                limit,
+                search,
+                startDate,
+                endDate,
+                employee,
+                month,
+                year,
+            },
+        })
+        return response.data
+    } catch (error) {
+        console.error('Error fetching visa expenses reports:', error)
+        throw error
+    }
+}
+
+export const addVisaExpensesReport = async (data: any) => {
+    try {
+        const response = await BaseService.post('/visa-expenses/', data)
+        return response
+    } catch (error) {
+        console.error('Error adding visa expenses report:', error)
+        throw error
+    }
+}
+
+export const editVisaExpensesReport = async (
+    id: string,
+    data: {
+        employee: string
+        iBan: string
+        passportNumber: string
+        passportExpireDate: string
+        emirateIdNumber: string
+        emirateIdExpireDate: string
+        labourCardPersonalNumber: string
+        workPermitNumber: string
+        labourExpireDate: string
+        offerLetterTyping: number
+        labourInsurance: number
+        labourCardPayment: number
+        statusChangeInOut: number
+        insideEntry: number
+        medicalSharjah: number
+        tajweehSubmission: number
+        iloeInsurance: number
+        healthInsurance: number
+        emirateId: number
+        residenceStamping: number
+        srilankaCouncilHead: number
+        upscoding: number
+        labourFinePayment: number
+        labourCardRenewalPayment: number
+        servicePayment: number
+        visaStamping: number
+        twoMonthVisitingVisa: number
+        finePayment: number
+        entryPermitOutside: number
+        complaintEmployee: number
+        arabicLetter: number
+        violationCommittee: number
+        quotaModification: number
+        others: number
+        total: number
+    },
+) => {
+    try {
+        const response = await BaseService.put(`/visa-expenses/${id}`, data)
+        return response
+    } catch (error) {
+        console.error('Error editing visa expenses report:', error)
+        throw error
+    }
+}
+
+export const deleteVisaExpensesReport = async (id: string) => {
+    try {
+        const response = await BaseService.delete(`/visa-expenses/${id}`)
+        return response
+    } catch (error) {
+        console.error('Error deleting visa expenses report:', error)
+        throw error
+    }
+}
+
+export const fetchVisaExpensesById = async (id: string) => {
+    try {
+        const response = await BaseService.get(`/visa-expenses/${id}`)
+        return {
+            ...response.data,
+            employee: response.data.employee || '',
+            iBan: response.data.iBan || '',
+            passportNumber: response.data.passportNumber || '',
+            passportExpireDate: response.data.passportExpireDate || '',
+            emirateIdNumber: response.data.emirateIdNumber || '',
+            emirateIdExpireDate: response.data.emirateIdExpireDate || '',
+            labourCardPersonalNumber: response.data.labourCardPersonalNumber || '',
+            workPermitNumber: response.data.workPermitNumber || '',
+            labourExpireDate: response.data.labourExpireDate || '',
+            offerLetterTyping: Number(response.data.offerLetterTyping) || 0,
+            labourInsurance: Number(response.data.labourInsurance) || 0,
+            labourCardPayment: Number(response.data.labourCardPayment) || 0,
+            statusChangeInOut: Number(response.data.statusChangeInOut) || 0,
+            insideEntry: Number(response.data.insideEntry) || 0,
+            medicalSharjah: Number(response.data.medicalSharjah) || 0,
+            tajweehSubmission: Number(response.data.tajweehSubmission) || 0,
+            iloeInsurance: Number(response.data.iloeInsurance) || 0,
+            healthInsurance: Number(response.data.healthInsurance) || 0,
+            emirateId: Number(response.data.emirateId) || 0,
+            residenceStamping: Number(response.data.residenceStamping) || 0,
+            srilankaCouncilHead: Number(response.data.srilankaCouncilHead) || 0,
+            upscoding: Number(response.data.upscoding) || 0,
+            labourFinePayment: Number(response.data.labourFinePayment) || 0,
+            labourCardRenewalPayment: Number(response.data.labourCardRenewalPayment) || 0,
+            servicePayment: Number(response.data.servicePayment) || 0,
+            visaStamping: Number(response.data.visaStamping) || 0,
+            twoMonthVisitingVisa: Number(response.data.twoMonthVisitingVisa) || 0,
+            finePayment: Number(response.data.finePayment) || 0,
+            entryPermitOutside: Number(response.data.entryPermitOutside) || 0,
+            complaintEmployee: Number(response.data.complaintEmployee) || 0,
+            arabicLetter: Number(response.data.arabicLetter) || 0,
+            violationCommittee: Number(response.data.violationCommittee) || 0,
+            quotaModification: Number(response.data.quotaModification) || 0,
+            others: Number(response.data.others) || 0,
+            total: Number(response.data.total) || 0,
+        }
+    } catch (error) {
+        console.error('Error fetching visa expenses report:', error)
+        throw error
+    }
+}
+
+export const exportVisaExpensesToExcel = async ({
+    search,
+    startDate,
+    endDate,
+    page,
+    limit,
+    employee,
+    month,
+    year,
 }: {
     search?: string
     startDate?: string
     endDate?: string
     page?: number
     limit?: number
+    employee?: string
+    month?: number
+    year?: number
 }) => {
     try {
-        // Prepare params object with proper typing
         const params: {
             search?: string
-
             startDate?: string
             endDate?: string
             page?: number
             limit?: number
+            employee?: string
+            month?: number
+            year?: number
         } = {
             search,
             page,
             limit,
             startDate,
             endDate,
+            month,
+            year,
+            employee,
         }
 
-        // Add date params only if they exist
         if (startDate) {
             params.startDate = new Date(startDate).toISOString()
         }
@@ -951,7 +1224,6 @@ export const exportEmployeeExpensesToExcel = async ({
             params.endDate = new Date(endDate).toISOString()
         }
 
-        // Clean up undefined parameters
         Object.keys(params).forEach(
             (key) =>
                 params[key as keyof typeof params] === undefined &&
@@ -959,26 +1231,23 @@ export const exportEmployeeExpensesToExcel = async ({
         )
 
         const response = await BaseService.get(
-            '/employee-expenses/export/excel',
+            '/visa-expenses/export/excel',
             {
                 params,
                 responseType: 'blob',
             },
         )
 
-        // Validate response
         if (!response.data) {
             throw new Error('No data received from server')
         }
 
-        // Create filename with current date
         const now = new Date()
         const formattedDate = `${now.getFullYear()}-${String(
             now.getMonth() + 1,
         ).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`
-        const filename = `Expense_report_${formattedDate}.xlsx`
+        const filename = `Visa_expense_report_${formattedDate}.xlsx`
 
-        // Create download link
         const url = window.URL.createObjectURL(
             new Blob([response.data], {
                 type:
@@ -993,7 +1262,6 @@ export const exportEmployeeExpensesToExcel = async ({
         document.body.appendChild(link)
         link.click()
 
-        // Clean up
         setTimeout(() => {
             document.body.removeChild(link)
             window.URL.revokeObjectURL(url)
@@ -1001,10 +1269,9 @@ export const exportEmployeeExpensesToExcel = async ({
 
         return true
     } catch (error) {
-        console.error('Error exporting payroll report:', error)
+        console.error('Error exporting visa expense report:', error)
 
-        // Enhanced error handling
-        let errorMessage = 'Failed to export payroll report'
+        let errorMessage = 'Failed to export visa expense report'
         if (error instanceof Error) {
             errorMessage = error.message
         } else if (typeof error === 'string') {
@@ -1014,5 +1281,30 @@ export const exportEmployeeExpensesToExcel = async ({
         }
 
         throw new Error(errorMessage)
+    }
+}
+export const getMonthlyReports = async ({ year, month }) => {
+    try {
+        const response = await BaseService.get(`/reports/monthly`, {
+            params: { year, month },
+            responseType: 'blob', // 👈 important for Excel file
+        })
+        return response
+    } catch (error) {
+        console.error('Error downloading monthly report:', error)
+        throw error
+    }
+}
+
+export const getYearlyReports = async ({ year }) => {
+    try {
+        const response = await BaseService.get(`/reports/yearly`, {
+            params: { year },
+            responseType: 'blob', // 👈 important for Excel file
+        })
+        return response
+    } catch (error) {
+        console.error('Error downloading yearly report:', error)
+        throw error
     }
 }

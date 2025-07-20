@@ -26,6 +26,8 @@ import {
     exportEmployeeExpensesToExcel,
     getPayrollReport,
     exportPayrollReportToExcel,
+    getVisaExpensesReport,
+    exportVisaExpensesToExcel,
 } from '../../api/api'
 import moment from 'moment'
 import BillDeleteConfirmation from './BillDeleteConfirmation'
@@ -69,6 +71,7 @@ type FilterParams = {
     endDate?: string
     category?: string
     shop?: string
+    employee?: string
 }
 
 const months = [
@@ -108,6 +111,8 @@ const ActionColumn = ({ row, onDeleteClick }: ActionColumnProps) => {
             ? 'labour'
             : location.pathname.includes('/payroll-report-view')
               ? 'payroll'
+              : location.pathname.includes('/visa-expense-report-view')
+                ? 'visaExpense'
               : 'expense'
     //Edit Paths For Reports
     const editPaths = {
@@ -116,6 +121,7 @@ const ActionColumn = ({ row, onDeleteClick }: ActionColumnProps) => {
         profit: '/app/new-profit-and-loss-report',
         labour: '/app/new-labour-expenses-report',
         payroll: '/app/new-payroll-report',
+        visaExpense: '/app/new-visa-expense-report',
     }
     //Handle View Attachments For Reports
     const handleViewAttachments = () => {
@@ -131,7 +137,7 @@ const ActionColumn = ({ row, onDeleteClick }: ActionColumnProps) => {
 
     return (
         <div className="flex text-lg">
-            {reportType !== 'labour' && reportType !== 'payroll' && (
+            {reportType !== 'labour' && reportType !== 'payroll' && reportType !== 'visaExpense' && (
                 <span
                     className={`cursor-pointer p-2 hover:${textTheme}`}
                     onClick={handleViewAttachments}
@@ -180,6 +186,7 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
         endDate: '',
         category: '',
         shop: '',
+        employee: '',
     })
     const location = useLocation()
     //Get Report Type From Route
@@ -192,11 +199,12 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
                 ? 'labour'
                 : location.pathname.includes('/payroll-report-view')
                   ? 'payroll'
+                  : location.pathname.includes('/visa-expense-report-view')
+                    ? 'visaExpense'
                   : 'expense'
     }, [location.pathname])
 
     const reportType = getReportTypeFromRoute()
-
     const handleApplyFilters = (data: FilterParams) => {
         setFilters(data)
         setPagination((prev) => ({ ...prev, page: 1 }))
@@ -206,6 +214,7 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
         profit: getProfitReport,
         labour: getLabourExpensesReport,
         payroll: getPayrollReport,
+        visaExpense: getVisaExpensesReport,
         default: getAdibReportAndExpenses,
     }
 
@@ -223,6 +232,7 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
             endDate: filters.endDate,
             category: filters.category,
             shop: filters.shop,
+            employee: filters.employee,
             reportType,
         }
 
@@ -246,6 +256,14 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
                     ...baseParams,
                     startDate: filters.startDate,
                     endDate: filters.endDate,
+                    employee: filters.employee,
+                }
+            case 'visaExpense':
+                return {
+                    ...baseParams,
+                    startDate: filters.startDate,
+                    endDate: filters.endDate,
+                    employee: filters.employee,
                 }
             default:
                 return {
@@ -287,9 +305,9 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
         response?.data?.projects ||
         response?.data?.expenses ||
         response?.data?.payrolls ||
+        response?.data?.visaExpenses ||
         []
 
-    console.log(reports, '123 re')
     const paginationData = response?.data?.pagination || {
         total: 0,
         page: 1,
@@ -359,6 +377,16 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
                     endDate: filters.endDate,
                 })
             }
+            else if (reportType === 'visaExpense') {
+                exportResponse = await exportVisaExpensesToExcel({
+                    page: pagination.page,
+                    limit: pagination.limit,
+                    search: searchTerm,
+                    startDate: filters.startDate,
+                    endDate: filters.endDate,
+                    employee:filters.employee
+                })
+            }
             else {
                 exportResponse = await exportReportToExcel({
                     page: pagination.page,
@@ -374,6 +402,7 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
                     export: true,
                 })
             }
+           
 
             const allReports = exportResponse?.data?.reports || []
 
@@ -905,7 +934,218 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
                     ),
                 },
             ];
-        } else {
+        } 
+        else if (reportType === 'visaExpense') {
+            return [
+                {
+                    header: 'Employee',
+                    accessorKey: 'employee',
+                    cell: (props) => (
+                      <span>
+                        {props.row.original.employee?.firstName} {props.row.original.employee?.lastName}
+                      </span>
+                    ),
+                  },
+                  
+                  {
+                    header: 'IBAN',
+                    accessorKey: 'iBan',
+                    cell: (props) => <span>{props.row.original.iBan}</span>,
+                  },
+                  {
+                    header: 'Passport No',
+                    accessorKey: 'passportNumber',
+                    cell: (props) => <span>{props.row.original.passportNumber}</span>,
+                  },
+                  {
+                    header: 'Passport Expiry',
+                    accessorKey: 'passportExpireDate',
+                    cell: (props) => (
+                      <span>
+                        {moment(props.row.original.passportExpireDate).format('DD/MM/YYYY')}
+                      </span>
+                    ),
+                  },
+                  {
+                    header: 'Emirate ID',
+                    accessorKey: 'emirateIdNumber',
+                    cell: (props) => <span>{props.row.original.emirateIdNumber}</span>,
+                  },
+                  {
+                    header: 'Emirate ID Expiry',
+                    accessorKey: 'emirateIdExpireDate',
+                    cell: (props) => (
+                      <span>
+                        {moment(props.row.original.emirateIdExpireDate).format('DD/MM/YYYY')}
+                      </span>
+                    ),
+                  },
+                  {
+                    header: 'Labour Card No',
+                    accessorKey: 'labourCardPersonalNumber',
+                    cell: (props) => <span>{props.row.original.labourCardPersonalNumber}</span>,
+                  },
+                  {
+                    header: 'Work Permit No',
+                    accessorKey: 'workPermitNumber',
+                    cell: (props) => <span>{props.row.original.workPermitNumber}</span>,
+                  },
+                  {
+                    header: 'Labour Expiry',
+                    accessorKey: 'labourExpireDate',
+                    cell: (props) => (
+                      <span>
+                        {moment(props.row.original.labourExpireDate).format('DD/MM/YYYY')}
+                      </span>
+                    ),
+                  },
+                  {
+                    header: 'Offer Letter Typing',
+                    accessorKey: 'offerLetterTyping',
+                    cell: (props) => <span>{props.row.original.offerLetterTyping.toFixed(2)}</span>,
+                  },
+                  {
+                    header: 'Labour Insurance',
+                    accessorKey: 'labourInsurance',
+                    cell: (props) => <span>{props.row.original.labourInsurance.toFixed(2)}</span>,
+                  },
+                  {
+                    header: 'Labour Card Payment',
+                    accessorKey: 'labourCardPayment',
+                    cell: (props) => <span>{props.row.original.labourCardPayment.toFixed(2)}</span>,
+                  },
+                  {
+                    header: 'Status Change In/Out',
+                    accessorKey: 'statusChangeInOut',
+                    cell: (props) => <span>{props.row.original.statusChangeInOut.toFixed(2)}</span>,
+                  },
+                  {
+                    header: 'Inside Entry',
+                    accessorKey: 'insideEntry',
+                    cell: (props) => <span>{props.row.original.insideEntry.toFixed(2)}</span>,
+                  },
+                  {
+                    header: 'Medical Sharjah',
+                    accessorKey: 'medicalSharjah',
+                    cell: (props) => <span>{props.row.original.medicalSharjah.toFixed(2)}</span>,
+                  },
+                  {
+                    header: 'Tajweeh Submission',
+                    accessorKey: 'tajweehSubmission',
+                    cell: (props) => <span>{props.row.original.tajweehSubmission.toFixed(2)}</span>,
+                  },
+                  {
+                    header: 'ILOE Insurance',
+                    accessorKey: 'iloeInsurance',
+                    cell: (props) => <span>{props.row.original.iloeInsurance.toFixed(2)}</span>,
+                  },
+                  {
+                    header: 'Health Insurance',
+                    accessorKey: 'healthInsurance',
+                    cell: (props) => <span>{props.row.original.healthInsurance.toFixed(2)}</span>,
+                  },
+                  {
+                    header: 'Emirate ID Fee',
+                    accessorKey: 'emirateId',
+                    cell: (props) => <span>{props.row.original.emirateId.toFixed(2)}</span>,
+                  },
+                  {
+                    header: 'Residence Stamping',
+                    accessorKey: 'residenceStamping',
+                    cell: (props) => <span>{props.row.original.residenceStamping.toFixed(2)}</span>,
+                  },
+                  {
+                    header: 'Srilanka Council',
+                    accessorKey: 'srilankaCouncilHead',
+                    cell: (props) => <span>{props.row.original.srilankaCouncilHead.toFixed(2)}</span>,
+                  },
+                  {
+                    header: 'Upscoding',
+                    accessorKey: 'upscoding',
+                    cell: (props) => <span>{props.row.original.upscoding.toFixed(2)}</span>,
+                  },
+                  {
+                    header: 'Labour Fine Payment',
+                    accessorKey: 'labourFinePayment',
+                    cell: (props) => <span>{props.row.original.labourFinePayment.toFixed(2)}</span>,
+                  },
+                  {
+                    header: 'Labour Card Renewal',
+                    accessorKey: 'labourCardRenewalPayment',
+                    cell: (props) => <span>{props.row.original.labourCardRenewalPayment.toFixed(2)}</span>,
+                  },
+                  {
+                    header: 'Service Payment',
+                    accessorKey: 'servicePayment',
+                    cell: (props) => <span>{props.row.original.servicePayment.toFixed(2)}</span>,
+                  },
+                  {
+                    header: 'Visa Stamping',
+                    accessorKey: 'visaStamping',
+                    cell: (props) => <span>{props.row.original.visaStamping.toFixed(2)}</span>,
+                  },
+                  {
+                    header: '2 Month Visa',
+                    accessorKey: 'twoMonthVisitingVisa',
+                    cell: (props) => <span>{props.row.original.twoMonthVisitingVisa.toFixed(2)}</span>,
+                  },
+                  {
+                    header: 'Fine Payment',
+                    accessorKey: 'finePayment',
+                    cell: (props) => <span>{props.row.original.finePayment.toFixed(2)}</span>,
+                  },
+                  {
+                    header: 'Entry Permit Outside',
+                    accessorKey: 'entryPermitOutside',
+                    cell: (props) => <span>{props.row.original.entryPermitOutside.toFixed(2)}</span>,
+                  },
+                  {
+                    header: 'Complaint Employee',
+                    accessorKey: 'complaintEmployee',
+                    cell: (props) => <span>{props.row.original.complaintEmployee.toFixed(2)}</span>,
+                  },
+                  {
+                    header: 'Arabic Letter',
+                    accessorKey: 'arabicLetter',
+                    cell: (props) => <span>{props.row.original.arabicLetter.toFixed(2)}</span>,
+                  },
+                  {
+                    header: 'Violation Committee',
+                    accessorKey: 'violationCommittee',
+                    cell: (props) => <span>{props.row.original.violationCommittee.toFixed(2)}</span>,
+                  },
+                  {
+                    header: 'Quota Modification',
+                    accessorKey: 'quotaModification',
+                    cell: (props) => <span>{props.row.original.quotaModification.toFixed(2)}</span>,
+                  },
+                  {
+                    header: 'Others',
+                    accessorKey: 'others',
+                    cell: (props) => <span>{props.row.original.others.toFixed(2)}</span>,
+                  },
+                  {
+                    header: 'Total',
+                    accessorKey: 'total',
+                    cell: (props) => (
+                      <span className="font-semibold">
+                        {props.row.original.total.toFixed(2)}
+                      </span>
+                    ),
+                  },
+                  {
+                    header: 'Action',
+                    id: 'action',
+                    cell: (props) => (
+                      <ActionColumn
+                        row={props.row.original}
+                        onDeleteClick={handleDeleteClick}
+                      />
+                    ),
+                  }
+            ]
+        }
+        else {
             return [
                 {
                     header: 'DATE',
@@ -997,8 +1237,6 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
                         value={searchTerm}
                     />
                     <div className="flex flex-wrap gap-2 items-center w-full md:w-auto">
-                        {reportType !== 'labour'||reportType !== 'payroll' && (
-                            <>
                                 <select
                                     className="p-2 border rounded-md dark:bg-gray-800 dark:border-gray-700"
                                     value={month}
@@ -1042,8 +1280,7 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
                                 >
                                     <HiOutlineRefresh size={18} />
                                 </button>
-                            </>
-                        )}
+                     
                         <button
                             onClick={handleExport}
                             disabled={isExporting}
