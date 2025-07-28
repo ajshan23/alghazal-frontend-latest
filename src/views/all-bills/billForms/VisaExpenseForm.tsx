@@ -76,6 +76,8 @@ type VisaExpenseFormProps = {
 type UserOption = {
     value: string
     label: string
+    passportNumber: string
+    emirateIdNumber: string
 }
 
 const VisaExpenseForm = forwardRef<FormikRef, VisaExpenseFormProps>((props, ref) => {
@@ -128,26 +130,19 @@ const VisaExpenseForm = forwardRef<FormikRef, VisaExpenseFormProps>((props, ref)
         const fetchUsers = async () => {
             try {
                 const response = await fetchUser()
-                console.log(response, 'response')
                 const options = response.data?.users.map((user: any) => ({
                     value: user._id,
                     label: `${user.firstName} ${user.lastName}`,
-                    passportNumber: user.passportNumber, // Add passport number to options
-                    emirateIdNumber: user.emiratesId                    // Add emirate ID to options
+                    passportNumber: user.passportNumber,
+                    emirateIdNumber: user.emiratesId
                 }))
                 setUserOptions(options)
-                
-                // If initialData doesn't have these values, set them from the first user
-                if (!initialData.passportNumber && !initialData.emirateIdNumber && options.length > 0) {
-                    setFieldValue('passportNumber', options[0].passportNumber || '')
-                    setFieldValue('emirateIdNumber', options[0].emirateIdNumber || '')
-                }
             } catch (error) {
                 console.error('Failed to fetch users', error)
             }
         }
         fetchUsers()
-    }, [initialData.passportNumber, initialData.emirateIdNumber])
+    }, [])
 
     const validationSchema = Yup.object().shape({
         employee: Yup.string().required('Employee is required'),
@@ -183,10 +178,43 @@ const VisaExpenseForm = forwardRef<FormikRef, VisaExpenseFormProps>((props, ref)
         others: Yup.number().min(0),
     })
 
-  
-    const handleFieldChange = (fieldName: string, value: string, setFieldValue: any, values: any) => {
+    const calculateTotal = (values: any) => {
+        const expenseFields = [
+            'offerLetterTyping',
+            'labourInsurance',
+            'labourCardPayment',
+            'statusChangeInOut',
+            'insideEntry',
+            'medicalSharjah',
+            'tajweehSubmission',
+            'iloeInsurance',
+            'healthInsurance',
+            'emirateId',
+            'residenceStamping',
+            'srilankaCouncilHead',
+            'upscoding',
+            'labourFinePayment',
+            'labourCardRenewalPayment',
+            'servicePayment',
+            'visaStamping',
+            'twoMonthVisitingVisa',
+            'finePayment',
+            'entryPermitOutside',
+            'complaintEmployee',
+            'arabicLetter',
+            'violationCommittee',
+            'quotaModification',
+            'others'
+        ]
+        
+        return expenseFields.reduce((sum, field) => {
+            const value = parseFloat(values[field] as string) || 0
+            return sum + value
+        }, 0)
+    }
+
+    const handleFieldChange = (fieldName: string, value: string, setFieldValue: any) => {
         setFieldValue(fieldName, value)
-    
     }
 
     return (
@@ -251,651 +279,663 @@ const VisaExpenseForm = forwardRef<FormikRef, VisaExpenseFormProps>((props, ref)
             }}
             enableReinitialize={true}
         >
-            {({ values, touched, errors, isSubmitting, setFieldValue }) => (
-                <Form>
-                    <FormContainer>
-                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-                            <div className="lg:col-span-3">
-                                <AdaptableCard divider className="mb-4">
-                                    <h5 className="mb-4">Employee Information</h5>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <FormItem
-                                            label="Employee"
-                                            invalid={!!errors.employee && touched.employee}
-                                            errorMessage={errors.employee as string}
-                                        >
-                                            <Select
-                                                options={userOptions}
-                                                value={userOptions.filter(
-                                                    (option) => option.value === values.employee
-                                                )}
-                                                onChange={(option) => {
-                                                    setFieldValue('employee', option?.value)
-                                                    if (option) {
-                                                        setFieldValue('passportNumber', option.passportNumber || '')
-                                                        setFieldValue('emirateIdNumber', option.emirateIdNumber || '')
-                                                    }
-                                                }}
-                                            />
-                                        </FormItem>
-
-                                        <FormItem
-                                            label="IBAN"
-                                            invalid={!!errors.iBan && touched.iBan}
-                                            errorMessage={errors.iBan as string}
-                                        >
-                                            <Field name="iBan">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        placeholder="IBAN"
-                                                        {...field}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        <FormItem
-    label="Passport Number"
-    invalid={!!errors.passportNumber && touched.passportNumber}
-    errorMessage={errors.passportNumber as string}
->
-    <Field name="passportNumber">
-        {({ field }: FieldProps) => (
-            <Input
-                placeholder="Passport Number"
-                {...field}
-            />
-        )}
-    </Field>
-</FormItem>
-
-                                        <FormItem
-                                            label="Passport Expiry Date"
-                                            invalid={!!errors.passportExpireDate && touched.passportExpireDate}
-                                            errorMessage={errors.passportExpireDate as string}
-                                        >
-                                            <Field name="passportExpireDate">
-                                                {({ field, form }: FieldProps) => (
-                                                    <DatePicker
-                                                        placeholder="Select Passport Expiry Date"
-                                                        value={field.value ? new Date(field.value) : null}
-                                                        onChange={(date) =>
-                                                            form.setFieldValue(field.name, date)
-                                                        }
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        <FormItem
-    label="Emirate ID Number"
-    invalid={!!errors.emirateIdNumber && touched.emirateIdNumber}
-    errorMessage={errors.emirateIdNumber as string}
->
-    <Field name="emirateIdNumber">
-        {({ field }: FieldProps) => (
-            <Input
-                placeholder="Emirate ID Number"
-                {...field}
-            />
-        )}
-    </Field>
-</FormItem>
-
-                                        <FormItem
-                                            label="Emirate ID Expiry Date"
-                                            invalid={!!errors.emirateIdExpireDate && touched.emirateIdExpireDate}
-                                            errorMessage={errors.emirateIdExpireDate as string}
-                                        >
-                                            <Field name="emirateIdExpireDate">
-                                                {({ field, form }: FieldProps) => (
-                                                    <DatePicker
-                                                        placeholder="Select Emirate ID Expiry Date"
-                                                        value={field.value ? new Date(field.value) : null}
-                                                        onChange={(date) =>
-                                                            form.setFieldValue(field.name, date)
-                                                        }
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        <FormItem
-                                            label="Labour Card Personal Number"
-                                            invalid={!!errors.labourCardPersonalNumber && touched.labourCardPersonalNumber}
-                                            errorMessage={errors.labourCardPersonalNumber as string}
-                                        >
-                                            <Field name="labourCardPersonalNumber">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        placeholder="Labour Card Personal Number"
-                                                        {...field}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        <FormItem
-                                            label="Work Permit Number"
-                                            invalid={!!errors.workPermitNumber && touched.workPermitNumber}
-                                            errorMessage={errors.workPermitNumber as string}
-                                        >
-                                            <Field name="workPermitNumber">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        placeholder="Work Permit Number"
-                                                        {...field}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        <FormItem
-                                            label="Labour Card Expiry Date"
-                                            invalid={!!errors.labourExpireDate && touched.labourExpireDate}
-                                            errorMessage={errors.labourExpireDate as string}
-                                        >
-                                            <Field name="labourExpireDate">
-                                                {({ field, form }: FieldProps) => (
-                                                    <DatePicker
-                                                        placeholder="Select Labour Card Expiry Date"
-                                                        value={field.value ? new Date(field.value) : null}
-                                                        onChange={(date) =>
-                                                            form.setFieldValue(field.name, date)
-                                                        }
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
+            {({ values, touched, errors, isSubmitting, setFieldValue }) => {
+                const totalExpenses = calculateTotal(values)
+                
+                return (
+                    <Form>
+                        <FormContainer>
+                            {/* Total Expenses Box */}
+                            <div className="flex justify-end mb-6">
+                                <div className="bg-blue-50 dark:bg-gray-700 p-4 rounded-lg shadow-sm border border-blue-100 dark:border-gray-600 w-64">
+                                    <div className="text-sm font-semibold text-blue-600 dark:text-blue-300 mb-1">
+                                        Total Expenses
                                     </div>
-                                </AdaptableCard>
-
-                                <AdaptableCard divider className="mb-4">
-                                    <h5 className="mb-4">Visa Expenses</h5>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        {/* Group 1 */}
-                                        <FormItem
-                                            label="Offer Letter Typing"
-                                            invalid={!!errors.offerLetterTyping && touched.offerLetterTyping}
-                                            errorMessage={errors.offerLetterTyping as string}
-                                        >
-                                            <Field name="offerLetterTyping">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Amount"
-                                                        {...field}
-                                                        onChange={(e) => handleFieldChange('offerLetterTyping', e.target.value, setFieldValue, values)}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        <FormItem
-                                            label="Labour Insurance"
-                                            invalid={!!errors.labourInsurance && touched.labourInsurance}
-                                            errorMessage={errors.labourInsurance as string}
-                                        >
-                                            <Field name="labourInsurance">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Amount"
-                                                        {...field}
-                                                        onChange={(e) => handleFieldChange('labourInsurance', e.target.value, setFieldValue, values)}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        <FormItem
-                                            label="Labour Card Payment"
-                                            invalid={!!errors.labourCardPayment && touched.labourCardPayment}
-                                            errorMessage={errors.labourCardPayment as string}
-                                        >
-                                            <Field name="labourCardPayment">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Amount"
-                                                        {...field}
-                                                        onChange={(e) => handleFieldChange('labourCardPayment', e.target.value, setFieldValue, values)}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        {/* Group 2 */}
-                                        <FormItem
-                                            label="Status Change In/Out"
-                                            invalid={!!errors.statusChangeInOut && touched.statusChangeInOut}
-                                            errorMessage={errors.statusChangeInOut as string}
-                                        >
-                                            <Field name="statusChangeInOut">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Amount"
-                                                        {...field}
-                                                        onChange={(e) => handleFieldChange('statusChangeInOut', e.target.value, setFieldValue, values)}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        <FormItem
-                                            label="Inside Entry"
-                                            invalid={!!errors.insideEntry && touched.insideEntry}
-                                            errorMessage={errors.insideEntry as string}
-                                        >
-                                            <Field name="insideEntry">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Amount"
-                                                        {...field}
-                                                        onChange={(e) => handleFieldChange('insideEntry', e.target.value, setFieldValue, values)}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        <FormItem
-                                            label="Medical Sharjah"
-                                            invalid={!!errors.medicalSharjah && touched.medicalSharjah}
-                                            errorMessage={errors.medicalSharjah as string}
-                                        >
-                                            <Field name="medicalSharjah">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Amount"
-                                                        {...field}
-                                                        onChange={(e) => handleFieldChange('medicalSharjah', e.target.value, setFieldValue, values)}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        {/* Group 3 */}
-                                        <FormItem
-                                            label="Tajweeh Submission"
-                                            invalid={!!errors.tajweehSubmission && touched.tajweehSubmission}
-                                            errorMessage={errors.tajweehSubmission as string}
-                                        >
-                                            <Field name="tajweehSubmission">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Amount"
-                                                        {...field}
-                                                        onChange={(e) => handleFieldChange('tajweehSubmission', e.target.value, setFieldValue, values)}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        <FormItem
-                                            label="ILOE Insurance"
-                                            invalid={!!errors.iloeInsurance && touched.iloeInsurance}
-                                            errorMessage={errors.iloeInsurance as string}
-                                        >
-                                            <Field name="iloeInsurance">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Amount"
-                                                        {...field}
-                                                        onChange={(e) => handleFieldChange('iloeInsurance', e.target.value, setFieldValue, values)}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        <FormItem
-                                            label="Health Insurance"
-                                            invalid={!!errors.healthInsurance && touched.healthInsurance}
-                                            errorMessage={errors.healthInsurance as string}
-                                        >
-                                            <Field name="healthInsurance">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Amount"
-                                                        {...field}
-                                                        onChange={(e) => handleFieldChange('healthInsurance', e.target.value, setFieldValue, values)}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        {/* Group 4 */}
-                                        <FormItem
-                                            label="Emirate ID"
-                                            invalid={!!errors.emirateId && touched.emirateId}
-                                            errorMessage={errors.emirateId as string}
-                                        >
-                                            <Field name="emirateId">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Amount"
-                                                        {...field}
-                                                        onChange={(e) => handleFieldChange('emirateId', e.target.value, setFieldValue, values)}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        <FormItem
-                                            label="Residence Stamping"
-                                            invalid={!!errors.residenceStamping && touched.residenceStamping}
-                                            errorMessage={errors.residenceStamping as string}
-                                        >
-                                            <Field name="residenceStamping">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Amount"
-                                                        {...field}
-                                                        onChange={(e) => handleFieldChange('residenceStamping', e.target.value, setFieldValue, values)}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        <FormItem
-                                            label="Srilanka Council Head"
-                                            invalid={!!errors.srilankaCouncilHead && touched.srilankaCouncilHead}
-                                            errorMessage={errors.srilankaCouncilHead as string}
-                                        >
-                                            <Field name="srilankaCouncilHead">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Amount"
-                                                        {...field}
-                                                        onChange={(e) => handleFieldChange('srilankaCouncilHead', e.target.value, setFieldValue, values)}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        {/* Group 5 */}
-                                        <FormItem
-                                            label="Upscoding"
-                                            invalid={!!errors.upscoding && touched.upscoding}
-                                            errorMessage={errors.upscoding as string}
-                                        >
-                                            <Field name="upscoding">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Amount"
-                                                        {...field}
-                                                        onChange={(e) => handleFieldChange('upscoding', e.target.value, setFieldValue, values)}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        <FormItem
-                                            label="Labour Fine Payment"
-                                            invalid={!!errors.labourFinePayment && touched.labourFinePayment}
-                                            errorMessage={errors.labourFinePayment as string}
-                                        >
-                                            <Field name="labourFinePayment">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Amount"
-                                                        {...field}
-                                                        onChange={(e) => handleFieldChange('labourFinePayment', e.target.value, setFieldValue, values)}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        <FormItem
-                                            label="Labour Card Renewal Payment"
-                                            invalid={!!errors.labourCardRenewalPayment && touched.labourCardRenewalPayment}
-                                            errorMessage={errors.labourCardRenewalPayment as string}
-                                        >
-                                            <Field name="labourCardRenewalPayment">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Amount"
-                                                        {...field}
-                                                        onChange={(e) => handleFieldChange('labourCardRenewalPayment', e.target.value, setFieldValue, values)}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        {/* Group 6 */}
-                                        <FormItem
-                                            label="Service Payment"
-                                            invalid={!!errors.servicePayment && touched.servicePayment}
-                                            errorMessage={errors.servicePayment as string}
-                                        >
-                                            <Field name="servicePayment">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Amount"
-                                                        {...field}
-                                                        onChange={(e) => handleFieldChange('servicePayment', e.target.value, setFieldValue, values)}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        <FormItem
-                                            label="Visa Stamping"
-                                            invalid={!!errors.visaStamping && touched.visaStamping}
-                                            errorMessage={errors.visaStamping as string}
-                                        >
-                                            <Field name="visaStamping">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Amount"
-                                                        {...field}
-                                                        onChange={(e) => handleFieldChange('visaStamping', e.target.value, setFieldValue, values)}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        <FormItem
-                                            label="Two Month Visiting Visa"
-                                            invalid={!!errors.twoMonthVisitingVisa && touched.twoMonthVisitingVisa}
-                                            errorMessage={errors.twoMonthVisitingVisa as string}
-                                        >
-                                            <Field name="twoMonthVisitingVisa">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Amount"
-                                                        {...field}
-                                                        onChange={(e) => handleFieldChange('twoMonthVisitingVisa', e.target.value, setFieldValue, values)}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        {/* Group 7 */}
-                                        <FormItem
-                                            label="Fine Payment"
-                                            invalid={!!errors.finePayment && touched.finePayment}
-                                            errorMessage={errors.finePayment as string}
-                                        >
-                                            <Field name="finePayment">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Amount"
-                                                        {...field}
-                                                        onChange={(e) => handleFieldChange('finePayment', e.target.value, setFieldValue, values)}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        <FormItem
-                                            label="Entry Permit Outside"
-                                            invalid={!!errors.entryPermitOutside && touched.entryPermitOutside}
-                                            errorMessage={errors.entryPermitOutside as string}
-                                        >
-                                            <Field name="entryPermitOutside">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Amount"
-                                                        {...field}
-                                                        onChange={(e) => handleFieldChange('entryPermitOutside', e.target.value, setFieldValue, values)}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        <FormItem
-                                            label="Complaint Employee"
-                                            invalid={!!errors.complaintEmployee && touched.complaintEmployee}
-                                            errorMessage={errors.complaintEmployee as string}
-                                        >
-                                            <Field name="complaintEmployee">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Amount"
-                                                        {...field}
-                                                        onChange={(e) => handleFieldChange('complaintEmployee', e.target.value, setFieldValue, values)}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        {/* Group 8 */}
-                                        <FormItem
-                                            label="Arabic Letter"
-                                            invalid={!!errors.arabicLetter && touched.arabicLetter}
-                                            errorMessage={errors.arabicLetter as string}
-                                        >
-                                            <Field name="arabicLetter">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Amount"
-                                                        {...field}
-                                                        onChange={(e) => handleFieldChange('arabicLetter', e.target.value, setFieldValue, values)}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        <FormItem
-                                            label="Violation Committee"
-                                            invalid={!!errors.violationCommittee && touched.violationCommittee}
-                                            errorMessage={errors.violationCommittee as string}
-                                        >
-                                            <Field name="violationCommittee">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Amount"
-                                                        {...field}
-                                                        onChange={(e) => handleFieldChange('violationCommittee', e.target.value, setFieldValue, values)}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        <FormItem
-                                            label="Quota Modification"
-                                            invalid={!!errors.quotaModification && touched.quotaModification}
-                                            errorMessage={errors.quotaModification as string}
-                                        >
-                                            <Field name="quotaModification">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Amount"
-                                                        {...field}
-                                                        onChange={(e) => handleFieldChange('quotaModification', e.target.value, setFieldValue, values)}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        {/* Group 9 */}
-                                        <FormItem
-                                            label="Others"
-                                            invalid={!!errors.others && touched.others}
-                                            errorMessage={errors.others as string}
-                                        >
-                                            <Field name="others">
-                                                {({ field }: FieldProps) => (
-                                                    <Input
-                                                        type="number"
-                                                        placeholder="Amount"
-                                                        {...field}
-                                                        onChange={(e) => handleFieldChange('others', e.target.value, setFieldValue, values)}
-                                                    />
-                                                )}
-                                            </Field>
-                                        </FormItem>
-
-                                        <div className="col-span-2"></div>
-
-                                   
+                                    <div className="text-2xl font-bold text-blue-800 dark:text-blue-200">
+                                     {totalExpenses.toFixed(2)}
                                     </div>
-                                </AdaptableCard>
+                                </div>
                             </div>
-                        </div>
 
-                        <StickyFooter
-                            className="-mx-8 px-8 flex items-center justify-between py-4"
-                            stickyClass="border-t bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
-                        >
-                            <div>
-                                {type === 'edit' && onDelete && (
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                                <div className="lg:col-span-3">
+                                    <AdaptableCard divider className="mb-4">
+                                        <h5 className="mb-4">Employee Information</h5>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            <FormItem
+                                                label="Employee"
+                                                invalid={!!errors.employee && touched.employee}
+                                                errorMessage={errors.employee as string}
+                                            >
+                                                <Select
+                                                    options={userOptions}
+                                                    value={userOptions.filter(
+                                                        (option) => option.value === values.employee
+                                                    )}
+                                                    onChange={(option) => {
+                                                        setFieldValue('employee', option?.value)
+                                                        if (option) {
+                                                            setFieldValue('passportNumber', option.passportNumber || '')
+                                                            setFieldValue('emirateIdNumber', option.emirateIdNumber || '')
+                                                        }
+                                                    }}
+                                                />
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="IBAN"
+                                                invalid={!!errors.iBan && touched.iBan}
+                                                errorMessage={errors.iBan as string}
+                                            >
+                                                <Field name="iBan">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            placeholder="IBAN"
+                                                            {...field}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="Passport Number"
+                                                invalid={!!errors.passportNumber && touched.passportNumber}
+                                                errorMessage={errors.passportNumber as string}
+                                            >
+                                                <Field name="passportNumber">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            placeholder="Passport Number"
+                                                            {...field}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="Passport Expiry Date"
+                                                invalid={!!errors.passportExpireDate && touched.passportExpireDate}
+                                                errorMessage={errors.passportExpireDate as string}
+                                            >
+                                                <Field name="passportExpireDate">
+                                                    {({ field, form }: FieldProps) => (
+                                                        <DatePicker
+                                                            placeholder="Select Passport Expiry Date"
+                                                            value={field.value ? new Date(field.value) : null}
+                                                            onChange={(date) =>
+                                                                form.setFieldValue(field.name, date)
+                                                            }
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="Emirate ID Number"
+                                                invalid={!!errors.emirateIdNumber && touched.emirateIdNumber}
+                                                errorMessage={errors.emirateIdNumber as string}
+                                            >
+                                                <Field name="emirateIdNumber">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            placeholder="Emirate ID Number"
+                                                            {...field}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="Emirate ID Expiry Date"
+                                                invalid={!!errors.emirateIdExpireDate && touched.emirateIdExpireDate}
+                                                errorMessage={errors.emirateIdExpireDate as string}
+                                            >
+                                                <Field name="emirateIdExpireDate">
+                                                    {({ field, form }: FieldProps) => (
+                                                        <DatePicker
+                                                            placeholder="Select Emirate ID Expiry Date"
+                                                            value={field.value ? new Date(field.value) : null}
+                                                            onChange={(date) =>
+                                                                form.setFieldValue(field.name, date)
+                                                            }
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="Labour Card Personal Number"
+                                                invalid={!!errors.labourCardPersonalNumber && touched.labourCardPersonalNumber}
+                                                errorMessage={errors.labourCardPersonalNumber as string}
+                                            >
+                                                <Field name="labourCardPersonalNumber">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            placeholder="Labour Card Personal Number"
+                                                            {...field}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="Work Permit Number"
+                                                invalid={!!errors.workPermitNumber && touched.workPermitNumber}
+                                                errorMessage={errors.workPermitNumber as string}
+                                            >
+                                                <Field name="workPermitNumber">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            placeholder="Work Permit Number"
+                                                            {...field}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="Labour Card Expiry Date"
+                                                invalid={!!errors.labourExpireDate && touched.labourExpireDate}
+                                                errorMessage={errors.labourExpireDate as string}
+                                            >
+                                                <Field name="labourExpireDate">
+                                                    {({ field, form }: FieldProps) => (
+                                                        <DatePicker
+                                                            placeholder="Select Labour Card Expiry Date"
+                                                            value={field.value ? new Date(field.value) : null}
+                                                            onChange={(date) =>
+                                                                form.setFieldValue(field.name, date)
+                                                            }
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+                                        </div>
+                                    </AdaptableCard>
+
+                                    <AdaptableCard divider className="mb-4">
+                                        <h5 className="mb-4">Visa Expenses</h5>
+                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                            {/* Group 1 */}
+                                            <FormItem
+                                                label="Offer Letter Typing"
+                                                invalid={!!errors.offerLetterTyping && touched.offerLetterTyping}
+                                                errorMessage={errors.offerLetterTyping as string}
+                                            >
+                                                <Field name="offerLetterTyping">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Amount"
+                                                            {...field}
+                                                            onChange={(e) => handleFieldChange('offerLetterTyping', e.target.value, setFieldValue)}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="Labour Insurance"
+                                                invalid={!!errors.labourInsurance && touched.labourInsurance}
+                                                errorMessage={errors.labourInsurance as string}
+                                            >
+                                                <Field name="labourInsurance">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Amount"
+                                                            {...field}
+                                                            onChange={(e) => handleFieldChange('labourInsurance', e.target.value, setFieldValue)}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="Labour Card Payment"
+                                                invalid={!!errors.labourCardPayment && touched.labourCardPayment}
+                                                errorMessage={errors.labourCardPayment as string}
+                                            >
+                                                <Field name="labourCardPayment">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Amount"
+                                                            {...field}
+                                                            onChange={(e) => handleFieldChange('labourCardPayment', e.target.value, setFieldValue)}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            {/* Group 2 */}
+                                            <FormItem
+                                                label="Status Change In/Out"
+                                                invalid={!!errors.statusChangeInOut && touched.statusChangeInOut}
+                                                errorMessage={errors.statusChangeInOut as string}
+                                            >
+                                                <Field name="statusChangeInOut">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Amount"
+                                                            {...field}
+                                                            onChange={(e) => handleFieldChange('statusChangeInOut', e.target.value, setFieldValue)}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="Inside Entry"
+                                                invalid={!!errors.insideEntry && touched.insideEntry}
+                                                errorMessage={errors.insideEntry as string}
+                                            >
+                                                <Field name="insideEntry">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Amount"
+                                                            {...field}
+                                                            onChange={(e) => handleFieldChange('insideEntry', e.target.value, setFieldValue)}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="Medical Sharjah"
+                                                invalid={!!errors.medicalSharjah && touched.medicalSharjah}
+                                                errorMessage={errors.medicalSharjah as string}
+                                            >
+                                                <Field name="medicalSharjah">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Amount"
+                                                            {...field}
+                                                            onChange={(e) => handleFieldChange('medicalSharjah', e.target.value, setFieldValue)}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            {/* Group 3 */}
+                                            <FormItem
+                                                label="Tajweeh Submission"
+                                                invalid={!!errors.tajweehSubmission && touched.tajweehSubmission}
+                                                errorMessage={errors.tajweehSubmission as string}
+                                            >
+                                                <Field name="tajweehSubmission">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Amount"
+                                                            {...field}
+                                                            onChange={(e) => handleFieldChange('tajweehSubmission', e.target.value, setFieldValue)}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="ILOE Insurance"
+                                                invalid={!!errors.iloeInsurance && touched.iloeInsurance}
+                                                errorMessage={errors.iloeInsurance as string}
+                                            >
+                                                <Field name="iloeInsurance">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Amount"
+                                                            {...field}
+                                                            onChange={(e) => handleFieldChange('iloeInsurance', e.target.value, setFieldValue)}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="Health Insurance"
+                                                invalid={!!errors.healthInsurance && touched.healthInsurance}
+                                                errorMessage={errors.healthInsurance as string}
+                                            >
+                                                <Field name="healthInsurance">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Amount"
+                                                            {...field}
+                                                            onChange={(e) => handleFieldChange('healthInsurance', e.target.value, setFieldValue)}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            {/* Group 4 */}
+                                            <FormItem
+                                                label="Emirate ID"
+                                                invalid={!!errors.emirateId && touched.emirateId}
+                                                errorMessage={errors.emirateId as string}
+                                            >
+                                                <Field name="emirateId">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Amount"
+                                                            {...field}
+                                                            onChange={(e) => handleFieldChange('emirateId', e.target.value, setFieldValue)}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="Residence Stamping"
+                                                invalid={!!errors.residenceStamping && touched.residenceStamping}
+                                                errorMessage={errors.residenceStamping as string}
+                                            >
+                                                <Field name="residenceStamping">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Amount"
+                                                            {...field}
+                                                            onChange={(e) => handleFieldChange('residenceStamping', e.target.value, setFieldValue)}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="Srilanka Council Head"
+                                                invalid={!!errors.srilankaCouncilHead && touched.srilankaCouncilHead}
+                                                errorMessage={errors.srilankaCouncilHead as string}
+                                            >
+                                                <Field name="srilankaCouncilHead">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Amount"
+                                                            {...field}
+                                                            onChange={(e) => handleFieldChange('srilankaCouncilHead', e.target.value, setFieldValue)}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            {/* Group 5 */}
+                                            <FormItem
+                                                label="Upscoding"
+                                                invalid={!!errors.upscoding && touched.upscoding}
+                                                errorMessage={errors.upscoding as string}
+                                            >
+                                                <Field name="upscoding">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Amount"
+                                                            {...field}
+                                                            onChange={(e) => handleFieldChange('upscoding', e.target.value, setFieldValue)}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="Labour Fine Payment"
+                                                invalid={!!errors.labourFinePayment && touched.labourFinePayment}
+                                                errorMessage={errors.labourFinePayment as string}
+                                            >
+                                                <Field name="labourFinePayment">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Amount"
+                                                            {...field}
+                                                            onChange={(e) => handleFieldChange('labourFinePayment', e.target.value, setFieldValue)}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="Labour Card Renewal Payment"
+                                                invalid={!!errors.labourCardRenewalPayment && touched.labourCardRenewalPayment}
+                                                errorMessage={errors.labourCardRenewalPayment as string}
+                                            >
+                                                <Field name="labourCardRenewalPayment">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Amount"
+                                                            {...field}
+                                                            onChange={(e) => handleFieldChange('labourCardRenewalPayment', e.target.value, setFieldValue)}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            {/* Group 6 */}
+                                            <FormItem
+                                                label="Service Payment"
+                                                invalid={!!errors.servicePayment && touched.servicePayment}
+                                                errorMessage={errors.servicePayment as string}
+                                            >
+                                                <Field name="servicePayment">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Amount"
+                                                            {...field}
+                                                            onChange={(e) => handleFieldChange('servicePayment', e.target.value, setFieldValue)}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="Visa Stamping"
+                                                invalid={!!errors.visaStamping && touched.visaStamping}
+                                                errorMessage={errors.visaStamping as string}
+                                            >
+                                                <Field name="visaStamping">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Amount"
+                                                            {...field}
+                                                            onChange={(e) => handleFieldChange('visaStamping', e.target.value, setFieldValue)}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="Two Month Visiting Visa"
+                                                invalid={!!errors.twoMonthVisitingVisa && touched.twoMonthVisitingVisa}
+                                                errorMessage={errors.twoMonthVisitingVisa as string}
+                                            >
+                                                <Field name="twoMonthVisitingVisa">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Amount"
+                                                            {...field}
+                                                            onChange={(e) => handleFieldChange('twoMonthVisitingVisa', e.target.value, setFieldValue)}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            {/* Group 7 */}
+                                            <FormItem
+                                                label="Fine Payment"
+                                                invalid={!!errors.finePayment && touched.finePayment}
+                                                errorMessage={errors.finePayment as string}
+                                            >
+                                                <Field name="finePayment">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Amount"
+                                                            {...field}
+                                                            onChange={(e) => handleFieldChange('finePayment', e.target.value, setFieldValue)}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="Entry Permit Outside"
+                                                invalid={!!errors.entryPermitOutside && touched.entryPermitOutside}
+                                                errorMessage={errors.entryPermitOutside as string}
+                                            >
+                                                <Field name="entryPermitOutside">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Amount"
+                                                            {...field}
+                                                            onChange={(e) => handleFieldChange('entryPermitOutside', e.target.value, setFieldValue)}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="Complaint Employee"
+                                                invalid={!!errors.complaintEmployee && touched.complaintEmployee}
+                                                errorMessage={errors.complaintEmployee as string}
+                                            >
+                                                <Field name="complaintEmployee">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Amount"
+                                                            {...field}
+                                                            onChange={(e) => handleFieldChange('complaintEmployee', e.target.value, setFieldValue)}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            {/* Group 8 */}
+                                            <FormItem
+                                                label="Arabic Letter"
+                                                invalid={!!errors.arabicLetter && touched.arabicLetter}
+                                                errorMessage={errors.arabicLetter as string}
+                                            >
+                                                <Field name="arabicLetter">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Amount"
+                                                            {...field}
+                                                            onChange={(e) => handleFieldChange('arabicLetter', e.target.value, setFieldValue)}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="Violation Committee"
+                                                invalid={!!errors.violationCommittee && touched.violationCommittee}
+                                                errorMessage={errors.violationCommittee as string}
+                                            >
+                                                <Field name="violationCommittee">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Amount"
+                                                            {...field}
+                                                            onChange={(e) => handleFieldChange('violationCommittee', e.target.value, setFieldValue)}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            <FormItem
+                                                label="Quota Modification"
+                                                invalid={!!errors.quotaModification && touched.quotaModification}
+                                                errorMessage={errors.quotaModification as string}
+                                            >
+                                                <Field name="quotaModification">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Amount"
+                                                            {...field}
+                                                            onChange={(e) => handleFieldChange('quotaModification', e.target.value, setFieldValue)}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+
+                                            {/* Group 9 */}
+                                            <FormItem
+                                                label="Others"
+                                                invalid={!!errors.others && touched.others}
+                                                errorMessage={errors.others as string}
+                                            >
+                                                <Field name="others">
+                                                    {({ field }: FieldProps) => (
+                                                        <Input
+                                                            type="number"
+                                                            placeholder="Amount"
+                                                            {...field}
+                                                            onChange={(e) => handleFieldChange('others', e.target.value, setFieldValue)}
+                                                        />
+                                                    )}
+                                                </Field>
+                                            </FormItem>
+                                        </div>
+                                    </AdaptableCard>
+                                </div>
+                            </div>
+
+                            <StickyFooter
+                                className="-mx-8 px-8 flex items-center justify-between py-4"
+                                stickyClass="border-t bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+                            >
+                                <div>
+                                    {type === 'edit' && onDelete && (
+                                        <Button
+                                            size="sm"
+                                            variant="plain"
+                                            color="red"
+                                            icon={<HiOutlineTrash />}
+                                            type="button"
+                                            onClick={() => onDelete(() => {})}
+                                        >
+                                            Delete
+                                        </Button>
+                                    )}
+                                </div>
+                                <div className="md:flex items-center">
                                     <Button
                                         size="sm"
-                                        variant="plain"
-                                        color="red"
-                                        icon={<HiOutlineTrash />}
+                                        className="ltr:mr-3 rtl:ml-3"
                                         type="button"
-                                        onClick={() => onDelete(() => {})}
+                                        onClick={() => onDiscard?.()}
                                     >
-                                        Delete
+                                        Discard
                                     </Button>
-                                )}
-                            </div>
-                            <div className="md:flex items-center">
-                                <Button
-                                    size="sm"
-                                    className="ltr:mr-3 rtl:ml-3"
-                                    type="button"
-                                    onClick={() => onDiscard?.()}
-                                >
-                                    Discard
-                                </Button>
-                                <Button
-                                    size="sm"
-                                    variant="solid"
-                                    loading={isSubmitting}
-                                    icon={<AiOutlineSave />}
-                                    type="submit"
-                                >
-                                    Save
-                                </Button>
-                            </div>
-                        </StickyFooter>
-                    </FormContainer>
-                </Form>
-            )}
+                                    <Button
+                                        size="sm"
+                                        variant="solid"
+                                        loading={isSubmitting}
+                                        icon={<AiOutlineSave />}
+                                        type="submit"
+                                    >
+                                        Save
+                                    </Button>
+                                </div>
+                            </StickyFooter>
+                        </FormContainer>
+                    </Form>
+                )
+            }}
         </Formik>
     )
 })

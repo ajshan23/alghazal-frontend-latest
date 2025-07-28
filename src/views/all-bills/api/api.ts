@@ -337,6 +337,7 @@ export const exportReportToExcel = async ({
     endDate,
     category,
     shop,
+    employee,
 }: {
     search?: string
     billType?: string
@@ -346,6 +347,7 @@ export const exportReportToExcel = async ({
     endDate?: string
     category?: string
     shop?: string
+    employee?: string
 }) => {
     try {
         // Prepare params object with proper typing
@@ -360,6 +362,7 @@ export const exportReportToExcel = async ({
             endDate: endDate ? new Date(endDate).toISOString() : undefined,
             category,
             shop,
+            employee,
         }
 
         // Clean up undefined parameters
@@ -378,7 +381,7 @@ export const exportReportToExcel = async ({
         }
 
         // Create filename with current date and bill type
-        const filename = `bills_export_${billType || 'all'}_${new Date()
+        const filename = `${billType || 'Report'}_${new Date()
             .toISOString()
             .slice(0, 10)}.xlsx`
 

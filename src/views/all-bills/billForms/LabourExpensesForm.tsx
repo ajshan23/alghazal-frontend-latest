@@ -1,70 +1,70 @@
-import { forwardRef, useEffect, useState } from 'react'
-import { FormContainer, FormItem } from '@/components/ui/Form'
-import Button from '@/components/ui/Button'
-import StickyFooter from '@/components/shared/StickyFooter'
-import { Form, Formik, FormikProps } from 'formik'
-import { AiOutlineSave, AiOutlinePlus } from 'react-icons/ai'
-import { HiOutlineTrash } from 'react-icons/hi'
-import * as Yup from 'yup'
-import { Input } from '@/components/ui'
-import { AdaptableCard } from '@/components/shared'
-import Select from '@/components/ui/Select'
-import { fetchUser } from '../api/api'
+import { forwardRef, useEffect, useState } from 'react';
+import { FormContainer, FormItem } from '@/components/ui/Form';
+import Button from '@/components/ui/Button';
+import StickyFooter from '@/components/shared/StickyFooter';
+import { Form, Formik, FormikProps } from 'formik';
+import { AiOutlineSave, AiOutlinePlus } from 'react-icons/ai';
+import { HiOutlineTrash } from 'react-icons/hi';
+import * as Yup from 'yup';
+import { Input } from '@/components/ui';
+import { AdaptableCard } from '@/components/shared';
+import Select from '@/components/ui/Select';
+import { fetchUser } from '../api/api';
 
-type FormikRef = FormikProps<any>
+type FormikRef = FormikProps<any>;
 
 type CustomExpense = {
-  name: string
-  amount: number
-}
+  name: string;
+  amount: number;
+};
 
 type LabourExpenseItem = {
-  employee: string
-  designation: string
-  country: string
-  basicSalary: number
-  allowance: number
-  totalSalary: number
-  twoYearSalary: number
-  perYearExpenses: number
-  perMonthExpenses: number
-  perDayExpenses: number
-  totalExpensesPerPerson: number
-  visaExpenses: number
-  twoYearUniform: number
-  shoes: number
-  twoYearAccommodation: number
-  sewaBills: number
-  dewaBills: number
-  insurance: number
-  transport: number
-  water: number
-  thirdPartyLiabilities: number
-  fairmontCertificate: number
-  leaveSalary: number
-  ticket: number
-  gratuity: number
-  customExpenses: CustomExpense[]
-}
+  employee: string;
+  designation: string;
+  country: string;
+  basicSalary: number;
+  allowance: number;
+  totalSalary: number;
+  twoYearSalary: number;
+  perYearExpenses: number;
+  perMonthExpenses: number;
+  perDayExpenses: number;
+  totalExpensesPerPerson: number;
+  visaExpenses: number;
+  twoYearUniform: number;
+  shoes: number;
+  twoYearAccommodation: number;
+  sewaBills: number;
+  dewaBills: number;
+  insurance: number;
+  transport: number;
+  water: number;
+  thirdPartyLiabilities: number;
+  fairmontCertificate: number;
+  leaveSalary: number;
+  ticket: number;
+  gratuity: number;
+  customExpenses: CustomExpense[];
+};
 
-export type FormModel = LabourExpenseItem
+export type FormModel = LabourExpenseItem;
 
 type LabourExpensesFormProps = {
-  initialData?: FormModel
-  type: 'edit' | 'new'
-  onDiscard?: () => void
-  onDelete?: (callback: React.Dispatch<React.SetStateAction<boolean>>) => void
+  initialData?: FormModel;
+  type: 'edit' | 'new';
+  onDiscard?: () => void;
+  onDelete?: (callback: React.Dispatch<React.SetStateAction<boolean>>) => void;
   onFormSubmit: (
     formData: FormModel,
     setSubmitting: (isSubmitting: boolean) => void
-  ) => Promise<any>
-}
+  ) => Promise<any>;
+};
 
 type UserOption = {
-  value: string
-  label: string
-  role: string
-}
+  value: string;
+  label: string;
+  role: string;
+};
 
 const LabourExpensesForm = forwardRef<FormikRef, LabourExpensesFormProps>((props, ref) => {
   const {
@@ -100,7 +100,7 @@ const LabourExpensesForm = forwardRef<FormikRef, LabourExpensesFormProps>((props
     onFormSubmit,
     onDiscard,
     onDelete,
-  } = props
+  } = props;
 
   const validationSchema = Yup.object().shape({
     employee: Yup.string().required('Employee is required'),
@@ -180,7 +180,7 @@ const LabourExpensesForm = forwardRef<FormikRef, LabourExpensesFormProps>((props
           .min(0, 'Amount cannot be negative')
       })
     )
-  })
+  });
 
   const countryOptions = [
     { value: "Aruba", label: "Aruba" },
@@ -434,38 +434,38 @@ const LabourExpensesForm = forwardRef<FormikRef, LabourExpensesFormProps>((props
     { value: "Zimbabwe", label: "Zimbabwe" }
   ];
 
-  const [userOptions, setUserOptions] = useState<UserOption[]>([])
+  const [userOptions, setUserOptions] = useState<UserOption[]>([]);
 
   useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await fetchUser()
+        const response = await fetchUser();
         const options = response.data?.users.map((user: any) => ({
           value: user._id,
           label: `${user.firstName} ${user.lastName}`,
           role: user.role
-        }))
-        setUserOptions(options)
+        }));
+        setUserOptions(options);
       } catch (error) {
-        console.error('Failed to fetch users', error)
+        console.error('Failed to fetch users', error);
       }
-    }
+    };
 
-    fetchUsers()
-  }, [])
+    fetchUsers();
+  }, []);
 
   const handleAddCustomExpense = (values: FormModel, setFieldValue: any) => {
-    const currentExpenses = values.customExpenses || []
-    const customExpenses = [...currentExpenses, { name: '', amount: 0 }]
-    setFieldValue('customExpenses', customExpenses)
-  }
+    const currentExpenses = values.customExpenses || [];
+    const customExpenses = [...currentExpenses, { name: '', amount: 0 }];
+    setFieldValue('customExpenses', customExpenses);
+  };
 
   const handleRemoveCustomExpense = (customIndex: number, values: FormModel, setFieldValue: any) => {
-    const currentExpenses = values.customExpenses || []
-    const customExpenses = [...currentExpenses]
-    customExpenses.splice(customIndex, 1)
-    setFieldValue('customExpenses', customExpenses)
-  }
+    const currentExpenses = values.customExpenses || [];
+    const customExpenses = [...currentExpenses];
+    customExpenses.splice(customIndex, 1);
+    setFieldValue('customExpenses', customExpenses);
+  };
 
   const handleCustomExpenseChange = (
     customIndex: number,
@@ -474,16 +474,15 @@ const LabourExpensesForm = forwardRef<FormikRef, LabourExpensesFormProps>((props
     values: FormModel,
     setFieldValue: any
   ) => {
-    const currentExpenses = values.customExpenses || []
-    const customExpenses = [...currentExpenses]
+    const currentExpenses = values.customExpenses || [];
+    const customExpenses = [...currentExpenses];
     customExpenses[customIndex] = {
       ...customExpenses[customIndex],
       [field]: field === 'amount' ? Number(value) || 0 : value
-    }
-    setFieldValue('customExpenses', customExpenses)
-  }
+    };
+    setFieldValue('customExpenses', customExpenses);
+  };
 
-  
   return (
     <Formik
       innerRef={ref}
@@ -491,525 +490,591 @@ const LabourExpensesForm = forwardRef<FormikRef, LabourExpensesFormProps>((props
       validationSchema={validationSchema}
       onSubmit={async (values, { setSubmitting }) => {
         try {
-          await onFormSubmit(values, setSubmitting)
+          await onFormSubmit(values, setSubmitting);
         } catch (error) {
-          setSubmitting(false)
-          console.error('Form submission error:', error)
+          setSubmitting(false);
+          console.error('Form submission error:', error);
         }
       }}
       enableReinitialize={true}
     >
-      {({ values, touched, errors, isSubmitting, setFieldValue, handleBlur }) => (
-        <Form>
-          <FormContainer>
-            <div className="grid grid-cols-1 gap-4">
-              <AdaptableCard divider className="mb-4">
-                {/* Basic Information Section */}
-                <div className="mb-8">
-                  <h5 className="text-lg font-semibold mb-4 border-b pb-2">
-                    Basic Information
-                  </h5>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <FormItem
-                      label="EMPLOYEE"
-                      invalid={!!errors.employee}
-                      errorMessage={errors.employee as string}
-                    >
-                      <Select
-                        name="employee"
-                        placeholder="Select employee"
-                        value={userOptions.find(opt => opt.value === values.employee)}
-                        options={userOptions}
-                        onChange={(option) => {
-                          setFieldValue('employee', option?.value)
-                          setFieldValue('designation', option?.role)
-                        }}
-                        onBlur={handleBlur}
-                      />
-                    </FormItem>
+      {({ values, touched, errors, isSubmitting, setFieldValue, handleBlur }) => {
+        useEffect(() => {
+          // Calculate salary fields
+          const basicSalary = Number(values.basicSalary) || 0;
+          const allowance = Number(values.allowance) || 0;
+          const totalSalary = basicSalary + allowance;
+          const twoYearSalary = totalSalary * 24;
 
-                    <FormItem
-                      label="DESIGNATION"
-                      invalid={!!errors.designation}
-                      errorMessage={errors.designation as string}
-                    >
-                      <Input
-                        name="designation"
-                        value={values.designation}
-                        readOnly
-                        onBlur={handleBlur}
-                      />
-                    </FormItem>
+          // Calculate detailed expenses
+          const detailedExpenses = [
+            'visaExpenses',
+            'twoYearUniform',
+            'shoes',
+            'twoYearAccommodation',
+            'sewaBills',
+            'dewaBills',
+            'insurance',
+            'transport',
+            'water',
+            'thirdPartyLiabilities',
+            'fairmontCertificate',
+            'leaveSalary',
+            'ticket',
+            'gratuity'
+          ].reduce((sum, field) => sum + (Number(values[field as keyof FormModel]) || 0), 0);
 
-                    <FormItem
-                      label="COUNTRY"
-                      invalid={!!errors.country}
-                      errorMessage={errors.country as string}
-                    >
-                      <Select
-                        name="country"
-                        value={countryOptions.find(opt => opt.value === values.country)}
-                        options={countryOptions}
-                        onChange={(option) => setFieldValue('country', option?.value)}
-                        onBlur={handleBlur}
-                      />
-                    </FormItem>
-                  </div>
-                </div>
+          // Calculate custom expenses
+          const customExpensesTotal = (values.customExpenses || [])
+            .reduce((sum, expense) => sum + (Number(expense.amount) || 0), 0);
 
-                {/* Salary Information Section */}
-                <div className="mb-8">
-                  <h5 className="text-lg font-semibold mb-4 border-b pb-2">
-                    Salary Information
-                  </h5>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <FormItem
-                      label="BASIC SALARY"
-                      invalid={!!errors.basicSalary}
-                      errorMessage={errors.basicSalary as string}
-                    >
-                      <Input
-                        type="number"
-                        name="basicSalary"
-                        value={values.basicSalary}
-                        onChange={(e) => {
-                          const basicSalary = Number(e.target.value) || 0
-                          setFieldValue('basicSalary', basicSalary)
-                        }}
-                        onBlur={handleBlur}
-                      />
-                    </FormItem>
+          // Calculate all totals
+          const totalTwoYearExpenses = twoYearSalary + detailedExpenses + customExpensesTotal;
+          const perYearExpenses = totalTwoYearExpenses / 2;
+          const perMonthExpenses = totalTwoYearExpenses / 24;
+          const perDayExpenses = perMonthExpenses / 30;
 
-                    <FormItem
-                      label="ALLOWANCE"
-                      invalid={!!errors.allowance}
-                      errorMessage={errors.allowance as string}
-                    >
-                      <Input
-                        type="number"
-                        name="allowance"
-                        value={values.allowance}
-                        onChange={(e) => {
-                          const allowance = Number(e.target.value) || 0
-                          setFieldValue('allowance', allowance)
-                        }}
-                        onBlur={handleBlur}
-                      />
-                    </FormItem>
+          // Update all calculated fields
+          setFieldValue('totalSalary', totalSalary);
+          setFieldValue('twoYearSalary', twoYearSalary);
+          setFieldValue('totalExpensesPerPerson', totalTwoYearExpenses.toFixed(2));
+          setFieldValue('perYearExpenses', perYearExpenses.toFixed(2));
+          setFieldValue('perMonthExpenses', perMonthExpenses.toFixed(2));
+          setFieldValue('perDayExpenses', perDayExpenses.toFixed(2));
 
-                    <FormItem
-                      label="TOTAL SALARY"
-                      invalid={!!errors.totalSalary}
-                      errorMessage={errors.totalSalary as string}
-                    >
-                      <Input
-                        type="number"
-                        name="totalSalary"
-                        value={values.totalSalary}
-                        onChange={(e) => setFieldValue('totalSalary', Number(e.target.value) || 0)}
-                        onBlur={handleBlur}
-                      />
-                    </FormItem>
+        }, [
+          values.basicSalary,
+          values.allowance,
+          values.visaExpenses,
+          values.twoYearUniform,
+          values.shoes,
+          values.twoYearAccommodation,
+          values.sewaBills,
+          values.dewaBills,
+          values.insurance,
+          values.transport,
+          values.water,
+          values.thirdPartyLiabilities,
+          values.fairmontCertificate,
+          values.leaveSalary,
+          values.ticket,
+          values.gratuity,
+          values.customExpenses,
+          setFieldValue
+        ]);
 
-                    <FormItem
-                      label="2 YEARS SALARY"
-                      invalid={!!errors.twoYearSalary}
-                      errorMessage={errors.twoYearSalary as string}
-                    >
-                      <Input
-                        type="number"
-                        name="twoYearSalary"
-                        value={values.twoYearSalary}
-                        onChange={(e) => setFieldValue('twoYearSalary', Number(e.target.value) || 0)}
-                        onBlur={handleBlur}
-                      />
-                    </FormItem>
-                  </div>
-                </div>
-
-                {/* Expenses Breakdown Section */}
-                <div className="mb-8">
-                  <h5 className="text-lg font-semibold mb-4 border-b pb-2">
-                    Expenses Breakdown
-                  </h5>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <FormItem
-                      label="PER YEAR EXPENSES"
-                      invalid={!!errors.perYearExpenses}
-                      errorMessage={errors.perYearExpenses as string}
-                    >
-                      <Input
-                        type="number"
-                        name="perYearExpenses"
-                        value={values.perYearExpenses}
-                        onChange={(e) => setFieldValue('perYearExpenses', Number(e.target.value) || 0)}
-                        onBlur={handleBlur}
-                      />
-                    </FormItem>
-
-                    <FormItem
-                      label="PER MONTH EXPENSES"
-                      invalid={!!errors.perMonthExpenses}
-                      errorMessage={errors.perMonthExpenses as string}
-                    >
-                      <Input
-                        type="number"
-                        name="perMonthExpenses"
-                        value={values.perMonthExpenses}
-                        onChange={(e) => setFieldValue('perMonthExpenses', Number(e.target.value) || 0)}
-                        onBlur={handleBlur}
-                      />
-                    </FormItem>
-
-                    <FormItem
-                      label="PER DAY EXPENSES"
-                      invalid={!!errors.perDayExpenses}
-                      errorMessage={errors.perDayExpenses as string}
-                    >
-                      <Input
-                        type="number"
-                        name="perDayExpenses"
-                        value={values.perDayExpenses}
-                        onChange={(e) => setFieldValue('perDayExpenses', Number(e.target.value) || 0)}
-                        onBlur={handleBlur}
-                      />
-                    </FormItem>
-
-                    <FormItem
-                      label="TOTAL EXPENSES PER PERSON (2 YEAR)"
-                      invalid={!!errors.totalExpensesPerPerson}
-                      errorMessage={errors.totalExpensesPerPerson as string}
-                    >
-                      <Input
-                        type="number"
-                        name="totalExpensesPerPerson"
-                        value={values.totalExpensesPerPerson}
-                        onChange={(e) => setFieldValue('totalExpensesPerPerson', Number(e.target.value) || 0)}
-                        onBlur={handleBlur}
-                      />
-                    </FormItem>
-                  </div>
-                </div>
-
-                {/* Detailed Expenses Section */}
-                <div className="mb-8">
-                  <h5 className="text-lg font-semibold mb-4 border-b pb-2">
-                    Detailed Expenses
-                  </h5>
-                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                    <FormItem
-                      label="VISA EXPENSES"
-                      invalid={!!errors.visaExpenses}
-                      errorMessage={errors.visaExpenses as string}
-                    >
-                      <Input
-                        type="number"
-                        name="visaExpenses"
-                        value={values.visaExpenses}
-                        onChange={(e) => setFieldValue('visaExpenses', Number(e.target.value) || 0)}
-                        onBlur={handleBlur}
-                      />
-                    </FormItem>
-
-                    <FormItem
-                      label="2 YEAR UNIFORM (3 SET PER 6 MONTH)"
-                      invalid={!!errors.twoYearUniform}
-                      errorMessage={errors.twoYearUniform as string}
-                    >
-                      <Input
-                        type="number"
-                        name="twoYearUniform"
-                        value={values.twoYearUniform}
-                        onChange={(e) => setFieldValue('twoYearUniform', Number(e.target.value) || 0)}
-                        onBlur={handleBlur}
-                      />
-                    </FormItem>
-
-                    <FormItem
-                      label="SHOES"
-                      invalid={!!errors.shoes}
-                      errorMessage={errors.shoes as string}
-                    >
-                      <Input
-                        type="number"
-                        name="shoes"
-                        value={values.shoes}
-                        onChange={(e) => setFieldValue('shoes', Number(e.target.value) || 0)}
-                        onBlur={handleBlur}
-                      />
-                    </FormItem>
-
-                    <FormItem
-                      label="2 YEAR ACCOMMODATION + OFFICE RENT"
-                      invalid={!!errors.twoYearAccommodation}
-                      errorMessage={errors.twoYearAccommodation as string}
-                    >
-                      <Input
-                        type="number"
-                        name="twoYearAccommodation"
-                        value={values.twoYearAccommodation}
-                        onChange={(e) => setFieldValue('twoYearAccommodation', Number(e.target.value) || 0)}
-                        onBlur={handleBlur}
-                      />
-                    </FormItem>
-
-                    <FormItem
-                      label="SEWA BILLS 2 YEAR"
-                      invalid={!!errors.sewaBills}
-                      errorMessage={errors.sewaBills as string}
-                    >
-                      <Input
-                        type="number"
-                        name="sewaBills"
-                        value={values.sewaBills}
-                        onChange={(e) => setFieldValue('sewaBills', Number(e.target.value) || 0)}
-                        onBlur={handleBlur}
-                      />
-                    </FormItem>
-
-                    <FormItem
-                      label="DEWA BILLS 2 YEAR"
-                      invalid={!!errors.dewaBills}
-                      errorMessage={errors.dewaBills as string}
-                    >
-                      <Input
-                        type="number"
-                        name="dewaBills"
-                        value={values.dewaBills}
-                        onChange={(e) => setFieldValue('dewaBills', Number(e.target.value) || 0)}
-                        onBlur={handleBlur}
-                      />
-                    </FormItem>
-
-                    <FormItem
-                      label="WORKMAN COMPENSATION INSURANCE"
-                      invalid={!!errors.insurance}
-                      errorMessage={errors.insurance as string}
-                    >
-                      <Input
-                        type="number"
-                        name="insurance"
-                        value={values.insurance}
-                        onChange={(e) => setFieldValue('insurance', Number(e.target.value) || 0)}
-                        onBlur={handleBlur}
-                      />
-                    </FormItem>
-
-                    <FormItem
-                      label="TRANSPORT"
-                      invalid={!!errors.transport}
-                      errorMessage={errors.transport as string}
-                    >
-                      <Input
-                        type="number"
-                        name="transport"
-                        value={values.transport}
-                        onChange={(e) => setFieldValue('transport', Number(e.target.value) || 0)}
-                        onBlur={handleBlur}
-                      />
-                    </FormItem>
-
-                    <FormItem
-                      label="WATER"
-                      invalid={!!errors.water}
-                      errorMessage={errors.water as string}
-                    >
-                      <Input
-                        type="number"
-                        name="water"
-                        value={values.water}
-                        onChange={(e) => setFieldValue('water', Number(e.target.value) || 0)}
-                        onBlur={handleBlur}
-                      />
-                    </FormItem>
-
-                    <FormItem
-                      label="THIRD PARTY LIABILITIES"
-                      invalid={!!errors.thirdPartyLiabilities}
-                      errorMessage={errors.thirdPartyLiabilities as string}
-                    >
-                      <Input
-                        type="number"
-                        name="thirdPartyLiabilities"
-                        value={values.thirdPartyLiabilities}
-                        onChange={(e) => setFieldValue('thirdPartyLiabilities', Number(e.target.value) || 0)}
-                        onBlur={handleBlur}
-                      />
-                    </FormItem>
-
-                    <FormItem
-                      label="FAIRMONT CERTIFICATE"
-                      invalid={!!errors.fairmontCertificate}
-                      errorMessage={errors.fairmontCertificate as string}
-                    >
-                      <Input
-                        type="number"
-                        name="fairmontCertificate"
-                        value={values.fairmontCertificate}
-                        onChange={(e) => setFieldValue('fairmontCertificate', Number(e.target.value) || 0)}
-                        onBlur={handleBlur}
-                      />
-                    </FormItem>
-
-                    <FormItem
-                      label="LEAVE SALARY"
-                      invalid={!!errors.leaveSalary}
-                      errorMessage={errors.leaveSalary as string}
-                    >
-                      <Input
-                        type="number"
-                        name="leaveSalary"
-                        value={values.leaveSalary}
-                        onChange={(e) => setFieldValue('leaveSalary', Number(e.target.value) || 0)}
-                        onBlur={handleBlur}
-                      />
-                    </FormItem>
-
-                    <FormItem
-                      label="TICKET (UP AND DOWN)"
-                      invalid={!!errors.ticket}
-                      errorMessage={errors.ticket as string}
-                    >
-                      <Input
-                        type="number"
-                        name="ticket"
-                        value={values.ticket}
-                        onChange={(e) => setFieldValue('ticket', Number(e.target.value) || 0)}
-                        onBlur={handleBlur}
-                      />
-                    </FormItem>
-
-                    <FormItem
-                      label="GRATUITY"
-                      invalid={!!errors.gratuity}
-                      errorMessage={errors.gratuity as string}
-                    >
-                      <Input
-                        type="number"
-                        name="gratuity"
-                        value={values.gratuity}
-                        onChange={(e) => setFieldValue('gratuity', Number(e.target.value) || 0)}
-                        onBlur={handleBlur}
-                      />
-                    </FormItem>
-                  </div>
-                </div>
-
-                {/* Custom Expenses Section */}
-                <div className="mb-8">
-                  <div className="flex justify-between items-center mb-4 border-b pb-2">
-                    <h5 className="text-lg font-semibold">
-                      {values?.customExpenses?.length > 0 ? 'Additional Custom Expenses' : ''}
+        return (
+          <Form>
+            <FormContainer>
+              <div className="grid grid-cols-1 gap-4">
+                <AdaptableCard divider className="mb-4">
+                  {/* Basic Information Section */}
+                  <div className="mb-8">
+                    <h5 className="text-lg font-semibold mb-4 border-b pb-2">
+                      Basic Information
                     </h5>
-                    <Button
-                      size="sm"
-                      variant="plain"
-                      icon={<AiOutlinePlus />}
-                      onClick={() => handleAddCustomExpense(values, setFieldValue)}
-                    >
-                      Add Custom Expense
-                    </Button>
-                  </div>
-                  
-                  {(values.customExpenses || []).map((customExpense: any, customIndex: any) => (
-                    <div key={customIndex} className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 items-end">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                       <FormItem
-                        label="Expense Name"
-                        invalid={!!errors.customExpenses?.[customIndex]?.name}
-                        errorMessage={errors.customExpenses?.[customIndex]?.name as string}
+                        label="EMPLOYEE"
+                        invalid={!!errors.employee}
+                        errorMessage={errors.employee as string}
                       >
-                        <Input
-                          value={customExpense.name}
-                          onChange={(e) => handleCustomExpenseChange(
-                            customIndex,
-                            'name',
-                            e.target.value,
-                            values,
-                            setFieldValue
-                          )}
+                        <Select
+                          name="employee"
+                          placeholder="Select employee"
+                          value={userOptions.find(opt => opt.value === values.employee)}
+                          options={userOptions}
+                          onChange={(option) => {
+                            setFieldValue('employee', option?.value);
+                            setFieldValue('designation', option?.role);
+                          }}
+                          onBlur={handleBlur}
                         />
                       </FormItem>
+
                       <FormItem
-                        label="Amount"
-                        invalid={!!errors.customExpenses?.[customIndex]?.amount}
-                        errorMessage={errors.customExpenses?.[customIndex]?.amount as string}
+                        label="DESIGNATION"
+                        invalid={!!errors.designation}
+                        errorMessage={errors.designation as string}
+                      >
+                        <Input
+                          name="designation"
+                          value={values.designation}
+                          readOnly
+                          onBlur={handleBlur}
+                        />
+                      </FormItem>
+
+                      <FormItem
+                        label="COUNTRY"
+                        invalid={!!errors.country}
+                        errorMessage={errors.country as string}
+                      >
+                        <Select
+                          name="country"
+                          value={countryOptions.find(opt => opt.value === values.country)}
+                          options={countryOptions}
+                          onChange={(option) => setFieldValue('country', option?.value)}
+                          onBlur={handleBlur}
+                        />
+                      </FormItem>
+                    </div>
+                  </div>
+
+                  {/* Salary Information Section */}
+                  <div className="mb-8">
+                    <h5 className="text-lg font-semibold mb-4 border-b pb-2">
+                      Salary Information
+                    </h5>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <FormItem
+                        label="BASIC SALARY"
+                        invalid={!!errors.basicSalary}
+                        errorMessage={errors.basicSalary as string}
                       >
                         <Input
                           type="number"
-                          value={customExpense.amount}
-                          onChange={(e) => handleCustomExpenseChange(
+                          name="basicSalary"
+                          value={values.basicSalary}
+                          onChange={(e) => {
+                            const value = Number(e.target.value) || 0;
+                            setFieldValue('basicSalary', value);
+                          }}
+                          onBlur={handleBlur}
+                        />
+                      </FormItem>
+
+                      <FormItem
+                        label="ALLOWANCE"
+                        invalid={!!errors.allowance}
+                        errorMessage={errors.allowance as string}
+                      >
+                        <Input
+                          type="number"
+                          name="allowance"
+                          value={values.allowance}
+                          onChange={(e) => {
+                            const value = Number(e.target.value) || 0;
+                            setFieldValue('allowance', value);
+                          }}
+                          onBlur={handleBlur}
+                        />
+                      </FormItem>
+
+                      <FormItem
+                        label="TOTAL SALARY"
+                        invalid={!!errors.totalSalary}
+                        errorMessage={errors.totalSalary as string}
+                      >
+                        <Input
+                          type="number"
+                          name="totalSalary"
+                          value={values.totalSalary}
+                          disabled
+                          onBlur={handleBlur}
+                        />
+                      </FormItem>
+
+                      <FormItem
+                        label="2 YEARS SALARY"
+                        invalid={!!errors.twoYearSalary}
+                        errorMessage={errors.twoYearSalary as string}
+                      >
+                        <Input
+                          type="number"
+                          name="twoYearSalary"
+                          value={values.twoYearSalary}
+                          disabled
+                          onBlur={handleBlur}
+                        />
+                      </FormItem>
+                    </div>
+                  </div>
+
+                  {/* Expenses Breakdown Section */}
+                  <div className="mb-8">
+                    <h5 className="text-lg font-semibold mb-4 border-b pb-2">
+                      Expenses Breakdown
+                    </h5>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <FormItem
+                        label="PER YEAR EXPENSES"
+                        invalid={!!errors.perYearExpenses}
+                        errorMessage={errors.perYearExpenses as string}
+                      >
+                        <Input
+                          type="number"
+                          name="perYearExpenses"
+                          value={values.perYearExpenses}
+                          disabled
+                          onBlur={handleBlur}
+                        />
+                      </FormItem>
+
+                      <FormItem
+                        label="PER MONTH EXPENSES"
+                        invalid={!!errors.perMonthExpenses}
+                        errorMessage={errors.perMonthExpenses as string}
+                      >
+                        <Input
+                          type="number"
+                          name="perMonthExpenses"
+                          value={values.perMonthExpenses}
+                          disabled
+                          onBlur={handleBlur}
+                        />
+                      </FormItem>
+
+                      <FormItem
+                        label="PER DAY EXPENSES"
+                        invalid={!!errors.perDayExpenses}
+                        errorMessage={errors.perDayExpenses as string}
+                      >
+                        <Input
+                          type="number"
+                          name="perDayExpenses"
+                          value={values.perDayExpenses}
+                          disabled
+                          onBlur={handleBlur}
+                        />
+                      </FormItem>
+
+                      <FormItem
+                        label="TOTAL EXPENSES PER PERSON (2 YEAR)"
+                        invalid={!!errors.totalExpensesPerPerson}
+                        errorMessage={errors.totalExpensesPerPerson as string}
+                      >
+                        <Input
+                          type="number"
+                          name="totalExpensesPerPerson"
+                          value={values.totalExpensesPerPerson}
+                          disabled
+                          onBlur={handleBlur}
+                        />
+                      </FormItem>
+                    </div>
+                  </div>
+
+                  {/* Detailed Expenses Section */}
+                  <div className="mb-8">
+                    <h5 className="text-lg font-semibold mb-4 border-b pb-2">
+                      Detailed Expenses
+                    </h5>
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                      <FormItem
+                        label="VISA EXPENSES"
+                        invalid={!!errors.visaExpenses}
+                        errorMessage={errors.visaExpenses as string}
+                      >
+                        <Input
+                          type="number"
+                          name="visaExpenses"
+                          value={values.visaExpenses}
+                          onChange={(e) => setFieldValue('visaExpenses', Number(e.target.value) || 0)}
+                          onBlur={handleBlur}
+                        />
+                      </FormItem>
+
+                      <FormItem
+                        label="2 YEAR UNIFORM (3 SET PER 6 MONTH)"
+                        invalid={!!errors.twoYearUniform}
+                        errorMessage={errors.twoYearUniform as string}
+                      >
+                        <Input
+                          type="number"
+                          name="twoYearUniform"
+                          value={values.twoYearUniform}
+                          onChange={(e) => setFieldValue('twoYearUniform', Number(e.target.value) || 0)}
+                          onBlur={handleBlur}
+                        />
+                      </FormItem>
+
+                      <FormItem
+                        label="SHOES"
+                        invalid={!!errors.shoes}
+                        errorMessage={errors.shoes as string}
+                      >
+                        <Input
+                          type="number"
+                          name="shoes"
+                          value={values.shoes}
+                          onChange={(e) => setFieldValue('shoes', Number(e.target.value) || 0)}
+                          onBlur={handleBlur}
+                        />
+                      </FormItem>
+
+                      <FormItem
+                        label="2 YEAR ACCOMMODATION + OFFICE RENT"
+                        invalid={!!errors.twoYearAccommodation}
+                        errorMessage={errors.twoYearAccommodation as string}
+                      >
+                        <Input
+                          type="number"
+                          name="twoYearAccommodation"
+                          value={values.twoYearAccommodation}
+                          onChange={(e) => setFieldValue('twoYearAccommodation', Number(e.target.value) || 0)}
+                          onBlur={handleBlur}
+                        />
+                      </FormItem>
+
+                      <FormItem
+                        label="SEWA BILLS 2 YEAR"
+                        invalid={!!errors.sewaBills}
+                        errorMessage={errors.sewaBills as string}
+                      >
+                        <Input
+                          type="number"
+                          name="sewaBills"
+                          value={values.sewaBills}
+                          onChange={(e) => setFieldValue('sewaBills', Number(e.target.value) || 0)}
+                          onBlur={handleBlur}
+                        />
+                      </FormItem>
+
+                      <FormItem
+                        label="DEWA BILLS 2 YEAR"
+                        invalid={!!errors.dewaBills}
+                        errorMessage={errors.dewaBills as string}
+                      >
+                        <Input
+                          type="number"
+                          name="dewaBills"
+                          value={values.dewaBills}
+                          onChange={(e) => setFieldValue('dewaBills', Number(e.target.value) || 0)}
+                          onBlur={handleBlur}
+                        />
+                      </FormItem>
+
+                      <FormItem
+                        label="WORKMAN COMPENSATION INSURANCE"
+                        invalid={!!errors.insurance}
+                        errorMessage={errors.insurance as string}
+                      >
+                        <Input
+                          type="number"
+                          name="insurance"
+                          value={values.insurance}
+                          onChange={(e) => setFieldValue('insurance', Number(e.target.value) || 0)}
+                          onBlur={handleBlur}
+                        />
+                      </FormItem>
+
+                      <FormItem
+                        label="TRANSPORT"
+                        invalid={!!errors.transport}
+                        errorMessage={errors.transport as string}
+                      >
+                        <Input
+                          type="number"
+                          name="transport"
+                          value={values.transport}
+                          onChange={(e) => setFieldValue('transport', Number(e.target.value) || 0)}
+                          onBlur={handleBlur}
+                        />
+                      </FormItem>
+
+                      <FormItem
+                        label="WATER"
+                        invalid={!!errors.water}
+                        errorMessage={errors.water as string}
+                      >
+                        <Input
+                          type="number"
+                          name="water"
+                          value={values.water}
+                          onChange={(e) => setFieldValue('water', Number(e.target.value) || 0)}
+                          onBlur={handleBlur}
+                        />
+                      </FormItem>
+
+                      <FormItem
+                        label="THIRD PARTY LIABILITIES"
+                        invalid={!!errors.thirdPartyLiabilities}
+                        errorMessage={errors.thirdPartyLiabilities as string}
+                      >
+                        <Input
+                          type="number"
+                          name="thirdPartyLiabilities"
+                          value={values.thirdPartyLiabilities}
+                          onChange={(e) => setFieldValue('thirdPartyLiabilities', Number(e.target.value) || 0)}
+                          onBlur={handleBlur}
+                        />
+                      </FormItem>
+
+                      <FormItem
+                        label="FAIRMONT CERTIFICATE"
+                        invalid={!!errors.fairmontCertificate}
+                        errorMessage={errors.fairmontCertificate as string}
+                      >
+                        <Input
+                          type="number"
+                          name="fairmontCertificate"
+                          value={values.fairmontCertificate}
+                          onChange={(e) => setFieldValue('fairmontCertificate', Number(e.target.value) || 0)}
+                          onBlur={handleBlur}
+                        />
+                      </FormItem>
+
+                      <FormItem
+                        label="LEAVE SALARY"
+                        invalid={!!errors.leaveSalary}
+                        errorMessage={errors.leaveSalary as string}
+                      >
+                        <Input
+                          type="number"
+                          name="leaveSalary"
+                          value={values.leaveSalary}
+                          onChange={(e) => setFieldValue('leaveSalary', Number(e.target.value) || 0)}
+                          onBlur={handleBlur}
+                        />
+                      </FormItem>
+
+                      <FormItem
+                        label="TICKET (UP AND DOWN)"
+                        invalid={!!errors.ticket}
+                        errorMessage={errors.ticket as string}
+                      >
+                        <Input
+                          type="number"
+                          name="ticket"
+                          value={values.ticket}
+                          onChange={(e) => setFieldValue('ticket', Number(e.target.value) || 0)}
+                          onBlur={handleBlur}
+                        />
+                      </FormItem>
+
+                      <FormItem
+                        label="GRATUITY"
+                        invalid={!!errors.gratuity}
+                        errorMessage={errors.gratuity as string}
+                      >
+                        <Input
+                          type="number"
+                          name="gratuity"
+                          value={values.gratuity}
+                          onChange={(e) => setFieldValue('gratuity', Number(e.target.value) || 0)}
+                          onBlur={handleBlur}
+                        />
+                      </FormItem>
+                    </div>
+                  </div>
+
+                  {/* Custom Expenses Section */}
+                  <div className="mb-8">
+                    <div className="flex justify-between items-center mb-4 border-b pb-2">
+                      <h5 className="text-lg font-semibold">
+                        {values?.customExpenses?.length > 0 ? 'Additional Custom Expenses' : ''}
+                      </h5>
+                      <Button
+                        size="sm"
+                        variant="plain"
+                        icon={<AiOutlinePlus />}
+                        onClick={() => handleAddCustomExpense(values, setFieldValue)}
+                      >
+                        Add Custom Expense
+                      </Button>
+                    </div>
+                    
+                    {(values.customExpenses || []).map((customExpense: any, customIndex: any) => (
+                      <div key={customIndex} className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 items-end">
+                        <FormItem
+                          label="Expense Name"
+                          invalid={!!errors.customExpenses?.[customIndex]?.name}
+                          errorMessage={errors.customExpenses?.[customIndex]?.name as string}
+                        >
+                          <Input
+                            value={customExpense.name}
+                            onChange={(e) => handleCustomExpenseChange(
+                              customIndex,
+                              'name',
+                              e.target.value,
+                              values,
+                              setFieldValue
+                            )}
+                          />
+                        </FormItem>
+                        <FormItem
+                          label="Amount"
+                          invalid={!!errors.customExpenses?.[customIndex]?.amount}
+                          errorMessage={errors.customExpenses?.[customIndex]?.amount as string}
+                        >
+                          <Input
+                            type="number"
+                            value={customExpense.amount}
+                            onChange={(e) => handleCustomExpenseChange(
+                              customIndex,
+                              'amount',
+                              e.target.value,
+                              values,
+                              setFieldValue
+                            )}
+                          />
+                        </FormItem>
+                        <Button
+                          type="button"
+                          variant="plain"
+                          color="red"
+                          icon={<HiOutlineTrash />}
+                          onClick={() => handleRemoveCustomExpense(
                             customIndex,
-                            'amount',
-                            e.target.value,
                             values,
                             setFieldValue
                           )}
-                        />
-                      </FormItem>
-                      <Button
-                        type="button"
-                        variant="plain"
-                        color="red"
-                        icon={<HiOutlineTrash />}
-                        onClick={() => handleRemoveCustomExpense(
-                          customIndex,
-                          values,
-                          setFieldValue
-                        )}
-                      >
-                        Remove
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              </AdaptableCard>
-            </div>
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </AdaptableCard>
+              </div>
 
-            <StickyFooter
-              className="-mx-8 px-8 flex items-center justify-between py-4"
-              stickyClass="border-t bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
-            >
-              <div>
-                {type === 'edit' && onDelete && (
+              <StickyFooter
+                className="-mx-8 px-8 flex items-center justify-between py-4"
+                stickyClass="border-t bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700"
+              >
+                <div>
+                  {type === 'edit' && onDelete && (
+                    <Button
+                      size="sm"
+                      variant="plain"
+                      color="red"
+                      icon={<HiOutlineTrash />}
+                      type="button"
+                      onClick={() => onDelete(() => {})}
+                    >
+                      Delete
+                    </Button>
+                  )}
+                </div>
+                <div className="md:flex items-center">
                   <Button
                     size="sm"
-                    variant="plain"
-                    color="red"
-                    icon={<HiOutlineTrash />}
+                    className="ltr:mr-3 rtl:ml-3"
                     type="button"
-                    onClick={() => onDelete(() => {})}
+                    onClick={() => onDiscard?.()}
                   >
-                    Delete
+                    Discard
                   </Button>
-                )}
-              </div>
-              <div className="md:flex items-center">
-                <Button
-                  size="sm"
-                  className="ltr:mr-3 rtl:ml-3"
-                  type="button"
-                  onClick={() => onDiscard?.()}
-                >
-                  Discard
-                </Button>
-                <Button
-                  size="sm"
-                  variant="solid"
-                  loading={isSubmitting}
-                  icon={<AiOutlineSave />}
-                  type="submit"
-                >
-                  Save
-                </Button>
-              </div>
-            </StickyFooter>
-          </FormContainer>
-        </Form>
-      )}
+                  <Button
+                    size="sm"
+                    variant="solid"
+                    loading={isSubmitting}
+                    icon={<AiOutlineSave />}
+                    type="submit"
+                  >
+                    Save
+                  </Button>
+                </div>
+              </StickyFooter>
+            </FormContainer>
+          </Form>
+        );
+      }}
     </Formik>
-  )
-})
+  );
+});
 
-LabourExpensesForm.displayName = 'LabourExpensesForm'
+LabourExpensesForm.displayName = 'LabourExpensesForm';
 
-export default LabourExpensesForm
+export default LabourExpensesForm;

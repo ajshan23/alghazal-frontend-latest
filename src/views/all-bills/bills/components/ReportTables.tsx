@@ -205,6 +205,8 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
     }, [location.pathname])
 
     const reportType = getReportTypeFromRoute()
+
+    console.log(reportType)
     const handleApplyFilters = (data: FilterParams) => {
         setFilters(data)
         setPagination((prev) => ({ ...prev, page: 1 }))
@@ -365,6 +367,8 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
                     search: searchTerm,
                     startDate: filters.startDate,
                     endDate: filters.endDate,
+                    employee:filters.employee
+
                 })
 
             }
@@ -375,6 +379,7 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
                     search: searchTerm,
                     startDate: filters.startDate,
                     endDate: filters.endDate,
+                    employee:filters.employee
                 })
             }
             else if (reportType === 'visaExpense') {
@@ -394,6 +399,7 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
                     search: searchTerm,
                     category: filters.category,
                     shop: filters.shop,
+                    employee:filters.employee,
                     startDate: filters.startDate,
                     endDate: filters.endDate,
                     month,
@@ -498,10 +504,10 @@ const ReportTables = ({ onDropdownSelect }: ReportTablesProps) => {
             return [
                 {
                     header: 'DATE',
-                    accessorKey: 'reportDate',
+                    accessorKey: 'startDate',
                     cell: (props) => (
                         <span>
-                            {moment(props.row.original.reportDate).format(
+                            {moment(props.row.original.startDate).format(
                                 'DD MMM YYYY',
                             )}
                         </span>
