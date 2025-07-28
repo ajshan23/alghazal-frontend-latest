@@ -112,13 +112,16 @@ const UserForm = forwardRef<FormikRef, UserForm>((props, ref) => {
         phoneNumbers: Yup.array()
             .of(Yup.string().matches(/^[0-9]+$/, 'Phone number must be digits only'))
             .min(1, 'At least one phone number is required'),
-        salary: Yup.number()
-            .min(0, 'Salary cannot be negative')
+            salary: Yup.number()
+            .moreThan(0, 'Salary must be greater than zero')
             .when('role', {
                 is: (role: string) => !['admin', 'super_admin'].includes(role),
                 then: (schema) => schema.required('Salary is required for this role'),
                 otherwise: (schema) => schema.notRequired()
-            }),
+            })
+            .required('Salary is required for this role'),
+
+
         accountNumber: Yup.string(),
         emiratesId: Yup.string(),
         passportNumber: Yup.string()

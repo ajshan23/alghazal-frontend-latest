@@ -227,7 +227,7 @@ const NewVisaExpenseReport = () => {
                     </Notification>,
                     { placement: 'top-center' }
                 );
-                navigate('/app/visa-expense-report-viewview');
+                navigate('/app/visa-expense-report-view');
             } else {
                 throw new Error(response?.response?.data?.message || 'Unexpected status code');
             }
@@ -251,10 +251,10 @@ const NewVisaExpenseReport = () => {
     const handleDiscard = () => {
         if (JSON.stringify(initialData) !== JSON.stringify(defaultReportData)) {
             if (window.confirm('Are you sure you want to discard changes?')) {
-                navigate('/app/visa-expense-view')
+                navigate('/app/visa-expense-report-view')
             }
         } else {
-            navigate('/app/visa-expense-view')
+            navigate('/app/visa-expense-report-view')
         }
     }
 
