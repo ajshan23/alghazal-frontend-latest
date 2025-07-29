@@ -285,17 +285,7 @@ const VisaExpenseForm = forwardRef<FormikRef, VisaExpenseFormProps>((props, ref)
                 return (
                     <Form>
                         <FormContainer>
-                            {/* Total Expenses Box */}
-                            <div className="flex justify-end mb-6">
-                                <div className="bg-blue-50 dark:bg-gray-700 p-4 rounded-lg shadow-sm border border-blue-100 dark:border-gray-600 w-64">
-                                    <div className="text-sm font-semibold text-blue-600 dark:text-blue-300 mb-1">
-                                        Total Expenses
-                                    </div>
-                                    <div className="text-2xl font-bold text-blue-800 dark:text-blue-200">
-                                     {totalExpenses.toFixed(2)}
-                                    </div>
-                                </div>
-                            </div>
+                        
 
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                                 <div className="lg:col-span-3">
@@ -614,7 +604,7 @@ const VisaExpenseForm = forwardRef<FormikRef, VisaExpenseFormProps>((props, ref)
 
                                             {/* Group 4 */}
                                             <FormItem
-                                                label="Emirate ID"
+                                                label="Emirate ID Fee"
                                                 invalid={!!errors.emirateId && touched.emirateId}
                                                 errorMessage={errors.emirateId as string}
                                             >
@@ -891,6 +881,17 @@ const VisaExpenseForm = forwardRef<FormikRef, VisaExpenseFormProps>((props, ref)
                                             </FormItem>
                                         </div>
                                     </AdaptableCard>
+                                </div>
+                            </div>
+                                {/* Total Expenses Box */}
+                                <div className="flex justify-end mb-6">
+                                <div className="bg-blue-50 dark:bg-gray-700 p-4 rounded-lg shadow-sm border border-blue-100 dark:border-gray-600 w-64">
+                                    <div className="text-sm font-semibold text-blue-600 dark:text-blue-300 mb-1">
+                                        Total Expenses
+                                    </div>
+                                    <div className="text-2xl font-bold text-blue-800 dark:text-blue-200">
+                                     {totalExpenses.toFixed(2)}
+                                    </div>
                                 </div>
                             </div>
 
