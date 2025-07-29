@@ -330,7 +330,7 @@ export const deleteAdibReportAndExpenses = async (id: string) => {
 }
 export const exportReportToExcel = async ({
     search,
-    billType,
+    reportType,
     month,
     year,
     startDate,
@@ -340,7 +340,7 @@ export const exportReportToExcel = async ({
     employee,
 }: {
     search?: string
-    billType?: string
+    reportType?: string
     month?: number
     year?: number
     startDate?: string
@@ -353,7 +353,7 @@ export const exportReportToExcel = async ({
         // Prepare params object with proper typing
         const params: Record<string, any> = {
             search,
-            billType,
+            reportType,
             month,
             year,
             startDate: startDate
@@ -381,7 +381,7 @@ export const exportReportToExcel = async ({
         }
 
         // Create filename with current date and bill type
-        const filename = `${billType || 'Report'}_${new Date()
+        const filename = `${reportType || 'Report'}_${new Date()
             .toISOString()
             .slice(0, 10)}.xlsx`
 
