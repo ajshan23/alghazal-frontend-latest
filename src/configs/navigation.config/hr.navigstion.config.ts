@@ -54,16 +54,16 @@ const appsNavigationConfig: NavigationTree[] = [
                 type: NAV_ITEM_TYPE_COLLAPSE,
                 authority: [ADMIN, SUPERADMIN],
                 subMenu: [
-                    {
-                        key: 'attandance.dashboard',
-                        path: `${APP_PREFIX_PATH}/attendance/dashboard`,
-                        title: 'Dashboard',
-                        translateKey: 'Dashboard',
-                        icon: 'project',
-                        type: NAV_ITEM_TYPE_ITEM,
-                        authority: [ADMIN, USER,SUPERADMIN],
-                        subMenu: [],
-           },
+        //             {
+        //                 key: 'attandance.dashboard',
+        //                 path: `${APP_PREFIX_PATH}/attendance/dashboard`,
+        //                 title: 'Dashboard',
+        //                 translateKey: 'Dashboard',
+        //                 icon: 'project',
+        //                 type: NAV_ITEM_TYPE_ITEM,
+        //                 authority: [ADMIN, USER,SUPERADMIN],
+        //                 subMenu: [],
+        //    },
 
                     {
                         key: 'attandance.dailyAttandance',

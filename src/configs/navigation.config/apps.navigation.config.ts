@@ -28,16 +28,16 @@ const appsNavigationConfig: NavigationTree[] = [
                         subMenu: [],
            },
 
-           {
-            key: 'apps.ongoingworks',
-            path: `${APP_PREFIX_PATH}/ongoingworks`,
-            title: 'Ongoing Works',
-            translateKey: 'Ongoing Works',
-            icon: 'graph',
-            type: NAV_ITEM_TYPE_ITEM,
-            authority: [ADMIN, USER,SUPERADMIN],
-            subMenu: [],
-},
+//            {
+//             key: 'apps.ongoingworks',
+//             path: `${APP_PREFIX_PATH}/ongoingworks`,
+//             title: 'Ongoing Works',
+//             translateKey: 'Ongoing Works',
+//             icon: 'graph',
+//             type: NAV_ITEM_TYPE_ITEM,
+//             authority: [ADMIN, USER,SUPERADMIN],
+//             subMenu: [],
+// },
          
             // {
             //     key: 'apps.estimation',

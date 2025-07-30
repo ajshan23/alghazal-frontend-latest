@@ -68,6 +68,8 @@ const InvoiceContent = () => {
     const [openModal, setOpenModal] = useState(false);
     const { projectId } = useParams();
 
+
+    console.log(data);
     const fetchData = async () => {
         try {
             setLoading(true);
@@ -151,6 +153,72 @@ const InvoiceContent = () => {
     const closeGrnModal = () => {
         setOpenModal(false);
     }
+    const convertToWords = (num: number): string => {
+        if (num === 0) return 'Zero AED only';
+        
+        const units = ['', 'One', 'Two', 'Three', 'Four', 'Five', 'Six', 'Seven', 'Eight', 'Nine'];
+        const teens = ['Ten', 'Eleven', 'Twelve', 'Thirteen', 'Fourteen', 'Fifteen', 'Sixteen', 'Seventeen', 'Eighteen', 'Nineteen'];
+        const tens = ['', 'Ten', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+        const scales = ['', 'Thousand', 'Million', 'Billion', 'Trillion'];
+      
+        // Helper function to convert a chunk of 3 digits to words
+        const convertChunk = (n: number): string => {
+          if (n === 0) return '';
+          let chunkWords = [];
+          
+          const hundred = Math.floor(n / 100);
+          if (hundred > 0) {
+            chunkWords.push(units[hundred] + ' Hundred');
+          }
+          
+          const remainder = n % 100;
+          if (remainder > 0) {
+            if (remainder < 10) {
+              chunkWords.push(units[remainder]);
+            } else if (remainder < 20) {
+              chunkWords.push(teens[remainder - 10]);
+            } else {
+              const ten = Math.floor(remainder / 10);
+              const unit = remainder % 10;
+              chunkWords.push(tens[ten]);
+              if (unit > 0) {
+                chunkWords.push(units[unit]);
+              }
+            }
+          }
+          
+          return chunkWords.join(' ');
+        };
+      
+        // Split number into chunks of 3 digits (from right to left)
+        const numStr = Math.floor(num).toString();
+        const chunks = [];
+        for (let i = numStr.length; i > 0; i -= 3) {
+          chunks.push(parseInt(numStr.substring(Math.max(0, i - 3), i), 10));
+        }
+      
+        // Convert each chunk to words with appropriate scale
+        let words = [];
+        for (let i = 0; i < chunks.length; i++) {
+          const chunkWords = convertChunk(chunks[i]);
+          if (chunkWords) {
+            words.unshift(chunkWords + (scales[i] ? ' ' + scales[i] : ''));
+          }
+        }
+      
+        // Handle decimal part (fils)
+        const decimal = Math.round((num - Math.floor(num)) * 100);
+        let decimalWords = '';
+        if (decimal > 0) {
+          decimalWords = ' and ' + convertChunk(decimal) + ' Fils';
+        }
+      
+        // Combine everything
+        const result = words.join(' ') + decimalWords + ' AED only';
+        
+        // Capitalize first letter and make the rest lowercase for consistent formatting
+        return result.charAt(0).toUpperCase() + result.slice(1).toLowerCase();
+      };
 
     if (error) {
         return (
@@ -199,13 +267,10 @@ const InvoiceContent = () => {
                         <p className="whitespace-pre-line">
                             {data.vendee.name}
                             <br />
-                            {data.vendee.contactPerson}
-                            <br />
+                        
                             {data.vendee.address}
                             <br />
                             Phone: {data.vendee.phone}
-                            <br />
-                            TRN#: {data.vendee.trn}
                         </p>
                     </div>
                     <div>
@@ -229,10 +294,10 @@ const InvoiceContent = () => {
                 </div>
             </div>
             
-            <div className="my-6">
+            {/* <div className="my-6">
                 <h4 className="font-bold">Subject:</h4>
                 <p>{data.subject}</p>
-            </div>
+            </div> */}
             
             <div className="my-6">
                 <ContentTable products={data.products} summary={data.summary} />
@@ -241,7 +306,7 @@ const InvoiceContent = () => {
             <div className="my-6">
                 <h4 className="font-bold mb-2">Comments or special instructions</h4>
                 <p>Payment: {data.paymentTerms}</p>
-                <p>Amt in Words: {data.amountInWords}</p>
+                <p>Amt in Words: {convertToWords(data.summary.totalReceivable)}</p>
             </div>
             
             <div className="mt-8">
