@@ -244,18 +244,18 @@ const InvoiceContent = () => {
                 </div>
                 <div className="my-4">
                     <div className="mb-2">
-                        <div className="flex justify-between">
+                        {/* <div className="flex justify-between">
                             <span>PO Box No: {data.vendor.poBox}</span>
                             <span>Date: {dayjs(data.date).format('DD/MM/YYYY')}</span>
-                        </div>
+                        </div> */}
                         <div className="flex justify-between">
-                            <span>Dubai, UAE</span>
+                            {/* <span>Dubai, UAE</span> */}
                             <span>INV #: {data.invoiceNumber}</span>
                         </div>
-                        <div className="flex justify-between">
+                        {/* <div className="flex justify-between">
                             <span>Website: www.alghazalgroup.com</span>
                             <span>Order No: {data.orderNumber}</span>
-                        </div>
+                        </div> */}
                     </div>
                 </div>
             </div>
